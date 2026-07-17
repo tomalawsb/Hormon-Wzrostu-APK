@@ -1,0 +1,228 @@
+# Dzienniczek hormonu wzrostu
+
+Wersja: **2.7 - 1607262336**
+
+Aplikacja do zapisywania podań hormonu wzrostu na telefonie i komputerze.
+
+## Najważniejsze funkcje
+
+- dokładnie jeden wpis dziennie — podanie albo pominięcie dawki,
+- główna karta „Co teraz zrobić” z automatyczną propozycją najbliższego działania,
+- szybki zapis daty, godziny, dawki i miejsca wkłucia,
+- obsługa głosowa po polsku,
+- polecenia głosowe można podawać etapami, np. najpierw „wczoraj”, potem „lewy brzuch”,
+- brak daty w poleceniu nie nadpisuje wcześniej wybranej daty,
+- kalendarz, historia, wyszukiwanie, edycja i usuwanie wpisów,
+- automatyczna rotacja miejsc bez uwzględniania przyszłych wpisów,
+- automatyczne odświeżenie daty po północy i po powrocie do aplikacji,
+- przypomnienie systemowe z proponowanym miejscem wkłucia, dawką i stanem ampułki,
+- licznik ampułki liczony automatycznie po kolejnych podaniach, bez zużycia przy dawkach pominiętych,
+- możliwość odłożenia rozpoczętej ampułki, rozpoczęcia nowej i późniejszego wznowienia poprzedniej,
+- automatyczne rozpoczęcie kolejnej ampułki przy następnym podaniu, gdy nie ma odłożonej ampułki,
+- numer aktualnej ampułki i data jej startu widoczne w aplikacji oraz w raportach PDF/Word/CSV,
+- ekran zgód przy pierwszym uruchomieniu,
+- podgląd raportu w tabeli z osobnym drukowaniem,
+- bezpośredni eksport raportu do PDF bez otwierania okna drukowania,
+- prawidłowy dokument Microsoft Word `.docx`,
+- eksport CSV i pełnej kopii JSON,
+- import JSON z walidacją i blokowaniem zduplikowanych dni,
+- lokalna kopia poprzedniego zapisu danych,
+- działanie offline po pierwszym poprawnym otwarciu,
+- obsługa klawiaturą.
+
+## Zasada jednego wpisu dziennie
+
+Aplikacja nie pozwala utworzyć dwóch wpisów z tą samą datą. Jeśli wpis dla wybranego dnia już istnieje, przycisk dodawania otworzy go do edycji. Dotyczy to zapisu ręcznego, głosowego oraz importu danych.
+
+## Przykładowe polecenia głosowe
+
+- `lewy brzuch`
+- `wczoraj prawe ramię`
+- `wczoraj`, a następnie `prawe ramię`
+- `dawka jeden przecinek jeden`
+- `pomiń dzisiaj`
+- `zapisz`
+- `anuluj`
+
+## Ampułka 10 ml
+
+W ustawieniach należy wskazać datę rozpoczęcia ampułki oraz jej numer. Aplikacja liczy zużycie każdej ampułki oddzielnie po rzeczywistych podaniach. Aktywną ampułkę można odłożyć, rozpocząć nową, a później wznowić odłożoną z zachowaniem pozostałej ilości. Jeżeli nie ma odłożonej ampułki, kolejna może rozpocząć się automatycznie przy następnym podaniu. Pominięta dawka nie zużywa ampułki.
+
+Zużycie ampułki jest liczone na podstawie jej pojemności i dawki zużywanej w ml. Jeśli domyślna jednostka dawki to `ml`, używana jest dawka domyślna. Przy jednostkach `mg`, `IU` albo `j.m.` trzeba wpisać osobno zużycie w ml, bo aplikacja nie przelicza medycznie mg/IU na ml.
+
+Na ekranie głównym pojawia się status ampułki. Gdy dzisiejsza dawka jest ostatnia z bieżącej ampułki, aplikacja pokazuje komunikat i dopisuje tę informację do powiadomienia. Można też opcjonalnie ustawić własny maksymalny czas od otwarcia; po jego przekroczeniu aplikacja ostrzega, ale nie ocenia medycznej przydatności leku.
+
+## Przypomnienia
+
+W ustawieniach można wybrać godzinę, zezwolić na powiadomienia i wysłać test. Treść zawiera proponowane miejsce i dawkę, np.:
+
+```text
+Czas na zastrzyk
+Dzisiaj: lewe udo. Dawka: 1,1 mg. Dzisiaj jest ostatni zastrzyk z tej ampułki.
+```
+
+Przypomnienie zależy od ustawień telefonu i przeglądarki. Dla pewności nie należy całkowicie zamykać aplikacji przed godziną przypomnienia.
+
+## Eksport raportów
+
+- **PDF** — otwiera raport i systemowe okno drukowania; wybierz „Zapisz jako PDF”.
+- **Word** — pobiera prawidłowy plik `.docx`.
+- **CSV** — tabela historii do Excela lub innego arkusza, od najstarszego do najnowszego wpisu, z numerem ampułki, datą jej startu i stanem po wpisie.
+- **JSON** — pełna kopia danych i ustawień.
+
+## Skróty klawiaturowe
+
+| Skrót | Działanie |
+|---|---|
+| `Alt + 1` | Dzisiaj |
+| `Alt + 2` | Kalendarz |
+| `Alt + 3` | Historia |
+| `Alt + 4` | Więcej |
+| `Alt + M` | Mikrofon |
+| `Alt + N` | Dodaj lub edytuj dzisiejszy wpis |
+| `Alt + P` | Raport PDF |
+| `Alt + W` | Raport Word |
+| `Ctrl + Enter` | Zapis przygotowanego wpisu |
+| `Esc` | Zamknięcie okna lub zatrzymanie mikrofonu |
+
+Elementy interfejsu można obsługiwać klawiszami `Tab`, `Shift + Tab`, `Enter` i `Spacja`. W kalendarzu działają strzałki.
+
+## Dane użytkownika
+
+Dane medyczne są przechowywane lokalnie w przeglądarce i nie trafiają do repozytorium GitHub. Telefon i komputer mają osobne dane, dopóki użytkownik nie przeniesie kopii JSON.
+
+Przed każdym zapisem aplikacja tworzy lokalną kopię poprzedniego stanu. Importowane wpisy są sprawdzane pod kątem daty, godziny, dawki, jednostki, miejsca, statusu oraz duplikatów dni.
+
+## Uruchomienie lokalne
+
+Nie otwieraj `index.html` bezpośrednio z dysku. Uruchom serwer w folderze projektu:
+
+```powershell
+python -m http.server 8080
+```
+
+Następnie otwórz:
+
+```text
+http://localhost:8080
+```
+
+## Wysyłanie na GitHub
+
+### Windows
+
+Uruchom:
+
+```powershell
+.\upload_to_github.ps1
+```
+
+### Android / Termux
+
+Uruchom w folderze projektu:
+
+```bash
+bash upload_to_github_android.sh
+```
+
+Skrypty używają repozytorium:
+
+```text
+https://github.com/tomalawsb/Dzienniczek-hormonu-wzrostu.git
+```
+
+Nie pytają o opis commita. Przed wysłaniem wykonują kontrolę projektu. Skrypty nie usuwają automatycznie dodatkowych plików istniejących już w repozytorium.
+
+
+## Zmiany w wersji 1.9 - 2506260900
+
+- Uproszczono ekran „Dzisiaj”: przycisk „Przygotuj wpis” zastąpiono „Użyj propozycji”, a zapis nazwano „Zapisz podanie”.
+- Dodano widoczny przycisk „Rozpocznij ampułkę dzisiaj” przy braku daty startu ampułki.
+- Dodano stały opis pod przyciskiem zapisu, żeby było jasne, czego brakuje do zapisania wpisu.
+- Dodano osobny zapis ustawień obsługi głosowej.
+- Jeżeli przeglądarka nie obsługuje rozpoznawania mowy, mikrofon jest wyraźnie oznaczony jako niedostępny.
+- Pierwsze uruchomienie nie jest już blokowane modalem zgód; zgody można pominąć i wrócić do nich w ustawieniach.
+- Kliknięcie pola „Miejsce” otwiera prosty wybór miejsca wkłucia zamiast pełnego formularza.
+- W trybie „Pominięto” ukrywane są pola dawki, strony i miejsca.
+- Historia na telefonie układa się jak lista kart, bez poziomego przewijania tabeli.
+
+
+## Zmiany w wersji 2.0 - 1107260833
+
+- Dodano obsługę kilku rozpoczętych ampułek.
+- Aktywną ampułkę można odłożyć bez utraty pozostałych dawek.
+- Można rozpocząć nową ampułkę, a później wznowić poprzednią.
+- Każdy wpis jest przypisywany do konkretnej ampułki.
+- Dotychczasowe dane z wersji 1.9 są automatycznie przenoszone do nowego mechanizmu.
+- Numer wersji jest wyświetlany bezpośrednio przy nazwie „Dzienniczek”.
+- Dodano opcjonalny, ustawiany przez użytkownika limit dni od otwarcia ampułki.
+
+
+## Zmiany w wersji 2.1 - 1107260923
+
+- Zablokowano przycisk „Rozpocznij ampułkę dzisiaj”, gdy istnieje już aktywna ampułka.
+- Pola daty i numeru pokazują dane faktycznie aktywnej ampułki.
+- Usunięto osobną sekcję opisującą skróty klawiaturowe; opisy skrótów przeniesiono do podpowiedzi przycisków.
+- Zastąpiono osobne przyciski eksportu trzema dużymi przyciskami: „Podgląd / Drukuj”, „Eksportuj raport” i „Kopia zapasowa”.
+- Dodano podgląd raportu w tabeli z osobnym przyciskiem „Drukuj”.
+- Dodano panel eksportu z kafelkami PDF, Word (.docx) i CSV.
+- Eksport PDF zapisuje plik bez uruchamiania okna drukowania.
+- Oddzielono eksport raportów od zapisu i przywracania kopii JSON.
+- Zachowano jasny motyw, dotychczasową strukturę danych i zawartość raportów.
+
+
+## Poprawka wersji 2.1 - 1107262219
+
+- W raportach przeniesiono datę podania w miejsce kolumny „Start ampułki”.
+- Usunięto pierwszą, powielającą datę kolumnę, aby tabela była węższa i czytelniejsza na telefonie.
+- Zmianę zastosowano w podglądzie, wydruku, PDF, Wordzie i CSV.
+
+
+## Poprawki Etapu 2 — 2.2 - 1607262239
+
+- Rozdzielono zapis ustawień leczenia od zapisu ustawień ampułki.
+- Ukryte pola ampułki nie blokują już zapisu dawki, jednostki ani godziny leczenia.
+- Przycisk zapisu ampułki nie zapisuje niezatwierdzonych zmian z zakładki leczenia.
+- Ujednolicono numer wersji w pliku wersji i dokumentacji.
+
+
+## Etap 3 — 2.3 - 1607262248
+
+- Dodano własną kolejność miejsc wkłuć.
+- Kolejność można zmieniać przeciąganiem lub przyciskami góra/dół.
+- Każde miejsce można włączyć lub wyłączyć z automatycznej rotacji.
+- Dodano podgląd następnego proponowanego miejsca.
+- Dodano przywracanie domyślnej kolejności.
+- Historia wcześniejszych podań pozostaje bez zmian.
+
+
+## Etap 4 — 2.4 - 1607262255
+
+- Rozdzielono odkładanie aktywnej ampułki od rozpoczynania nowej.
+- Dodano potwierdzenia przed odłożeniem, wznowieniem i zmianą aktywnej ampułki.
+- Dodano cofnięcie zmian, jeżeli zapis danych nie powiedzie się.
+- Historia ampułek pokazuje aktywne, odłożone i zużyte ampułki, liczbę podań oraz datę ostatniego użycia.
+- Zachowano zgodność ze starszymi danymi i dotychczasową historią podań.
+
+
+## Etap 5 — 2.5 - 1607262305
+
+- Uporządkowano zapis i walidację głównego obiektu danych.
+- Dodano bezpieczny, ograniczony rejestr błędów technicznych.
+- Uodporniono pamięć offline i service workera na brak pojedynczego zasobu.
+- Zachowano dotychczasowe funkcje i strukturę danych użytkownika.
+
+
+## Wersja 2.6 — Etap 6
+- Dodano projekt Android oparty na Capacitor.
+- Zachowano wspólne pliki interfejsu PWA w katalogu `www`.
+- Dodano obsługę sprzętowego przycisku Wstecz.
+- Dodano ikony, ekran startowy i konfigurację pakietu Android.
+
+## Wersja 2.7 — Etap 7
+
+- natywne lokalne przypomnienia Android,
+- zapis i udostępnianie PDF, DOCX, CSV oraz JSON przez system Android,
+- import kopii JSON przez systemowy selektor plików,
+- uprawnienia powiadomień i mikrofonu,
+- zachowany tryb PWA jako fallback.

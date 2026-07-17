@@ -1,0 +1,24 @@
+{
+  "appId": "pl.tomaszwolak.dzienniczekhormonu",
+  "appName": "Dzienniczek hormonu wzrostu",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#FFFFFF",
+      "showSpinner": false,
+      "androidScaleType": "CENTER_CROP"
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_injection",
+      "iconColor": "#2F7D69"
+    }
+  }
+}

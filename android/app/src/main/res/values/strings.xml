@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Dzienniczek hormonu wzrostu</string>
+    <string name="title_activity_main">Dzienniczek hormonu wzrostu</string>
+    <string name="package_name">pl.tomaszwolak.dzienniczekhormonu</string>
+    <string name="custom_url_scheme">pl.tomaszwolak.dzienniczekhormonu</string>
+</resources>
