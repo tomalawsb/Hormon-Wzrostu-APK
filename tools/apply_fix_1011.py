@@ -1,80 +1,64 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import re
 import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-
-
-def replace_once(text: str, pattern: str, replacement: str, label: str, flags=re.S) -> str:
-    updated, count = re.subn(pattern, replacement, text, count=1, flags=flags)
-    if count != 1:
-        raise SystemExit(f"Nie udało się poprawić: {label} (znaleziono {count})")
-    return updated
-
 
 subprocess.run([sys.executable, str(ROOT / "tools/set_version.py"), "1.0.11", "3912"], check=True)
 
 index_path = ROOT / "index.html"
 index = index_path.read_text(encoding="utf-8")
 
-# Usuń cały globalny panel aktualizacji. Lookahead pilnuje końca tuż przed settings-layout.
-update_box_pattern = r'''\n\s*<div class="settings-update-box settings-update-box--global card">.*?\n\s*</div>\s*\n\s*(?=<div id="settings-layout")'''
-index = replace_once(index, update_box_pattern, '\n\n          ', "usunięcie globalnego panelu aktualizacji")
+old_description = (
+    '<p class="muted">Ustaw datę rozpoczęcia obecnej ampułki i jej numer. '
+    'Na tej podstawie aplikacja pokaże, ile leku zostanie po kolejnych podaniach.</p>'
+)
+new_description = (
+    '<p class="muted">Zarządzaj aktualną i odłożonymi ampułkami. '
+    'Stan leku jest liczony na podstawie zapisanych podań.</p>'
+)
+if old_description in index:
+    index = index.replace(old_description, new_description, 1)
 
-update_panel = '''
-                    <div class="settings-update-box settings-update-box--global">
-                      <strong>Aktualizacje aplikacji</strong>
-                      <div class="settings-version-row">
-                        <span>Zainstalowana wersja</span>
-                        <strong id="settings-version-label">v1.0.11</strong>
-                      </div>
-                      <p id="update-status" class="muted">Sprawdź, czy na GitHubie jest nowsza wersja aplikacji.</p>
-                      <div class="dialog-actions dialog-actions--start">
-                        <button id="check-update-button" class="button button--primary button--small" type="button">Sprawdź aktualizacje</button>
-                        <button id="download-update-button" class="button button--secondary button--small is-hidden" type="button">Pobierz ponownie</button>
-                      </div>
-                    </div>
+runtime_fix = r'''
+<script id="runtime-fix-1011">
+document.addEventListener('DOMContentLoaded', () => {
+  const updateBox = document.querySelector('.settings-update-box--global');
+  const infoCard = document.querySelector('[data-settings-panel="permissions-info"] .settings-card');
+  if (updateBox && infoCard) infoCard.prepend(updateBox);
+
+  const ampouleCard = document.querySelector('[data-settings-panel="ampoules"] .settings-card');
+  const ampouleButton = document.getElementById('ampoule-new-button');
+  const formGrid = ampouleCard?.querySelector('.form-grid');
+  if (ampouleCard && ampouleButton && formGrid && !document.querySelector('.ampoule-primary-action')) {
+    const box = document.createElement('div');
+    box.className = 'ampoule-primary-action';
+    box.innerHTML = '<div><strong>Odłóż obecną ampułkę</strong><span>Zachowasz pozostałą ilość leku i później będzie można wrócić do tej ampułki.</span></div>';
+    ampouleButton.className = 'button button--primary';
+    box.appendChild(ampouleButton);
+    ampouleCard.insertBefore(box, formGrid);
+
+    const heading = document.createElement('div');
+    heading.className = 'ampoule-settings-heading';
+    heading.innerHTML = '<strong>Ustawienia bieżącej ampułki</strong><span>Data otwarcia, numer, pojemność i zużycie na jedno podanie.</span>';
+    ampouleCard.insertBefore(heading, formGrid);
+  }
+});
+</script>
 '''
+if 'id="runtime-fix-1011"' not in index:
+    index = index.replace('</body>', runtime_fix + '\n</body>', 1)
 
-permissions_marker = r'(<section class="settings-panel" data-settings-panel="permissions-info" role="tabpanel" hidden>\s*<article class="card settings-card[^>]*>)'
-index = replace_once(index, permissions_marker, r'\1' + update_panel, "dodanie aktualizacji do właściwej kategorii")
-
-ampoule_start = index.index('<section class="settings-panel" data-settings-panel="ampoules"')
-ampoule_end = index.index('<section class="settings-panel" data-settings-panel="reminders"', ampoule_start)
-ampoule = index[ampoule_start:ampoule_end]
-
-old_intro = '<p class="muted">Ustaw datę rozpoczęcia obecnej ampułki i jej numer. Na tej podstawie aplikacja pokaże, ile leku zostanie po kolejnych podaniach.</p>'
-new_intro = '''<p class="muted">Zarządzaj aktualną i odłożonymi ampułkami. Stan leku jest liczony wyłącznie na podstawie zapisanych podań.</p>
-                    <div class="ampoule-primary-action">
-                      <div>
-                        <strong>Chcesz odłożyć obecną ampułkę?</strong>
-                        <span>Odłożona ampułka zachowa pozostałą ilość leku i będzie można do niej później wrócić.</span>
-                      </div>
-                      <button id="ampoule-new-button" class="button button--primary" type="button">Odłóż aktywną i rozpocznij nową</button>
-                    </div>
-                    <div class="ampoule-settings-heading">
-                      <strong>Ustawienia bieżącej ampułki</strong>
-                      <span>Data otwarcia, numer, pojemność i zużycie na jedno podanie.</span>
-                    </div>'''
-if old_intro not in ampoule:
-    raise SystemExit("Nie znaleziono opisu ustawień ampułki")
-ampoule = ampoule.replace(old_intro, new_intro, 1)
-
-old_button = '                      <button id="ampoule-new-button" class="button button--secondary button--small" type="button">Odłóż aktywną i rozpocznij nową</button>\n'
-if old_button not in ampoule:
-    raise SystemExit("Nie znaleziono starego przycisku odkładania ampułki")
-ampoule = ampoule.replace(old_button, '', 1)
-
-index = index[:ampoule_start] + ampoule + index[ampoule_end:]
 index_path.write_text(index, encoding="utf-8")
 
 style_path = ROOT / "style.css"
 style = style_path.read_text(encoding="utf-8")
-style += r'''
+css_marker = '/* Wersja 1.0.11: stabilna Historia i ampułki */'
+if css_marker not in style:
+    style += r'''
 
-/* Wersja 1.0.11: stabilna Historia i czytelne zarządzanie ampułką */
+/* Wersja 1.0.11: stabilna Historia i ampułki */
 @media (max-width: 820px) {
   html, body, .app-shell, .app-content, main, .view,
   #view-history, .history-card, .history-table-wrap {
@@ -87,7 +71,7 @@ style += r'''
 
   #view-history {
     overflow-x: clip;
-    padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 18px);
+    padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 22px);
   }
 
   .history-card { overflow: hidden; }
@@ -102,16 +86,13 @@ style += r'''
 
   .history-table tbody,
   .history-table tr,
-  .history-table td {
+  .history-table td,
+  .history-table td > * {
     min-width: 0;
     max-width: 100%;
   }
 
-  .history-table td > * {
-    min-width: 0;
-    max-width: 100%;
-    overflow-wrap: anywhere;
-  }
+  .history-table td > * { overflow-wrap: anywhere; }
 
   .mobile-nav {
     position: fixed !important;
@@ -123,9 +104,12 @@ style += r'''
     transform: none !important;
   }
 
+  .settings-update-box--global { margin: 0 0 18px; }
+
   .ampoule-primary-action {
     display: grid;
     gap: 14px;
+    margin: 4px 0 18px;
     padding: 17px;
     border: 2px solid rgba(22, 184, 165, .42);
     border-radius: 18px;
@@ -141,8 +125,8 @@ style += r'''
   .ampoule-settings-heading {
     display: grid;
     gap: 4px;
-    margin-top: 8px;
-    padding-top: 18px;
+    margin: 2px 0 10px;
+    padding-top: 16px;
     border-top: 1px solid var(--line);
   }
 
