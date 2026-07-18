@@ -133,11 +133,13 @@
       const shortVersion = String(version.version || '').split(' - ')[0] || '1.0';
       currentAppVersion = shortVersion;
       el['version-label'].textContent = `Wersja ${version.version}`;
+      if (el['settings-version-label']) el['settings-version-label'].textContent = `v${shortVersion}`;
       document.querySelectorAll('.brand-version').forEach((label) => { label.textContent = `v${shortVersion}`; });
       document.title = `Dzienniczek Hormonu v${shortVersion}`;
     } catch (error) {
       currentAppVersion = '1.0.0';
       el['version-label'].textContent = 'Wersja 1.0';
+      if (el['settings-version-label']) el['settings-version-label'].textContent = 'v1.0';
       document.querySelectorAll('.brand-version').forEach((label) => { label.textContent = 'v1.0'; });
     }
   }

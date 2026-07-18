@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#19b8a6">
   <meta name="description" content="Prywatny dzienniczek podań hormonu wzrostu z obsługą głosową, klawiaturą, kalendarzem i historią.">
-  <title>Dzienniczek Hormonu v1.0.5</title>
+  <title>Dzienniczek Hormonu v1.0.6</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icon-192.png">
@@ -19,7 +19,7 @@
       <div class="brand brand--desktop">
         <img src="./icon-192.png" alt="" width="46" height="46">
         <div>
-          <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.5</span></strong>
+          <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.6</span></strong>
           <span>dziennik podań</span>
         </div>
       </div>
@@ -58,7 +58,7 @@
         <div class="brand brand--mobile">
           <img src="./icon-192.png" alt="" width="42" height="42">
           <div>
-            <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.5</span></strong>
+            <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.6</span></strong>
           <span>dziennik podań</span>
           </div>
         </div>
@@ -246,7 +246,10 @@
               <h1 id="calendar-heading">Kalendarz podań</h1>
             </div>
             <div class="page-heading-actions">
-              <button class="button button--ghost button--small" type="button" data-go-home>← Dzisiaj</button>
+              <button class="back-button" type="button" data-go-home aria-label="Wróć do ekranu Dzisiaj">
+                <span class="back-button__icon" aria-hidden="true">‹</span>
+                <span>Wróć do dzisiaj</span>
+              </button>
               <button class="button button--primary button--small" type="button" data-open-entry>Dodaj wpis</button>
             </div>
           </div>
@@ -297,7 +300,10 @@
               <h1 id="history-heading">Historia podań</h1>
             </div>
             <div class="page-heading-actions">
-              <button class="button button--ghost button--small" type="button" data-go-home>← Dzisiaj</button>
+              <button class="back-button" type="button" data-go-home aria-label="Wróć do ekranu Dzisiaj">
+                <span class="back-button__icon" aria-hidden="true">‹</span>
+                <span>Wróć do dzisiaj</span>
+              </button>
               <button class="button button--primary button--small" type="button" data-open-entry>Dodaj wpis</button>
             </div>
           </div>
@@ -365,7 +371,10 @@
               <h1 id="more-heading">Ustawienia i dane</h1>
             </div>
             <div class="page-heading-actions">
-              <button class="button button--ghost button--small" type="button" data-go-home>← Dzisiaj</button>
+              <button class="back-button" type="button" data-go-home aria-label="Wróć do ekranu Dzisiaj">
+                <span class="back-button__icon" aria-hidden="true">‹</span>
+                <span>Wróć do dzisiaj</span>
+              </button>
             </div>
           </div>
 
@@ -430,7 +439,10 @@
             </aside>
 
             <div class="settings-content">
-              <button id="settings-section-back-button" class="button button--ghost button--small settings-section-back is-hidden" type="button">← Wszystkie ustawienia</button>
+              <button id="settings-section-back-button" class="back-button settings-section-back is-hidden" type="button" aria-label="Wróć do wszystkich ustawień">
+                <span class="back-button__icon" aria-hidden="true">‹</span>
+                <span>Wszystkie ustawienia</span>
+              </button>
               <div id="settings-panels" class="settings-panels">
                 <section class="settings-panel" data-settings-panel="profiles" role="tabpanel">
                   <article class="card settings-card profiles-settings-card">
@@ -691,10 +703,14 @@
                     <p>Aplikacja pozwala zapisać jeden wpis dziennie dla każdego profilu. Nie dobiera dawki i nie zastępuje zaleceń lekarza.</p>
                     <div class="settings-update-box">
                       <strong>Aktualizacje aplikacji</strong>
-                      <p id="update-status" class="muted">Sprawdź, czy na GitHubie opublikowano nowszy podpisany APK.</p>
+                      <div class="settings-version-row">
+                        <span>Zainstalowana wersja</span>
+                        <strong id="settings-version-label">v1.0.6</strong>
+                      </div>
+                      <p id="update-status" class="muted">Przycisk sprawdzi GitHub i automatycznie rozpocznie pobieranie nowszego APK.</p>
                       <div class="dialog-actions dialog-actions--start">
-                        <button id="check-update-button" class="button button--secondary button--small" type="button">Sprawdź nowszą wersję</button>
-                        <button id="download-update-button" class="button button--primary button--small is-hidden" type="button">Pobierz aktualizację</button>
+                        <button id="check-update-button" class="button button--primary button--small" type="button">Sprawdź aktualizacje</button>
+                        <button id="download-update-button" class="button button--secondary button--small is-hidden" type="button">Pobierz ponownie</button>
                       </div>
                     </div>
                     <button id="settings-install-button" class="button button--primary button--small is-hidden" type="button">Zainstaluj aplikację</button>

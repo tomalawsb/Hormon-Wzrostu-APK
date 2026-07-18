@@ -2,10 +2,12 @@
 setlocal EnableExtensions DisableDelayedExpansion
 chcp 65001 >nul
 cd /d "%~dp0"
+set "NO_PAUSE="
+if /I "%~1"=="--no-pause" set "NO_PAUSE=1"
 
 where git >nul 2>nul || (
   echo BLAD: Nie znaleziono programu Git. Zainstaluj Git for Windows.
-  pause
+  if not defined NO_PAUSE pause
   exit /b 1
 )
 
@@ -17,7 +19,7 @@ if exist "%TEMP_REPO%" rmdir /s /q "%TEMP_REPO%"
 git clone "%REPO%" "%TEMP_REPO%"
 if errorlevel 1 (
   echo BLAD: Nie udalo sie pobrac repozytorium.
-  pause
+  if not defined NO_PAUSE pause
   exit /b 1
 )
 
@@ -41,7 +43,7 @@ set "ROBOCOPY_CODE=%ERRORLEVEL%"
 if %ROBOCOPY_CODE% GEQ 8 (
   echo.
   echo BLAD: Nie udalo sie skopiowac projektu. Kod Robocopy: %ROBOCOPY_CODE%
-  pause
+  if not defined NO_PAUSE pause
   exit /b 1
 )
 
@@ -52,7 +54,7 @@ if not errorlevel 1 (
   echo.
   echo Brak zmian do wyslania.
   popd
-  pause
+  if not defined NO_PAUSE pause
   exit /b 0
 )
 
@@ -65,12 +67,12 @@ popd
 echo.
 echo Gotowe. Projekt zostal wyslany do:
 echo https://github.com/tomalawsb/Hormon-Wzrostu-APK
-pause
+if not defined NO_PAUSE pause
 exit /b 0
 
 :PUSH_ERROR
 popd
 echo.
 echo BLAD: Wysylanie nie powiodlo sie. Sprawdz logowanie GitHub i polaczenie z internetem.
-pause
+if not defined NO_PAUSE pause
 exit /b 1

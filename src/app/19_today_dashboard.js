@@ -12,7 +12,12 @@
   function renderTodayProfileSwitcher(profiles = getAvailableProfiles()) {
     if (!el['today-profile-switcher']) return;
     const multiple = profiles.length > 1;
+    el['today-profile-switcher'].hidden = !multiple;
     el['today-profile-switcher'].classList.toggle('is-single-profile', !multiple);
+    if (!multiple) {
+      el['today-profile-switcher'].innerHTML = '';
+      return;
+    }
 
     const buttons = [];
     if (multiple) {
@@ -95,7 +100,9 @@
         : `Ampułka ${summary.ampoule.number} · dawka ${summary.ampoule.doseNumber || '—'}`
       : summary.ampoule.label;
     const remainingText = summary.ampoule.configured
-      ? `${formatMl(summary.ampoule.remainingAfterToday)} ml · ${summary.ampoule.dosesLeft} ${plural(summary.ampoule.dosesLeft, 'pełna dawka', 'pełne dawki', 'pełnych dawek')}${summary.ampoule.todayIsLast ? ' · ostatnia dawka' : ''}`
+      ? summary.status === 'pending'
+        ? `Teraz ${formatMl(summary.ampoule.currentRemaining)} ml · po dawce ${summary.ampoule.dosesLeft} ${plural(summary.ampoule.dosesLeft, 'pełna dawka', 'pełne dawki', 'pełnych dawek')}`
+        : `Pozostało ${formatMl(summary.ampoule.currentRemaining)} ml · ${summary.ampoule.dosesLeft} ${plural(summary.ampoule.dosesLeft, 'pełna dawka', 'pełne dawki', 'pełnych dawek')}${summary.ampoule.todayIsLast ? ' · ostatnia dawka' : ''}`
       : 'Uzupełnij ustawienia ampułki';
 
     return `
@@ -157,6 +164,7 @@
         number: 0,
         doseNumber: 0,
         dosesLeft: 0,
+        currentRemaining: 0,
         remainingAfterToday: 0,
         todayIsLast: false,
         openDays: 0,
@@ -192,6 +200,7 @@
       number: active.number,
       doseNumber,
       dosesLeft,
+      currentRemaining: remainingNow,
       remainingAfterToday,
       todayIsLast,
       openDays,
@@ -242,9 +251,11 @@
     if (ampouleInfo.configured) {
       el['main-ampoule-value'].textContent = `Nr ${ampouleInfo.ampouleNumber}`;
       el['main-dose-number-value'].textContent = ampouleInfo.todayDoseNumber
-        ? `Dawka ${ampouleInfo.todayDoseNumber}`
+        ? status === 'pending' ? `Planowana dawka ${ampouleInfo.todayDoseNumber}` : `Dawka ${ampouleInfo.todayDoseNumber}`
         : status === 'skipped' ? 'Bez podania dzisiaj' : 'Numer dawki niedostępny';
-      el['main-remaining-ml-value'].textContent = `Pozostało ${formatMl(ampouleInfo.remainingAfterToday)} ml`;
+      el['main-remaining-ml-value'].textContent = status === 'pending'
+        ? `Teraz ${formatMl(ampouleInfo.currentRemaining)} ml`
+        : `Pozostało ${formatMl(ampouleInfo.currentRemaining)} ml`;
       const dosesLabel = `${ampouleInfo.approximateDosesLeftAfterToday} ${plural(ampouleInfo.approximateDosesLeftAfterToday, 'pełna dawka', 'pełne dawki', 'pełnych dawek')}`;
       el['main-doses-left-value'].textContent = ampouleInfo.todayIsLast ? `${dosesLabel} · ostatnia dawka` : dosesLabel;
       const limitText = ampouleInfo.maxOpenDays ? ` / limit ${ampouleInfo.maxOpenDays}` : '';

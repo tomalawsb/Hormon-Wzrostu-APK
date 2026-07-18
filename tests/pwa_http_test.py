@@ -39,6 +39,7 @@ def main() -> int:
         service_worker_bytes, _ = fetch(base_url, "/service-worker.js")
         version_bytes, version_type = fetch(base_url, "/app-version.json")
         fetch(base_url, "/app.js")
+        fetch(base_url, "/native-bridge.js")
         fetch(base_url, "/style.css")
 
         index = index_bytes.decode("utf-8")

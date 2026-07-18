@@ -1,6 +1,17 @@
 # Dzienniczek Hormonu — Android APK
 
-**Wersja: v1.0.5**
+**Wersja: v1.0.6**
+
+## Najprostsza aktualizacja
+
+Po wprowadzeniu zmian uruchom `AKTUALIZUJ_I_WYSLIJ.cmd`. Skrypt sam:
+
+- dobierze kolejny numer wersji, jeśli obecna wersja jest już wydana,
+- zbuduje kompletne pliki PWA,
+- uruchomi testy,
+- wyśle projekt na GitHub.
+
+GitHub Actions następnie zbuduje podpisane APK/AAB i utworzy wydanie.
 
 Repozytorium źródłowe aplikacji Android i PWA. Po wysłaniu nowej wersji na gałąź `main` GitHub Actions:
 

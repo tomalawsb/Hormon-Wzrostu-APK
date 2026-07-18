@@ -125,6 +125,7 @@
       volumeMl: decimalToNumber(active.volumeMl),
       doseMl: decimalToNumber(active.doseMl),
       usedBeforeToday: Math.max(0, decimalToNumber(active.volumeMl) - remainingBeforeToday),
+      currentRemaining,
       remainingBeforeToday,
       remainingAfterToday,
       ampouleNumber: active.number,

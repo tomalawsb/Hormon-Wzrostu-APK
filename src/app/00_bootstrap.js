@@ -174,7 +174,7 @@
       'injection-order-summary', 'injection-order-list', 'injection-order-side', 'injection-order-site',
       'injection-order-add-button', 'injection-order-reset-button', 'injection-order-warning',
       'settings-layout', 'settings-category-list', 'settings-section-back-button', 'settings-panels', 'save-ampoule-settings-button',
-      'check-update-button', 'download-update-button', 'update-status'
+      'check-update-button', 'download-update-button', 'update-status', 'settings-version-label'
     ];
     ids.forEach((id) => { el[id] = document.getElementById(id); });
   }
@@ -357,7 +357,7 @@
       }
     });
 
-    el['check-update-button'].addEventListener('click', () => checkForUpdates());
+    el['check-update-button'].addEventListener('click', () => checkForUpdates({ autoDownload: true }));
     el['download-update-button'].addEventListener('click', downloadAvailableUpdate);
 
     [el['header-install-button'], el['desktop-install-button'], el['settings-install-button']].forEach((button) => {

@@ -1736,3 +1736,50 @@ kbd { display: inline-block; min-width: 24px; padding: 3px 6px; border: 1px soli
 .dialog-actions--start { justify-content: flex-start; }
 .text-success { color: #18794e; }
 .text-danger { color: #b42318; }
+
+
+/* Wersja 1.0.6: czytelniejsze powroty, aktualizacje i ekran jednego profilu */
+.back-button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 13px 6px 7px;
+  border: 1px solid rgba(132, 164, 185, .35);
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 5px 14px rgba(25, 55, 78, .07);
+  font-weight: 800;
+}
+.back-button:hover { border-color: rgba(22, 184, 165, .48); background: var(--primary-soft); }
+.back-button__icon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  background: linear-gradient(145deg, #20c9b4, #0f9d8b);
+  font-size: 1.65rem;
+  font-weight: 500;
+  line-height: 1;
+  padding-bottom: 2px;
+}
+.today-profile-switcher[hidden] { display: none !important; }
+.settings-version-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface-soft);
+}
+.settings-version-row span { color: var(--muted); font-size: .82rem; font-weight: 750; }
+.settings-version-row strong { color: var(--primary-dark); font-size: 1rem; }
+@media (max-width: 520px) {
+  .back-button { min-height: 40px; padding-right: 11px; font-size: .82rem; }
+  .back-button__icon { width: 27px; height: 27px; }
+}

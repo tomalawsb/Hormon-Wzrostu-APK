@@ -6,8 +6,6 @@ Thumbs.db
 .vscode/
 .idea/
 node_modules/
-/app.js
-/native-bridge.js
 __pycache__/
 *.py[cod]
 www/

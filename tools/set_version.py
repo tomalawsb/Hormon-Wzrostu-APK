@@ -84,6 +84,12 @@ def main() -> int:
         rf"\1v{version_name}\2",
         "etykieta wersji w interfejsie",
     )
+    index = replace_required(
+        index,
+        r'(<strong id="settings-version-label">)v[^<]+(</strong>)',
+        rf"\1v{version_name}\2",
+        "wersja w ustawieniach",
+    )
     index_path.write_text(index, encoding="utf-8")
 
     manifest_path = ROOT / "manifest.json"
@@ -92,6 +98,16 @@ def main() -> int:
     save_json(manifest_path, manifest)
 
     save_json(ROOT / "app-version.json", {"version": version_name})
+
+    service_worker_path = ROOT / "service-worker.js"
+    service_worker = service_worker_path.read_text(encoding="utf-8")
+    service_worker = replace_required(
+        service_worker,
+        r"^const CACHE_NAME = 'dzienniczek-hormonu-v[^']+';$",
+        f"const CACHE_NAME = 'dzienniczek-hormonu-v{version_name}';",
+        "cache service workera",
+    )
+    service_worker_path.write_text(service_worker, encoding="utf-8")
 
     readme_path = ROOT / "README.md"
     readme = readme_path.read_text(encoding="utf-8")

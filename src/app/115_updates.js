@@ -26,7 +26,7 @@
     el['update-status'].classList.toggle('text-danger', kind === 'error');
   }
 
-  async function checkForUpdates() {
+  async function checkForUpdates({ autoDownload = false } = {}) {
     const button = el['check-update-button'];
     latestUpdateUrl = '';
     latestUpdateVersion = '';
@@ -73,7 +73,8 @@
       latestUpdateVersion = releaseVersion;
       el['download-update-button'].textContent = `Pobierz wersję ${releaseVersion}`;
       el['download-update-button'].classList.remove('is-hidden');
-      setUpdateStatus(`Dostępna jest nowsza wersja ${releaseVersion}.`, 'success');
+      setUpdateStatus(`Dostępna jest nowsza wersja ${releaseVersion}. Rozpoczynam pobieranie APK…`, 'success');
+      if (autoDownload) await downloadAvailableUpdate({ skipCheck: true });
     } catch (error) {
       console.warn('Nie udało się sprawdzić aktualizacji:', error);
       setUpdateStatus('Nie udało się sprawdzić aktualizacji. Sprawdź internet i spróbuj ponownie.', 'error');
@@ -82,9 +83,10 @@
     }
   }
 
-  async function downloadAvailableUpdate() {
+  async function downloadAvailableUpdate({ skipCheck = false } = {}) {
     if (!latestUpdateUrl) {
-      await checkForUpdates();
+      if (skipCheck) return;
+      await checkForUpdates({ autoDownload: false });
       return;
     }
     let opened = false;

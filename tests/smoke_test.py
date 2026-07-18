@@ -109,6 +109,7 @@ for required in (
 
 ignore = read(".gitignore")
 require("android/signing/*" in ignore, "katalog podpisu nie jest ignorowany")
+require("/app.js" not in ignore and "/native-bridge.js" not in ignore, "pliki PWA są ignorowane i GitHub Pages nie zadziała")
 
 secret_suffixes = {".p12", ".jks", ".keystore", ".pem"}
 secret_files = [
@@ -135,6 +136,14 @@ require("tomalawsb/Hormon-Wzrostu-APK/releases/latest" in updater, "aktualizator
 require("browser_download_url" in updater, "aktualizator nie pobiera adresu APK")
 require("openExternalUrl" in native_main, "Android nie potrafi otworzyć pobierania aktualizacji")
 require("check-update-button" in read("index.html"), "brak przycisku sprawdzania aktualizacji")
+
+require("settings-version-label" in read("index.html"), "brak numeru wersji w ustawieniach")
+require("Sprawdź aktualizacje" in read("index.html"), "brak przycisku Sprawdź aktualizacje")
+require("autoDownload: true" in read("src/app/00_bootstrap.js"), "przycisk aktualizacji nie rozpoczyna pobierania")
+require("today-profile-switcher'].hidden = !multiple" in read("src/app/19_today_dashboard.js"), "pojedynczy profil jest nadal dublowany")
+require("currentRemaining" in read("src/app/40_ampoules.js"), "brak rzeczywistego stanu ampułki")
+require("AKTUALIZUJ_I_WYSLIJ.cmd" in [path.name for path in ROOT.iterdir()], "brak skryptu jednej operacji")
+require("dzienniczek-hormonu-v" + version_name in read("service-worker.js"), "cache PWA ma starą wersję")
 
 result = subprocess.run(
     [sys.executable, str(ROOT / "tools/build_app.py"), "--check", "--root", str(ROOT)],
