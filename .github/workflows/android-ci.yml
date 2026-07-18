@@ -16,6 +16,7 @@ concurrency:
 
 env:
   HAS_SIGNING: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && secrets.ANDROID_KEYSTORE_PASSWORD != '' && secrets.ANDROID_KEY_ALIAS != '' && secrets.ANDROID_KEY_PASSWORD != '' }}
+  RELEASE_PR: ${{ github.event_name == 'pull_request' && github.head_ref == 'release-1.0.11' }}
   ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
   ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
   ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
@@ -55,10 +56,6 @@ jobs:
       - name: Zainstaluj zależności
         run: npm ci --no-audit --no-fund
 
-      - name: Zastosuj poprawki 1.0.11 dla gałęzi wydania
-        if: github.event_name == 'pull_request' && github.head_ref == 'release-1.0.11'
-        run: python3 tools/apply_fix_1011.py
-
       - name: Zbuduj pliki aplikacji
         run: npm run prepare:web
 
@@ -79,15 +76,15 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Wymagaj sekretów podpisu dla gałęzi main
-        if: github.event_name != 'pull_request' && env.HAS_SIGNING != 'true'
+      - name: Wymagaj sekretów podpisu dla wydania
+        if: (github.event_name != 'pull_request' || env.RELEASE_PR == 'true') && env.HAS_SIGNING != 'true'
         shell: bash
         run: |
-          echo "Brak sekretów podpisu Androida. Uruchom KONFIGURUJ_PODPIS.cmd i dodaj cztery sekrety w ustawieniach repozytorium."
+          echo "Brak sekretów podpisu Androida."
           exit 1
 
       - name: Odtwórz prywatny klucz podpisu
-        if: github.event_name != 'pull_request' && env.HAS_SIGNING == 'true'
+        if: (github.event_name != 'pull_request' || env.RELEASE_PR == 'true') && env.HAS_SIGNING == 'true'
         shell: bash
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -98,12 +95,12 @@ jobs:
           echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/dzienniczek-signing/dzienniczek-release.p12" >> "$GITHUB_ENV"
 
       - name: Zbuduj podpisany APK i AAB
-        if: github.event_name != 'pull_request' && env.HAS_SIGNING == 'true'
+        if: (github.event_name != 'pull_request' || env.RELEASE_PR == 'true') && env.HAS_SIGNING == 'true'
         working-directory: android
         run: ./gradlew --no-daemon assembleRelease bundleRelease --stacktrace
 
       - name: Przygotuj pliki wydania
-        if: github.event_name != 'pull_request' && env.HAS_SIGNING == 'true'
+        if: (github.event_name != 'pull_request' || env.RELEASE_PR == 'true') && env.HAS_SIGNING == 'true'
         shell: bash
         run: |
           VERSION_NAME="$(awk -F= '$1=="VERSION_NAME" {print $2}' android/version.properties)"
@@ -117,7 +114,7 @@ jobs:
           sha256sum dist/* > dist/SHA256SUMS.txt
 
       - name: Zweryfikuj podpis
-        if: github.event_name != 'pull_request' && env.HAS_SIGNING == 'true'
+        if: (github.event_name != 'pull_request' || env.RELEASE_PR == 'true') && env.HAS_SIGNING == 'true'
         shell: bash
         run: |
           APK_FILE="$(find dist -maxdepth 1 -name '*.apk' -print -quit)"
@@ -127,7 +124,7 @@ jobs:
           jarsigner -verify "$AAB_FILE"
 
       - name: Udostępnij podpisane pliki jako artefakt
-        if: github.event_name != 'pull_request' && env.HAS_SIGNING == 'true'
+        if: (github.event_name != 'pull_request' || env.RELEASE_PR == 'true') && env.HAS_SIGNING == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: Dzienniczek-Hormonu-release-${{ env.VERSION_NAME }}
@@ -136,14 +133,14 @@ jobs:
           retention-days: 30
 
       - name: Utwórz automatyczne wydanie GitHub
-        if: github.event_name != 'pull_request' && env.HAS_SIGNING == 'true'
+        if: (github.event_name != 'pull_request' || env.RELEASE_PR == 'true') && env.HAS_SIGNING == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            echo "Wydanie $RELEASE_TAG już istnieje. Przed kolejnym wysłaniem uruchom USTAW_WERSJE.cmd i zwiększ wersję oraz versionCode."
-            exit 1
+            echo "Wydanie $RELEASE_TAG już istnieje."
+            exit 0
           fi
           gh release create "$RELEASE_TAG" \
             dist/*.apk \
