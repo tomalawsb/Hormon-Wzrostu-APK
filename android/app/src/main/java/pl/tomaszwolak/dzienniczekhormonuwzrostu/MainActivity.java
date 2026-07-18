@@ -254,9 +254,9 @@ public class MainActivity extends Activity {
     private String appVersionNative() {
         try {
             String value = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-            return value == null || value.trim().isEmpty() ? "1.0.8" : value.trim();
+            return value == null || value.trim().isEmpty() ? "1.0.9" : value.trim();
         } catch (Exception error) {
-            return "1.0.8";
+            return "1.0.9";
         }
     }
 
