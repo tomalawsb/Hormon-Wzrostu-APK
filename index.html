@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#19b8a6">
   <meta name="description" content="Prywatny dzienniczek podań hormonu wzrostu z obsługą głosową, klawiaturą, kalendarzem i historią.">
-  <title>Dzienniczek Hormonu v1.0.11</title>
+  <title>Dzienniczek Hormonu v1.0.12</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icon-192.png">
@@ -19,7 +19,7 @@
       <div class="brand brand--desktop">
         <img src="./icon-192.png" alt="" width="46" height="46">
         <div>
-          <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.11</span></strong>
+          <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.12</span></strong>
           <span>dziennik podań</span>
         </div>
       </div>
@@ -58,7 +58,7 @@
         <div class="brand brand--mobile">
           <img src="./icon-192.png" alt="" width="42" height="42">
           <div>
-            <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.11</span></strong>
+            <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.12</span></strong>
           <span>dziennik podań</span>
           </div>
         </div>
@@ -103,7 +103,7 @@
             <div class="action-card__content">
               <div class="today-profile-heading">
                 <span id="today-profile-avatar" class="profile-avatar profile-avatar--large" data-profile-color="teal" aria-hidden="true">🧒</span>
-                <div>
+                <div class="today-profile-main">
                   <p id="main-action-eyebrow" class="eyebrow">Dzisiejsza propozycja</p>
                   <h2 id="main-action-heading">Proponowane miejsce: —</h2>
                   <p id="main-profile-name" class="today-profile-name">Dziecko 1</p>
@@ -379,7 +379,7 @@
             <strong>Aktualizacje aplikacji</strong>
             <div class="settings-version-row">
               <span>Zainstalowana wersja</span>
-              <strong id="settings-version-label">v1.0.11</strong>
+              <strong id="settings-version-label">v1.0.12</strong>
             </div>
             <p id="update-status" class="muted">Sprawdza najnowsze wydanie na GitHubie. Gdy jest dostępne, rozpocznie pobieranie pliku APK.</p>
             <div class="dialog-actions dialog-actions--start">
@@ -558,6 +558,7 @@
                       <button id="ampoule-start-today-button" class="button button--secondary button--small" type="button">Rozpocznij ampułkę dzisiaj</button>
                       <button id="ampoule-new-button" class="button button--secondary button--small" type="button">Odłóż aktywną i rozpocznij nową</button>
                     </div>
+                    <p id="ampoule-new-help" class="muted ampoule-new-help">Jeżeli odłożysz obecną ampułkę, później wznowisz ją z listy odłożonych poniżej.</p>
                     <div class="ampoule-management" aria-live="polite">
                       <strong id="ampoule-management-summary">Nie ma odłożonych ampułek.</strong>
                       <div id="ampoule-list" class="ampoule-list"></div>
