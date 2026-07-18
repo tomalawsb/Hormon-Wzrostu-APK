@@ -14,15 +14,14 @@ def replace_once(text: str, pattern: str, replacement: str, label: str, flags=re
     return updated
 
 
-# 1. Wersja
 subprocess.run([sys.executable, str(ROOT / "tools/set_version.py"), "1.0.11", "3912"], check=True)
 
-# 2. Ustawienia: aktualizacje wyłącznie w kategorii Aktualizacje i informacje.
 index_path = ROOT / "index.html"
 index = index_path.read_text(encoding="utf-8")
 
-update_box_pattern = r'''\n\s*<div class="settings-update-box settings-update-box--global card">.*?</div>\s*\n\s*<div id="settings-layout"'''
-index = replace_once(index, update_box_pattern, '\n\n          <div id="settings-layout"', "usunięcie globalnego panelu aktualizacji")
+# Usuń cały globalny panel aktualizacji. Lookahead pilnuje końca tuż przed settings-layout.
+update_box_pattern = r'''\n\s*<div class="settings-update-box settings-update-box--global card">.*?\n\s*</div>\s*\n\s*(?=<div id="settings-layout")'''
+index = replace_once(index, update_box_pattern, '\n\n          ', "usunięcie globalnego panelu aktualizacji")
 
 update_panel = '''
                     <div class="settings-update-box settings-update-box--global">
@@ -39,40 +38,38 @@ update_panel = '''
                     </div>
 '''
 
-# Usuń ewentualny stary panel z sekcji informacji, aby nie dublować identyfikatorów.
-index = re.sub(r'\s*<div class="settings-update-box(?: settings-update-box--global)?">.*?</div>\s*', '\n', index, flags=re.S)
-
 permissions_marker = r'(<section class="settings-panel" data-settings-panel="permissions-info" role="tabpanel" hidden>\s*<article class="card settings-card[^>]*>)'
 index = replace_once(index, permissions_marker, r'\1' + update_panel, "dodanie aktualizacji do właściwej kategorii")
 
-# 3. Ampułki: ważna akcja na górze, krótki opis, reszta ustawień poniżej.
 ampoule_start = index.index('<section class="settings-panel" data-settings-panel="ampoules"')
 ampoule_end = index.index('<section class="settings-panel" data-settings-panel="reminders"', ampoule_start)
 ampoule = index[ampoule_start:ampoule_end]
 
-ampoule = ampoule.replace(
-    '<p class="muted">Ustaw datę rozpoczęcia obecnej ampułki i jej numer. Na tej podstawie aplikacja pokaże, ile leku zostanie po kolejnych podaniach.</p>',
-    '<p class="muted">Zarządzaj aktualną i odłożonymi ampułkami. Stan leku jest liczony wyłącznie na podstawie zapisanych podań.</p>\n'
-    '                    <div class="ampoule-primary-action">\n'
-    '                      <div>\n'
-    '                        <strong>Chcesz odłożyć obecną ampułkę?</strong>\n'
-    '                        <span>Odłożona ampułka zachowa pozostałą ilość leku i będzie można do niej później wrócić.</span>\n'
-    '                      </div>\n'
-    '                      <button id="ampoule-new-button" class="button button--primary" type="button">Odłóż aktywną i rozpocznij nową</button>\n'
-    '                    </div>\n'
-    '                    <div class="ampoule-settings-heading">\n'
-    '                      <strong>Ustawienia bieżącej ampułki</strong>\n'
-    '                      <span>Data otwarcia, numer, pojemność i zużycie na jedno podanie.</span>\n'
-    '                    </div>'
-)
-ampoule = ampoule.replace(
-    '                      <button id="ampoule-new-button" class="button button--secondary button--small" type="button">Odłóż aktywną i rozpocznij nową</button>\n',
-    ''
-)
+old_intro = '<p class="muted">Ustaw datę rozpoczęcia obecnej ampułki i jej numer. Na tej podstawie aplikacja pokaże, ile leku zostanie po kolejnych podaniach.</p>'
+new_intro = '''<p class="muted">Zarządzaj aktualną i odłożonymi ampułkami. Stan leku jest liczony wyłącznie na podstawie zapisanych podań.</p>
+                    <div class="ampoule-primary-action">
+                      <div>
+                        <strong>Chcesz odłożyć obecną ampułkę?</strong>
+                        <span>Odłożona ampułka zachowa pozostałą ilość leku i będzie można do niej później wrócić.</span>
+                      </div>
+                      <button id="ampoule-new-button" class="button button--primary" type="button">Odłóż aktywną i rozpocznij nową</button>
+                    </div>
+                    <div class="ampoule-settings-heading">
+                      <strong>Ustawienia bieżącej ampułki</strong>
+                      <span>Data otwarcia, numer, pojemność i zużycie na jedno podanie.</span>
+                    </div>'''
+if old_intro not in ampoule:
+    raise SystemExit("Nie znaleziono opisu ustawień ampułki")
+ampoule = ampoule.replace(old_intro, new_intro, 1)
+
+old_button = '                      <button id="ampoule-new-button" class="button button--secondary button--small" type="button">Odłóż aktywną i rozpocznij nową</button>\n'
+if old_button not in ampoule:
+    raise SystemExit("Nie znaleziono starego przycisku odkładania ampułki")
+ampoule = ampoule.replace(old_button, '', 1)
+
 index = index[:ampoule_start] + ampoule + index[ampoule_end:]
 index_path.write_text(index, encoding="utf-8")
 
-# 4. CSS: Historia bez poziomego rozpychania i nawigacja zawsze nad treścią.
 style_path = ROOT / "style.css"
 style = style_path.read_text(encoding="utf-8")
 style += r'''
@@ -93,13 +90,8 @@ style += r'''
     padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 18px);
   }
 
-  .history-card {
-    overflow: hidden;
-  }
-
-  .history-table-wrap {
-    overflow: visible !important;
-  }
+  .history-card { overflow: hidden; }
+  .history-table-wrap { overflow: visible !important; }
 
   .history-table {
     width: 100% !important;
@@ -141,11 +133,7 @@ style += r'''
     box-shadow: var(--shadow-soft);
   }
 
-  .ampoule-primary-action > div {
-    display: grid;
-    gap: 5px;
-  }
-
+  .ampoule-primary-action > div { display: grid; gap: 5px; }
   .ampoule-primary-action strong { font-size: 1.12rem; }
   .ampoule-primary-action span { color: var(--muted); line-height: 1.45; }
   .ampoule-primary-action .button { width: 100%; min-height: 52px; }
