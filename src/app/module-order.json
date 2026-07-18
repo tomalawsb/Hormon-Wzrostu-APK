@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 7,
+  "schemaVersion": 8,
   "output": "app.js",
   "encoding": "utf-8",
   "newlinePolicy": "zachowaj bajty modułów bez modyfikacji",
@@ -72,6 +72,10 @@
     {
       "file": "115_updates.js",
       "description": "Sprawdzanie najnowszego wydania GitHub, porównanie wersji i otwieranie podpisanego APK."
+    },
+    {
+      "file": "116_native_version_ui_fixes.js",
+      "description": "Natywne pobieranie wersji i GitHub Release w APK oraz mocniejsze wyróżnienie proponowanego miejsca."
     },
     {
       "file": "120_helpers.js",

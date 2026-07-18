@@ -25,6 +25,11 @@ import android.webkit.WebViewClient;
 
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 public class MainActivity extends Activity {
     private static final int REQ_MICROPHONE = 4101;
     private static final int REQ_NOTIFICATIONS = 4102;
@@ -245,6 +250,41 @@ public class MainActivity extends Activity {
         }
     }
 
+
+    private String appVersionNative() {
+        try {
+            String value = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            return value == null || value.trim().isEmpty() ? "1.0.8" : value.trim();
+        } catch (Exception error) {
+            return "1.0.8";
+        }
+    }
+
+    private String latestReleaseJsonNative() {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL("https://api.github.com/repos/tomalawsb/Hormon-Wzrostu-APK/releases/latest");
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(12000);
+            connection.setReadTimeout(12000);
+            connection.setRequestProperty("Accept", "application/vnd.github+json");
+            connection.setRequestProperty("User-Agent", "Dzienniczek-Hormonu-Android");
+            int status = connection.getResponseCode();
+            if (status != HttpURLConnection.HTTP_OK) return "";
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
+            StringBuilder result = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) result.append(line);
+            reader.close();
+            return result.toString();
+        } catch (Exception error) {
+            return "";
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -268,6 +308,8 @@ public class MainActivity extends Activity {
 
     public final class AndroidNativeApi {
         @JavascriptInterface public boolean isNative() { return true; }
+        @JavascriptInterface public String appVersion() { return appVersionNative(); }
+        @JavascriptInterface public String latestReleaseJson() { return latestReleaseJsonNative(); }
         @JavascriptInterface public void initialize() { createNotificationChannel(); }
         @JavascriptInterface public String microphonePermission() { return microphoneState(); }
         @JavascriptInterface public void requestMicrophonePermission() { runOnUiThread(new Runnable() { public void run() { requestMicrophonePermissionNative(); } }); }
