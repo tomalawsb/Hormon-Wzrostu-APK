@@ -2187,7 +2187,7 @@
       el['recommended-save-button'].textContent = 'Otwórz miejsca wkłucia';
     } else {
       el['main-action-heading'].textContent = `Proponowane miejsce: ${suggestedPlace}`;
-      el['main-action-text'].textContent = `${suggestionExplanation(suggestion)} Dawka: ${doseText}. Godzina: ${data.settings.defaultTime}. Jedno kliknięcie zapisze podanie; dane możesz wcześniej zmienić.`;
+      el['main-action-text'].textContent = `Dawka: ${doseText} · godz. ${data.settings.defaultTime}.`;
       el['recommended-save-button'].textContent = 'Potwierdź podanie';
     }
 

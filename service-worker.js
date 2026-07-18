@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dzienniczek-hormonu-v1.0.9';
+const CACHE_NAME = 'dzienniczek-hormonu-v1.0.10';
 const STATE_CACHE = 'gh-dzienniczek-reminder-state-v2';
 const STATE_URL = new URL('./__reminder_state_v2__', self.registration.scope).href;
 const REMINDER_IN_FLIGHT = new Set();
