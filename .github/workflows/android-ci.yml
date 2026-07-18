@@ -55,6 +55,10 @@ jobs:
       - name: Zainstaluj zależności
         run: npm ci --no-audit --no-fund
 
+      - name: Zastosuj poprawki 1.0.11 dla gałęzi wydania
+        if: github.event_name == 'pull_request' && github.head_ref == 'release-1.0.11'
+        run: python3 tools/apply_fix_1011.py
+
       - name: Zbuduj pliki aplikacji
         run: npm run prepare:web
 
