@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#19b8a6">
   <meta name="description" content="Prywatny dzienniczek podań hormonu wzrostu z obsługą głosową, klawiaturą, kalendarzem i historią.">
-  <title>Dzienniczek Hormonu v1.0.6</title>
+  <title>Dzienniczek Hormonu v1.0.7</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icon-192.png">
@@ -19,7 +19,7 @@
       <div class="brand brand--desktop">
         <img src="./icon-192.png" alt="" width="46" height="46">
         <div>
-          <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.6</span></strong>
+          <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.7</span></strong>
           <span>dziennik podań</span>
         </div>
       </div>
@@ -58,7 +58,7 @@
         <div class="brand brand--mobile">
           <img src="./icon-192.png" alt="" width="42" height="42">
           <div>
-            <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.6</span></strong>
+            <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.7</span></strong>
           <span>dziennik podań</span>
           </div>
         </div>
@@ -387,6 +387,19 @@
             </div>
           </div>
 
+          <div class="settings-update-box settings-update-box--global card">
+            <strong>Aktualizacje aplikacji</strong>
+            <div class="settings-version-row">
+              <span>Zainstalowana wersja</span>
+              <strong id="settings-version-label">v1.0.7</strong>
+            </div>
+            <p id="update-status" class="muted">Sprawdza najnowsze wydanie na GitHubie. Gdy jest dostępne, rozpocznie pobieranie pliku APK.</p>
+            <div class="dialog-actions dialog-actions--start">
+              <button id="check-update-button" class="button button--primary button--small" type="button">Sprawdź aktualizacje</button>
+              <button id="download-update-button" class="button button--secondary button--small is-hidden" type="button">Pobierz ponownie</button>
+            </div>
+          </div>
+
           <div id="settings-layout" class="settings-layout">
             <aside class="card settings-category-card" aria-label="Kategorie ustawień">
               <div class="settings-category-card__heading">
@@ -432,7 +445,7 @@
                 </button>
                 <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="permissions-info">
                   <span class="settings-category-button__icon" aria-hidden="true">ⓘ</span>
-                  <span><strong>Zgody i informacje</strong><small>Uprawnienia, instalacja i zasady</small></span>
+                  <span><strong>Aktualizacje i informacje</strong><small>Wersja aplikacji, aktualizacje i zgody</small></span>
                   <span aria-hidden="true">›</span>
                 </button>
               </div>
@@ -701,19 +714,7 @@
                       <h2>Informacje</h2>
                     </div>
                     <p>Aplikacja pozwala zapisać jeden wpis dziennie dla każdego profilu. Nie dobiera dawki i nie zastępuje zaleceń lekarza.</p>
-                    <div class="settings-update-box">
-                      <strong>Aktualizacje aplikacji</strong>
-                      <div class="settings-version-row">
-                        <span>Zainstalowana wersja</span>
-                        <strong id="settings-version-label">v1.0.6</strong>
-                      </div>
-                      <p id="update-status" class="muted">Przycisk sprawdzi GitHub i automatycznie rozpocznie pobieranie nowszego APK.</p>
-                      <div class="dialog-actions dialog-actions--start">
-                        <button id="check-update-button" class="button button--primary button--small" type="button">Sprawdź aktualizacje</button>
-                        <button id="download-update-button" class="button button--secondary button--small is-hidden" type="button">Pobierz ponownie</button>
-                      </div>
-                    </div>
-                    <button id="settings-install-button" class="button button--primary button--small is-hidden" type="button">Zainstaluj aplikację</button>
+<button id="settings-install-button" class="button button--primary button--small is-hidden" type="button">Zainstaluj aplikację</button>
                   </article>
                 </section>
               </div>
