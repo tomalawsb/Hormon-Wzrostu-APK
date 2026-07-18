@@ -3,6 +3,8 @@
 
   const STORAGE_KEY = 'dzienniczek-hormonu-wzrostu-v1';
   const BACKUP_STORAGE_KEY = 'dzienniczek-hormonu-wzrostu-v1-backup';
+  const BACKUP_REMINDER_KEY = 'dzienniczek-hormonu-backup-reminder-v1';
+  const BACKUP_REMINDER_INTERVAL_MS = 3 * 24 * 60 * 60 * 1000;
   const AUTO_IMPORT_BACKUP_KEY = 'dzienniczek-hormonu-wzrostu-auto-import-backup-v1';
   const PERMISSIONS_ONBOARDING_STORAGE_KEY = 'dzienniczek-hormonu-zgody-onboarding';
   const PERMISSIONS_ONBOARDING_REVISION = 'permissions-v2';
@@ -129,6 +131,7 @@
     checkReminderDue();
     maybeShowFirstRunPermissions();
     flushStartupWarnings();
+    maybeScheduleBackupReminder();
   }
 
   function cacheElements() {

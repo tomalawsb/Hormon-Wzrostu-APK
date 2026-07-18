@@ -3,6 +3,8 @@
 
   const STORAGE_KEY = 'dzienniczek-hormonu-wzrostu-v1';
   const BACKUP_STORAGE_KEY = 'dzienniczek-hormonu-wzrostu-v1-backup';
+  const BACKUP_REMINDER_KEY = 'dzienniczek-hormonu-backup-reminder-v1';
+  const BACKUP_REMINDER_INTERVAL_MS = 3 * 24 * 60 * 60 * 1000;
   const AUTO_IMPORT_BACKUP_KEY = 'dzienniczek-hormonu-wzrostu-auto-import-backup-v1';
   const PERMISSIONS_ONBOARDING_STORAGE_KEY = 'dzienniczek-hormonu-zgody-onboarding';
   const PERMISSIONS_ONBOARDING_REVISION = 'permissions-v2';
@@ -129,6 +131,7 @@
     checkReminderDue();
     maybeShowFirstRunPermissions();
     flushStartupWarnings();
+    maybeScheduleBackupReminder();
   }
 
   function cacheElements() {
@@ -4470,6 +4473,7 @@
       ? `dzienniczek-profil-${safeFilenamePart(activeProfile.name)}-${localDateISO()}.json`
       : `dzienniczek-kopia-${localDateISO()}.json`;
     downloadFile(filename, JSON.stringify(payload, null, 2), 'application/json');
+    try { localStorage.setItem(BACKUP_REMINDER_KEY, String(Date.now())); } catch (error) { console.warn(error); }
     showToast(scope === 'profile'
       ? `Pobrano kopię profilu „${activeProfile.name}”.`
       : 'Pobrano pełną kopię wszystkich profili.', 'success');
@@ -4877,6 +4881,31 @@
     resetQuickDraftForToday();
     renderAll();
     showToast(`Usunięto wszystkie wpisy profilu ${getActiveProfile().name}.`, 'success');
+  }
+
+
+  function maybeScheduleBackupReminder() {
+    let lastReminder = 0;
+    try {
+      lastReminder = Number(localStorage.getItem(BACKUP_REMINDER_KEY) || 0);
+    } catch (error) {
+      console.warn(error);
+      return;
+    }
+
+    const now = Date.now();
+    if (!Number.isFinite(lastReminder) || lastReminder <= 0) {
+      try { localStorage.setItem(BACKUP_REMINDER_KEY, String(now)); } catch (error) { console.warn(error); }
+      return;
+    }
+    if (now - lastReminder < BACKUP_REMINDER_INTERVAL_MS) return;
+
+    try { localStorage.setItem(BACKUP_REMINDER_KEY, String(now)); } catch (error) { console.warn(error); }
+    window.setTimeout(() => {
+      const accepted = window.confirm('Minęły 3 dni od ostatniego przypomnienia o kopii zapasowej. Czy pobrać teraz pełną kopię danych?');
+      if (accepted) exportJson();
+      else showToast('Przypomnę ponownie za 3 dni.', 'success');
+    }, 1200);
   }
   function isPermissionsOnboardingCompleted() {
     try {
