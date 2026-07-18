@@ -36,10 +36,16 @@ Aplikacja sprawdza najnowsze wydanie w:
 ## Następna wersja
 
 1. Uruchom `USTAW_WERSJE.cmd`.
-2. Podaj wyższą wersję, np. `1.0.6`, oraz wyższy `versionCode`, np. `3907`.
+2. Podaj wyższą wersję, np. `1.0.8`, oraz wyższy `versionCode`, np. `3909`.
 3. Uruchom `WYSYLAJ_NA_GITHUB.cmd`.
 4. GitHub sam zbuduje i opublikuje nowe APK.
-5. W aplikacji wybierz: `Więcej → Zgody i informacje → Sprawdź nowszą wersję`.
+5. W aplikacji wybierz: `Więcej → Sprawdź aktualizacje`.
+
+## Zmiany w wersji 1.0.7
+
+- poprawiony układ PWA na szerokim ekranie,
+- przyciski akcji przeniesione pod treść karty,
+- panel z numerem wersji i przyciskiem aktualizacji widoczny na górze ustawień.
 
 ## Ważne
 
