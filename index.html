@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#19b8a6">
   <meta name="description" content="Prywatny dzienniczek podań hormonu wzrostu z obsługą głosową, klawiaturą, kalendarzem i historią.">
-  <title>Dzienniczek Hormonu v1.0.10</title>
+  <title>Dzienniczek Hormonu v1.0.11</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icon-192.png">
@@ -19,7 +19,7 @@
       <div class="brand brand--desktop">
         <img src="./icon-192.png" alt="" width="46" height="46">
         <div>
-          <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.10</span></strong>
+          <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.11</span></strong>
           <span>dziennik podań</span>
         </div>
       </div>
@@ -58,7 +58,7 @@
         <div class="brand brand--mobile">
           <img src="./icon-192.png" alt="" width="42" height="42">
           <div>
-            <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.10</span></strong>
+            <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.11</span></strong>
           <span>dziennik podań</span>
           </div>
         </div>
@@ -379,7 +379,7 @@
             <strong>Aktualizacje aplikacji</strong>
             <div class="settings-version-row">
               <span>Zainstalowana wersja</span>
-              <strong id="settings-version-label">v1.0.10</strong>
+              <strong id="settings-version-label">v1.0.11</strong>
             </div>
             <p id="update-status" class="muted">Sprawdza najnowsze wydanie na GitHubie. Gdy jest dostępne, rozpocznie pobieranie pliku APK.</p>
             <div class="dialog-actions dialog-actions--start">
@@ -531,7 +531,7 @@
                       <p class="eyebrow">Zapas leku</p>
                       <h2>Ampułki</h2>
                     </div>
-                    <p class="muted">Ustaw datę rozpoczęcia obecnej ampułki i jej numer. Na tej podstawie aplikacja pokaże, ile leku zostanie po kolejnych podaniach.</p>
+                    <p class="muted">Zarządzaj aktualną i odłożonymi ampułkami. Stan leku jest liczony na podstawie zapisanych podań.</p>
                     <div class="form-grid form-grid--settings">
                       <label>
                         <span>Data rozpoczęcia ampułki</span>
@@ -1036,5 +1036,31 @@
 
   <script src="./native-bridge.js" defer></script>
   <script src="./app.js" defer></script>
+
+<script id="runtime-fix-1011">
+document.addEventListener('DOMContentLoaded', () => {
+  const updateBox = document.querySelector('.settings-update-box--global');
+  const infoCard = document.querySelector('[data-settings-panel="permissions-info"] .settings-card');
+  if (updateBox && infoCard) infoCard.prepend(updateBox);
+
+  const ampouleCard = document.querySelector('[data-settings-panel="ampoules"] .settings-card');
+  const ampouleButton = document.getElementById('ampoule-new-button');
+  const formGrid = ampouleCard?.querySelector('.form-grid');
+  if (ampouleCard && ampouleButton && formGrid && !document.querySelector('.ampoule-primary-action')) {
+    const box = document.createElement('div');
+    box.className = 'ampoule-primary-action';
+    box.innerHTML = '<div><strong>Odłóż obecną ampułkę</strong><span>Zachowasz pozostałą ilość leku i później będzie można wrócić do tej ampułki.</span></div>';
+    ampouleButton.className = 'button button--primary';
+    box.appendChild(ampouleButton);
+    ampouleCard.insertBefore(box, formGrid);
+
+    const heading = document.createElement('div');
+    heading.className = 'ampoule-settings-heading';
+    heading.innerHTML = '<strong>Ustawienia bieżącej ampułki</strong><span>Data otwarcia, numer, pojemność i zużycie na jedno podanie.</span>';
+    ampouleCard.insertBefore(heading, formGrid);
+  }
+});
+</script>
+
 </body>
 </html>
