@@ -1,0 +1,107 @@
+import java.util.Locale
+import java.util.Properties
+
+plugins {
+    id 'com.android.application'
+}
+
+final Properties appVersion = new Properties()
+final File versionFile = rootProject.file('version.properties')
+if (!versionFile.isFile()) {
+    throw new GradleException('Brak android/version.properties')
+}
+versionFile.withInputStream { appVersion.load(it) }
+
+final Properties signing = new Properties()
+final String signingPropertiesOverride = System.getenv('SIGNING_PROPERTIES_FILE')
+final String localAppData = System.getenv('LOCALAPPDATA')
+final File windowsSigningFile = localAppData
+        ? new File(localAppData, 'DzienniczekHormonu/signing/signing.properties')
+        : new File('__brak__')
+final File userSigningFile = new File(System.getProperty('user.home'), '.dzienniczek-hormonu/signing.properties')
+final File legacySigningFile = rootProject.file('signing/signing.properties')
+final File signingFile = signingPropertiesOverride
+        ? new File(signingPropertiesOverride)
+        : (windowsSigningFile.isFile()
+            ? windowsSigningFile
+            : (userSigningFile.isFile() ? userSigningFile : legacySigningFile))
+
+if (signingFile.isFile()) {
+    signingFile.withInputStream { signing.load(it) }
+}
+
+String storeFileValue = System.getenv('ANDROID_KEYSTORE_FILE') ?: signing.getProperty('storeFile')
+String storePasswordValue = System.getenv('ANDROID_KEYSTORE_PASSWORD') ?: signing.getProperty('storePassword')
+String keyAliasValue = System.getenv('ANDROID_KEY_ALIAS') ?: signing.getProperty('keyAlias')
+String keyPasswordValue = System.getenv('ANDROID_KEY_PASSWORD') ?: signing.getProperty('keyPassword')
+
+File resolvedStoreFile = null
+if (storeFileValue?.trim()) {
+    File configuredStore = new File(storeFileValue.trim())
+    if (configuredStore.isAbsolute()) {
+        resolvedStoreFile = configuredStore
+    } else if (System.getenv('ANDROID_KEYSTORE_FILE')) {
+        resolvedStoreFile = rootProject.file(storeFileValue.trim())
+    } else {
+        resolvedStoreFile = new File(signingFile.parentFile, storeFileValue.trim())
+    }
+}
+
+final boolean signingReady = resolvedStoreFile?.isFile()
+        && storePasswordValue?.trim()
+        && keyAliasValue?.trim()
+        && keyPasswordValue?.trim()
+
+android {
+    namespace 'pl.tomaszwolak.dzienniczekhormonuwzrostu'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'pl.tomaszwolak.dzienniczekhormonuwzrostu'
+        minSdk 24
+        targetSdk 36
+        versionCode appVersion.getProperty('VERSION_CODE').toInteger()
+        versionName appVersion.getProperty('VERSION_NAME')
+    }
+
+    signingConfigs {
+        if (signingReady) {
+            stable {
+                storeFile resolvedStoreFile
+                storePassword storePasswordValue
+                keyAlias keyAliasValue
+                keyPassword keyPasswordValue
+                enableV1Signing true
+                enableV2Signing true
+                enableV3Signing true
+                enableV4Signing true
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            // Debug używa standardowego klucza debug Androida, nigdy klucza produkcyjnego.
+        }
+        release {
+            if (signingReady) {
+                signingConfig signingConfigs.stable
+            }
+            minifyEnabled false
+            shrinkResources false
+        }
+    }
+}
+
+final boolean releaseBuildRequested = gradle.startParameter.taskNames.any { String taskName ->
+    String normalized = taskName.toLowerCase(Locale.ROOT)
+    normalized.endsWith('assemblerelease') || normalized.endsWith('bundlerelease')
+}
+
+if (releaseBuildRequested && !signingReady) {
+    throw new GradleException(
+            'Brak bezpiecznej konfiguracji podpisu. Uruchom KONFIGURUJ_PODPIS.cmd '
+                    + 'albo ustaw sekrety GitHub Actions zgodnie z GITHUB_ACTIONS_INSTRUKCJA.md.'
+    )
+}

@@ -1,0 +1,37 @@
+# Dzienniczek Hormonu — Android APK
+
+**Wersja: v1.0.5**
+
+Repozytorium źródłowe aplikacji Android i PWA. Po wysłaniu nowej wersji na gałąź `main` GitHub Actions:
+
+1. buduje pliki webowe,
+2. uruchamia testy,
+3. buduje APK debug,
+4. buduje podpisany APK i AAB,
+5. automatycznie tworzy GitHub Release `vX.Y.Z`.
+
+Aplikacja sprawdza najnowsze wydanie w:
+
+`https://github.com/tomalawsb/Hormon-Wzrostu-APK/releases/latest`
+
+## Pierwsza konfiguracja
+
+1. Uruchom `KONFIGURUJ_PODPIS.cmd` i utwórz nowy klucz.
+2. Dodaj cztery wartości z wygenerowanego pliku jako GitHub Actions Secrets.
+3. Uruchom `WYSYLAJ_NA_GITHUB.cmd`, aby zastąpić starą zawartość repozytorium czystą paczką.
+4. W zakładce Actions sprawdź, czy budowanie zakończyło się na zielono.
+5. Pobierz APK z pierwszego wydania GitHub Releases.
+
+## Następna wersja
+
+1. Uruchom `USTAW_WERSJE.cmd`.
+2. Podaj wyższą wersję, np. `1.0.6`, oraz wyższy `versionCode`, np. `3907`.
+3. Uruchom `WYSYLAJ_NA_GITHUB.cmd`.
+4. GitHub sam zbuduje i opublikuje nowe APK.
+5. W aplikacji wybierz: `Więcej → Zgody i informacje → Sprawdź nowszą wersję`.
+
+## Ważne
+
+- Nigdy nie dodawaj do repozytorium plików `.p12`, `.jks`, `signing.properties` ani pliku z sekretami.
+- Nie zgub klucza podpisującego. Wszystkie przyszłe aktualizacje muszą być podpisane tym samym kluczem.
+- Przed pierwszą instalacją tej linii wydań możesz odinstalować starą aplikację i przywrócić dane z kopii JSON.

@@ -1,0 +1,29 @@
+{
+  "name": "dzienniczek-hormonu",
+  "version": "1.0.5",
+  "private": true,
+  "description": "Dzienniczek Hormonu - PWA i natywna aplikacja Android WebView",
+  "scripts": {
+    "build:app": "node tools/run_python.js tools/build_app.py",
+    "build:check": "node tools/run_python.js tools/build_app.py --check",
+    "build:bridge": "esbuild src/native/native-bridge.js --bundle --format=iife --platform=browser --target=es2022 --outfile=native-bridge.js",
+    "prepare:web": "npm run build:app && npm run build:bridge && node tools/run_python.js tools/prepare_android_web.py",
+    "test:project": "node tools/run_python.js tests/smoke_test.py",
+    "test:pwa": "node tools/run_python.js tests/pwa_http_test.py",
+    "test:android-project": "npm run test:project",
+    "test:release-project": "npm run test:project",
+    "version:set": "node tools/run_python.js tools/set_version.py",
+    "test": "npm run build:check && npm run test:project && npm run test:pwa"
+  },
+  "dependencies": {
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.4.2",
+    "@capacitor/local-notifications": "8.2.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.6"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

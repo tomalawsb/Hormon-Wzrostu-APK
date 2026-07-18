@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 7,
+  "output": "app.js",
+  "encoding": "utf-8",
+  "newlinePolicy": "zachowaj bajty modułów bez modyfikacji",
+  "description": "Kolejność modułów źródłowych składających produkcyjny app.js; etapy 14–15 dodają niezależne przypomnienia każdego aktywnego profilu oraz polecenia głosowe wskazujące dziecko po imieniu.",
+  "modules": [
+    {
+      "file": "00_bootstrap.js",
+      "description": "Stałe, stan aplikacji, inicjalizacja, cache DOM i podpinanie zdarzeń."
+    },
+    {
+      "file": "10_data_storage.js",
+      "description": "Schemat danych wersji 10, pełna izolacja profili, migracja, sanitacja i zapis."
+    },
+    {
+      "file": "15_profiles.js",
+      "description": "Zarządzanie profilami dzieci: wybór, dodawanie, edycja, archiwizacja, przywracanie i bezpieczne usuwanie."
+    },
+    {
+      "file": "17_injection_order.js",
+      "description": "Edycja, walidacja i zapis własnej kolejności miejsc wkłucia aktywnego profilu, także przez przeciąganie dotykowe."
+    },
+    {
+      "file": "18_settings_navigation.js",
+      "description": "Tematyczna nawigacja ustawień: kafelki na telefonie, boczne menu na komputerze i otwieranie konkretnej sekcji."
+    },
+    {
+      "file": "19_today_dashboard.js",
+      "description": "Ekran Dzisiaj: kluczowe dane zastrzyku, dokładny stan ampułki, przełącznik Wszyscy/profile i zbiorcze karty dzieci."
+    },
+    {
+      "file": "20_rendering_navigation.js",
+      "description": "Renderowanie widoków, nawigacja, wybór miejsca i okno wpisu."
+    },
+    {
+      "file": "30_entries.js",
+      "description": "Jednoklikowe potwierdzanie, cofanie, edycja i pomijanie podań oraz migawka zużycia w ml."
+    },
+    {
+      "file": "40_ampoules.js",
+      "description": "Ampułki, bilans objętości, harmonogram oraz propozycja miejsca wkłucia."
+    },
+    {
+      "file": "50_calendar_history.js",
+      "description": "Kalendarz i historia jednego lub wszystkich aktywnych profili, filtrowanie oraz bezpieczna edycja właściwego dziecka."
+    },
+    {
+      "file": "60_settings_dialogs.js",
+      "description": "Ustawienia leczenia, głosu, przypomnień i okna danych."
+    },
+    {
+      "file": "70_reports.js",
+      "description": "Konfiguracja raportów wielu profili, podgląd oraz eksport PDF i Word z zakresem dat i opcjonalnymi ampułkami."
+    },
+    {
+      "file": "80_backup_import.js",
+      "description": "Eksport JSON/CSV, ścisła walidacja wersji i powiązań ampułek, import kopii oraz czyszczenie danych; CSV respektuje zakres raportu i wybrane profile."
+    },
+    {
+      "file": "90_permissions_reminders.js",
+      "description": "Uprawnienia oraz niezależne timery i stany przypomnień wszystkich aktywnych profili."
+    },
+    {
+      "file": "100_voice.js",
+      "description": "Rozpoznawanie mowy, wybór profilu po imieniu, parser poleceń i odpowiedzi głosowe."
+    },
+    {
+      "file": "110_pwa_keyboard.js",
+      "description": "Skróty klawiaturowe, instalacja PWA, wersja i service worker."
+    },
+    {
+      "file": "115_updates.js",
+      "description": "Sprawdzanie najnowszego wydania GitHub, porównanie wersji i otwieranie podpisanego APK."
+    },
+    {
+      "file": "120_helpers.js",
+      "description": "Funkcje pomocnicze, formatowanie, daty, pliki, komunikaty i zamknięcie IIFE."
+    }
+  ]
+}
