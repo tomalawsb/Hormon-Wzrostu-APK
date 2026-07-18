@@ -1,9 +1,0 @@
-DZIENNICZEK HORMONU WZROSTU 2.7
-
-1. Rozpakuj całe archiwum ZIP.
-2. Kliknij dwa razy plik UTWORZ_APK.cmd.
-3. Po zakończeniu w tym samym folderze pojawi się:
-   Dzienniczek_hormonu_wzrostu_2.7_DEBUG.apk
-
-Nie trzeba uruchamiać Android Studio ani wpisywać żadnych poleceń.
-Skrypt sam korzysta z już zainstalowanej Javy i Android SDK.
