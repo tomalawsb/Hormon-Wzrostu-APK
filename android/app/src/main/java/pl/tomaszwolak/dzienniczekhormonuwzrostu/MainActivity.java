@@ -277,8 +277,7 @@ public class MainActivity extends FragmentActivity {
             return interceptRequest(request == null ? null : request.getUrl());
         }
 
-        @Override
-        @SuppressWarnings("deprecation")
+        @Override         @SuppressWarnings("deprecation")
         public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
             return interceptRequest(url == null ? null : Uri.parse(url));
         }
@@ -295,8 +294,7 @@ public class MainActivity extends FragmentActivity {
                     request != null && request.isForMainFrame());
         }
 
-        @Override
-        @SuppressWarnings("deprecation")
+        @Override         @SuppressWarnings("deprecation")
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             return handleNavigation(url == null ? null : Uri.parse(url), true);
         }
@@ -333,14 +331,7 @@ public class MainActivity extends FragmentActivity {
             if (bridgeEnabled) dispatchPendingNotificationAction();
         }
 
-        @Override
-        public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-            if (failingUrl != null) {
-                bridgeEnabled = false;
-                denyPendingWebPermission();
-            }
-            super.onReceivedError(view, errorCode, description, failingUrl);
-        }
+        @Override         @SuppressWarnings("deprecation")         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {             if (failingUrl != null) {                 bridgeEnabled = false;                 denyPendingWebPermission();             }             super.onReceivedError(view, errorCode, description, failingUrl);         }
 
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
