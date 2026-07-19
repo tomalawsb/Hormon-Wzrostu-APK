@@ -1,6 +1,6 @@
 {
   "name": "dzienniczek-hormonu",
-  "version": "1.0.0-1907261941",
+  "version": "2.0.0-1907262012",
   "private": true,
   "description": "Dzienniczek Hormonu - PWA i natywna aplikacja Android WebView",
   "scripts": {

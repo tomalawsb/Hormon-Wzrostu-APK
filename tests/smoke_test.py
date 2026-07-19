@@ -38,10 +38,11 @@ version_name = android_version.get("VERSION_NAME", "")
 version_code = android_version.get("VERSION_CODE", "")
 scripts = package.get("scripts", {})
 
-require(re.fullmatch(r"\d+\.\d+(?:\.\d+)?-\d{10}", version_name) is not None, "VERSION_NAME musi mieć format 1.0-DDMMRRHHMM")
+require(re.fullmatch(r"\d+\.\d+(?:\.\d+)?-\d{10}", version_name) is not None, "VERSION_NAME musi mieć format X.Y-DDMMRRHHMM")
 require(version_code.isdigit() and int(version_code) > 0, "VERSION_CODE musi być dodatnią liczbą")
 require(package.get("name") == "dzienniczek-hormonu", "nieprawidłowa nazwa pakietu npm")
-expected_npm_version = "1.0.0-" + version_name.split("-", 1)[1]
+base_version, timestamp = version_name.split("-", 1)
+expected_npm_version = base_version + ".0-" + timestamp
 require(package.get("version") == expected_npm_version, "package.json nie zgadza się z wersją wydania")
 require(lock.get("version") == expected_npm_version, "package-lock.json nie zgadza się z wersją wydania")
 require(lock.get("packages", {}).get("", {}).get("version") == expected_npm_version, "główny pakiet w package-lock ma inną wersję")

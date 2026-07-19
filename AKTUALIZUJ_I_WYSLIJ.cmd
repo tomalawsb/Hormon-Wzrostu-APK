@@ -31,7 +31,7 @@ if not exist "%SOURCE%\WYSYLAJ_NA_GITHUB.cmd" goto MISSING_SEND_SCRIPT
 set "STAMP="
 for /f "delims=" %%I in ('powershell.exe -NoLogo -NoProfile -NonInteractive -Command "Get-Date -Format ddMMyyHHmm"') do set "STAMP=%%I"
 if not defined STAMP goto DATE_ERROR
-set "NEW_VERSION=1.0-%STAMP%"
+set "NEW_VERSION=2.0-%STAMP%"
 
 echo Tworzenie czystej kopii roboczej w katalogu tymczasowym...
 mkdir "%WORK_DIR%" >nul 2>nul

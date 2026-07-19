@@ -31,12 +31,12 @@ def replace_required(text: str, pattern: str, replacement: str, description: str
 
 def main() -> int:
     if len(sys.argv) != 3:
-        fail("użycie: set_version.py WERSJA VERSION_CODE, np. 1.0.4 3905")
+        fail("użycie: set_version.py WERSJA VERSION_CODE, np. 2.0-1907262007 1907262007")
 
     version_name = sys.argv[1].strip()
     version_code_raw = sys.argv[2].strip()
     if not VERSION_RE.fullmatch(version_name):
-        fail("wersja musi mieć format X.Y.Z albo X.Y-DDMMRRHHMM, np. 1.0-1907261820")
+        fail("wersja musi mieć format X.Y.Z albo X.Y-DDMMRRHHMM, np. 2.0-1907262007")
     if not version_code_raw.isdigit() or int(version_code_raw) < 1:
         fail("versionCode musi być dodatnią liczbą całkowitą")
     version_code = int(version_code_raw)
