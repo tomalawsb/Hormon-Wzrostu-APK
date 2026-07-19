@@ -7,12 +7,11 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   font-settings-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - name: Pobierz kod
         uses: actions/checkout@v4
@@ -42,35 +41,44 @@ jobs:
       - name: Sprawdź formatowanie
         run: npm run format:check
 
-      - name: Uruchom test projektu i zachowaj wynik
-        id: project_test
-        shell: bash
-        run: |
-          set +e
-          npm run test:project > project-test-output.txt 2>&1
-          EXIT_CODE=$?
-          cat project-test-output.txt
-          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
-          exit 0
+      - name: Test projektu
+        run: npm run test:project
 
-      - name: Opublikuj błąd testu w pull requeście
-        if: steps.project_test.outputs.exit_code != '0'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          {
-            echo '### Wynik testu projektu'
-            echo
-            echo '```text'
-            cat project-test-output.txt
-            echo '```'
-          } > project-test-comment.md
-          gh pr comment "${{ github.event.pull_request.number }}" --body-file project-test-comment.md
+      - name: Test architektury
+        run: npm run test:architecture
 
-      - name: Zatrzymaj diagnostykę po błędzie
-        if: steps.project_test.outputs.exit_code != '0'
-        run: exit 1
-
-      - name: Uruchom test wyglądu
+      - name: Test wyglądu i czcionki
         run: npm run test:visual
+
+      - name: Test ekranu dzisiaj
+        run: npm run test:today
+
+      - name: Test kalendarza i historii
+        run: npm run test:calendar-history
+
+      - name: Test profili i statystyk
+        run: npm run test:profile-stats
+
+      - name: Test ustawień
+        run: npm run test:settings
+
+      - name: Test powiadomień
+        run: npm run test:notifications
+
+      - name: Test PWA etapu 11
+        run: npm run test:pwa-stage11
+
+      - name: Testy końcowe
+        run: npm run test:final
+
+      - name: Test PWA HTTP
+        run: npm run test:pwa
+
+      - name: Test kopii
+        run: npm run test:backup
+
+      - name: Test bezpieczeństwa
+        run: npm run test:security
+
+      - name: Test WebView
+        run: npm run test:webview
