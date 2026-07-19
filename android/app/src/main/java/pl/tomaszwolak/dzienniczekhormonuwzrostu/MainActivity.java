@@ -745,6 +745,7 @@ public class MainActivity extends FragmentActivity {
     }
 
     @Override
+        @SuppressLint("GestureBackNavigation")
     public void onBackPressed() {
         if (webView != null && webView.canGoBack()) webView.goBack();
         else super.onBackPressed();
