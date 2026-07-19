@@ -37,6 +37,14 @@ if (!fs.existsSync(wrapper)) {
   failOrSkip('brak Gradle Wrappera.');
 }
 
+if (process.platform !== 'win32') {
+  try {
+    fs.chmodSync(wrapper, 0o755);
+  } catch (error) {
+    failOrSkip(`nie udało się nadać prawa uruchomienia Gradle Wrapperowi: ${error.message}`);
+  }
+}
+
 const result = spawnSync(wrapper, ['--no-daemon', 'lintDebug', 'assembleDebug', '--stacktrace'], {
   cwd: androidRoot,
   env: process.env,

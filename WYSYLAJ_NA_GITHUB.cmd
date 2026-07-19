@@ -40,6 +40,8 @@ if %ROBOCOPY_CODE% GEQ 8 goto COPY_ERROR
 
 pushd "%TEMP_REPO%"
 git add -A
+git update-index --chmod=+x android/gradlew
+if errorlevel 1 goto PUSH_ERROR
 git diff --cached --quiet
 if not errorlevel 1 (
   echo.
