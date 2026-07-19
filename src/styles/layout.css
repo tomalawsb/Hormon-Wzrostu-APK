@@ -1,7 +1,9 @@
 
 * { box-sizing: border-box; }
 
-html { min-height: 100%; background: var(--bg); }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%; min-height: 100%; background: var(--bg); }
 
 body {
   min-height: 100vh;

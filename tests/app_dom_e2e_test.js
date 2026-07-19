@@ -65,7 +65,7 @@ async function main() {
   window.fetch = async (input) => {
     const url = String(input?.url || input);
     if (url.includes('app-version.json')) {
-      return new Response(JSON.stringify({ version: '1.0.13' }), {
+      return new Response(JSON.stringify({ version: '1.0-1907261907' }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });

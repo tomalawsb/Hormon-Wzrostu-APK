@@ -38,12 +38,13 @@ version_name = android_version.get("VERSION_NAME", "")
 version_code = android_version.get("VERSION_CODE", "")
 scripts = package.get("scripts", {})
 
-require(re.fullmatch(r"\d+\.\d+\.\d+", version_name) is not None, "VERSION_NAME musi mieć format X.Y.Z")
+require(re.fullmatch(r"\d+\.\d+(?:\.\d+)?-\d{10}", version_name) is not None, "VERSION_NAME musi mieć format 1.0-DDMMRRHHMM")
 require(version_code.isdigit() and int(version_code) > 0, "VERSION_CODE musi być dodatnią liczbą")
 require(package.get("name") == "dzienniczek-hormonu", "nieprawidłowa nazwa pakietu npm")
-require(package.get("version") == version_name, "package.json nie zgadza się z VERSION_NAME")
-require(lock.get("version") == version_name, "package-lock.json nie zgadza się z VERSION_NAME")
-require(lock.get("packages", {}).get("", {}).get("version") == version_name, "główny pakiet w package-lock ma inną wersję")
+expected_npm_version = "1.0.0-" + version_name.split("-", 1)[1]
+require(package.get("version") == expected_npm_version, "package.json nie zgadza się z wersją wydania")
+require(lock.get("version") == expected_npm_version, "package-lock.json nie zgadza się z wersją wydania")
+require(lock.get("packages", {}).get("", {}).get("version") == expected_npm_version, "główny pakiet w package-lock ma inną wersję")
 require(version.get("version") == version_name, "app-version.json ma inną wersję")
 require(manifest.get("name") == f"Dzienniczek Hormonu v{version_name}", "manifest PWA ma inną wersję")
 require(manifest.get("short_name") == "Dzienniczek Hormonu", "nieprawidłowa krótka nazwa PWA")
@@ -160,7 +161,7 @@ for obsolete in (
     "tools/apply_fix_1013.py",
     "tools/apply_ui_fix_v107.py",
     ".release-1.0.12",
-    "release-1.0.13-trigger.txt",
+    "release-1.0-1907261907-trigger.txt",
 ):
     require(not (ROOT / obsolete).exists(), f"pozostał martwy plik: {obsolete}")
 

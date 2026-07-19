@@ -2,18 +2,20 @@ const GITHUB_RELEASE_API =
   'https://api.github.com/repos/tomalawsb/Hormon-Wzrostu-APK/releases/latest';
 
 function parseVersionParts(value) {
-  return String(value || '')
-    .trim()
-    .replace(/^v/i, '')
+  const normalized = String(value || '').trim().replace(/^v/i, '');
+  const [base = '', build = '0'] = normalized.split('-', 2);
+  const baseParts = base
     .split('.')
     .slice(0, 3)
     .map((part) => Number.parseInt(part, 10) || 0);
+  while (baseParts.length < 3) baseParts.push(0);
+  return [...baseParts, Number.parseInt(build, 10) || 0];
 }
 
 function compareVersions(left, right) {
   const a = parseVersionParts(left);
   const b = parseVersionParts(right);
-  for (let index = 0; index < 3; index += 1) {
+  for (let index = 0; index < 4; index += 1) {
     if (a[index] > b[index]) return 1;
     if (a[index] < b[index]) return -1;
   }

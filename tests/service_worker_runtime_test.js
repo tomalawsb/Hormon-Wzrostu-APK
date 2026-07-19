@@ -140,7 +140,7 @@ function request(url, { mode = 'same-origin', destination = '', accept = '*/*' }
 }
 
 async function run() {
-  const documentCache = bucket('dzienniczek-hormonu-v1.0.13-stage11-documents');
+  const documentCache = bucket('dzienniczek-hormonu-v1.0-1907261907-documents');
   await documentCache.put(
     new URL('./index.html', scope).href,
     new Response('<!doctype html><main>offline shell</main>', {
@@ -171,7 +171,7 @@ async function run() {
   assert.match(json.headers.get('content-type'), /application\/json/);
   assert.deepEqual(await json.json(), { ok: false, offline: true, error: 'offline' });
 
-  const scriptCache = bucket('dzienniczek-hormonu-v1.0.13-stage11-scripts');
+  const scriptCache = bucket('dzienniczek-hormonu-v1.0-1907261907-scripts');
   const scriptUrl = new URL('./app.js', scope).href;
   await scriptCache.put(
     scriptUrl,
@@ -198,10 +198,13 @@ async function run() {
           : url.endsWith('.png')
             ? 'image/png'
             : 'text/html';
-    return new Response(contentType === 'application/json' ? '{"version":"1.0.13"}' : 'fresh', {
-      status: 200,
-      headers: { 'Content-Type': contentType },
-    });
+    return new Response(
+      contentType === 'application/json' ? '{"version":"1.0-1907261907"}' : 'fresh',
+      {
+        status: 200,
+        headers: { 'Content-Type': contentType },
+      }
+    );
   };
   const refresh = await dispatchMessage('REFRESH_APP_RESOURCES');
   assert.equal(refresh.ok, true);
