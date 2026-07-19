@@ -190,12 +190,15 @@ kbd { display: inline-block; min-width: 24px; padding: 3px 6px; border: 1px soli
 
 .toast-region {
   position: fixed;
-  z-index: 1000;
+  z-index: 13000;
   right: 18px;
   bottom: calc(18px + var(--safe-bottom));
   display: grid;
   gap: 10px;
   pointer-events: none;
+}
+.toast-region--dialog {
+  z-index: 2147483647;
 }
 .toast {
   min-width: min(360px, calc(100vw - 36px));

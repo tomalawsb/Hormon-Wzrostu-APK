@@ -13,7 +13,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Window;
-import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
@@ -30,9 +29,11 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -54,6 +55,7 @@ public class MainActivity extends FragmentActivity {
     private static final int REQ_MICROPHONE = 4101;
     private static final int REQ_NOTIFICATIONS = 4102;
     private static final int REQ_FILE = 4103;
+    private static final int REQ_SAVE_JSON = 4104;
     private static final String PREFS = "permission_state";
     private static final String APP_ASSET_HOST = "appassets.androidplatform.net";
     private static final String APP_ASSET_PREFIX = "/assets/web/";
@@ -63,6 +65,7 @@ public class MainActivity extends FragmentActivity {
     private static final int MAX_RELEASE_JSON_CHARS = 2 * 1024 * 1024;
     private static final int MAX_NOTIFICATION_JSON_CHARS = 32 * 1024;
     private static final int MAX_REMINDER_JSON_CHARS = 1024 * 1024;
+    private static final int MAX_EXPORT_JSON_CHARS = 20 * 1024 * 1024;
     private static final String APP_CONTENT_SECURITY_POLICY =
             "default-src 'self'; base-uri 'none'; object-src 'none'; "
                     + "script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; "
@@ -88,6 +91,8 @@ public class MainActivity extends FragmentActivity {
     private WebView webView;
     private PermissionRequest pendingWebPermission;
     private ValueCallback<Uri[]> fileCallback;
+    private String pendingJsonFilename;
+    private String pendingJsonContent;
     private SharedPreferences prefs;
     private SecureDataStore secureDataStore;
     private BiometricPrompt biometricPrompt;
@@ -101,7 +106,6 @@ public class MainActivity extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         secureDataStore = new SecureDataStore(this);
         captureReminderIntent(getIntent());
@@ -119,7 +123,7 @@ public class MainActivity extends FragmentActivity {
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
         settings.setAllowFileAccess(false);
-        settings.setAllowContentAccess(false);
+        settings.setAllowContentAccess(true);
         settings.setAllowFileAccessFromFileURLs(false);
         settings.setAllowUniversalAccessFromFileURLs(false);
         settings.setBlockNetworkLoads(true);
@@ -166,10 +170,11 @@ public class MainActivity extends FragmentActivity {
                 fileCallback = callback;
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("*/*");
+                intent.setType("application/json");
                 intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
                         "application/json", "application/octet-stream", "text/plain"
                 });
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 try {
                     startActivityForResult(intent, REQ_FILE);
                     return true;
@@ -520,13 +525,89 @@ public class MainActivity extends FragmentActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQ_FILE && fileCallback != null) {
-            Uri[] result = null;
-            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
-                result = new Uri[]{data.getData()};
-            }
+            Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
             fileCallback.onReceiveValue(result);
             fileCallback = null;
+            return;
         }
+        if (requestCode == REQ_SAVE_JSON) {
+            String content;
+            synchronized (this) {
+                content = pendingJsonContent;
+                pendingJsonContent = null;
+                pendingJsonFilename = null;
+            }
+            if (resultCode != RESULT_OK || data == null || data.getData() == null) {
+                dispatchFileSaveResult(false, "cancelled");
+                return;
+            }
+            if (content == null) {
+                dispatchFileSaveResult(false, "missing_content");
+                return;
+            }
+            try (OutputStream output = getContentResolver().openOutputStream(data.getData(), "w")) {
+                if (output == null) throw new IllegalStateException("Brak strumienia zapisu");
+                output.write(content.getBytes(StandardCharsets.UTF_8));
+                output.flush();
+                dispatchFileSaveResult(true, "saved");
+            } catch (Exception error) {
+                dispatchFileSaveResult(false, "write_failed");
+            }
+        }
+    }
+
+    private boolean requestJsonSaveNative(String filename, String content) {
+        if (!bridgeAllowed() || content == null || content.length() > MAX_EXPORT_JSON_CHARS) return false;
+        String safeFilename = filename == null ? "dzienniczek-kopia.json" : filename.trim();
+        safeFilename = safeFilename.replace('/', '-').replace('\\', '-');
+        if (safeFilename.isEmpty()) safeFilename = "dzienniczek-kopia.json";
+        if (!safeFilename.toLowerCase(java.util.Locale.ROOT).endsWith(".json")) {
+            safeFilename += ".json";
+        }
+        synchronized (this) {
+            if (pendingJsonContent != null) return false;
+            pendingJsonFilename = safeFilename;
+            pendingJsonContent = content;
+        }
+        runOnUiThread(() -> {
+            if (!bridgeAllowed()) {
+                clearPendingJsonSave();
+                dispatchFileSaveResult(false, "bridge_blocked");
+                return;
+            }
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/json");
+            intent.putExtra(Intent.EXTRA_TITLE, pendingJsonFilename);
+            intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            try {
+                startActivityForResult(intent, REQ_SAVE_JSON);
+            } catch (Exception error) {
+                clearPendingJsonSave();
+                dispatchFileSaveResult(false, "picker_failed");
+            }
+        });
+        return true;
+    }
+
+    private void clearPendingJsonSave() {
+        synchronized (this) {
+            pendingJsonFilename = null;
+            pendingJsonContent = null;
+        }
+    }
+
+    private void dispatchFileSaveResult(boolean success, String state) {
+        if (!bridgeAllowed()) return;
+        final String safeState = JSONObject.quote(state == null ? "unknown" : state);
+        runOnUiThread(() -> {
+            if (!bridgeAllowed()) return;
+            webView.evaluateJavascript(
+                    "window.dispatchEvent(new CustomEvent('nativeFileSaveResult',{detail:{success:"
+                            + (success ? "true" : "false") + ",state:" + safeState + "}}));",
+                    null
+            );
+        });
     }
 
     private void createNotificationChannel() {
@@ -757,6 +838,7 @@ public class MainActivity extends FragmentActivity {
         bridgeEnabled = false;
         notificationEventsReady = false;
         denyPendingWebPermission();
+        clearPendingJsonSave();
         if (webView != null) {
             webView.removeJavascriptInterface("AndroidNative");
             webView.stopLoading();
@@ -866,6 +948,11 @@ public class MainActivity extends FragmentActivity {
         @JavascriptInterface
         public boolean openExternalUrl(String url) {
             return bridgeAllowed() && openExternalUrlNative(url);
+        }
+
+        @JavascriptInterface
+        public boolean saveJsonFile(String filename, String content) {
+            return bridgeAllowed() && requestJsonSaveNative(filename, content);
         }
 
         @JavascriptInterface

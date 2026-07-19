@@ -1,9 +1,27 @@
 
+  function getToastRegion(type = '') {
+    if (type !== 'error') return el['toast-region'];
+    const openDialogs = Array.from(document.querySelectorAll('dialog[open]'));
+    const topDialog = openDialogs.at(-1);
+    if (!topDialog) return el['toast-region'];
+    let region = topDialog.querySelector('.toast-region--dialog');
+    if (!region) {
+      region = document.createElement('div');
+      region.className = 'toast-region toast-region--dialog';
+      region.setAttribute('role', 'alert');
+      region.setAttribute('aria-live', 'assertive');
+      region.setAttribute('aria-atomic', 'true');
+      topDialog.appendChild(region);
+    }
+    return region;
+  }
+
   function showToast(message, type = '', duration = 4200) {
     const toast = document.createElement('div');
     toast.className = `toast${type ? ` toast--${type}` : ''}`;
     toast.textContent = message;
-    el['toast-region'].appendChild(toast);
+    if (type === 'error') toast.setAttribute('role', 'alert');
+    getToastRegion(type).appendChild(toast);
     window.setTimeout(() => toast.remove(), duration);
   }
 
@@ -25,7 +43,7 @@
       action();
     });
     toast.append(text, button);
-    el['toast-region'].appendChild(toast);
+    getToastRegion(type).appendChild(toast);
     window.setTimeout(remove, duration);
   }
 

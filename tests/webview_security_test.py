@@ -65,7 +65,7 @@ require("file:///android_asset" not in main, "pozostało bezpośrednie ładowani
 
 for setting in (
     "settings.setAllowFileAccess(false)",
-    "settings.setAllowContentAccess(false)",
+    "settings.setAllowContentAccess(true)",
     "settings.setAllowFileAccessFromFileURLs(false)",
     "settings.setAllowUniversalAccessFromFileURLs(false)",
     "settings.setBlockNetworkLoads(true)",
@@ -77,7 +77,8 @@ for setting in (
     require(setting in main, f"brak ustawienia: {setting}")
 
 require("setAllowFileAccess(true)" not in main, "dostęp do plików został ponownie włączony")
-require("setAllowContentAccess(true)" not in main, "dostęp content:// został ponownie włączony")
+require("Intent.ACTION_OPEN_DOCUMENT" in main, "import plików nie używa systemowego selektora dokumentów")
+require("Intent.FLAG_GRANT_READ_URI_PERMISSION" in main, "wybrany plik nie dostaje ograniczonego prawa odczytu")
 require("WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)" in main, "debugowanie WebView nie zależy od wariantu builda")
 require("setHttpAllowed(false)" in main, "WebViewAssetLoader dopuszcza HTTP")
 require("shouldInterceptRequest" in main and "blockedWebResponse()" in main, "obce żądania zasobów nie są blokowane")
@@ -138,6 +139,7 @@ expected_methods = {
     "openNotificationSettings",
     "notificationEventsReady",
     "openExternalUrl",
+    "saveJsonFile",
     "secureStorageRead",
     "secureStorageWrite",
     "secureStorageRemove",
@@ -162,6 +164,12 @@ require(found_methods == expected_methods, "lista metod AndroidNativeApi zmieni�
 require("isTrustedAppOrigin(request.getOrigin())" in main, "żądanie mikrofonu nie sprawdza pochodzenia")
 require("MAX_NOTIFICATION_JSON_CHARS" in main, "brak limitu danych powiadomienia")
 require("MAX_REMINDER_JSON_CHARS" in main, "brak limitu danych przypomnień")
+require("MAX_EXPORT_JSON_CHARS" in main, "brak limitu natywnego eksportu JSON")
+require("Intent.ACTION_CREATE_DOCUMENT" in main, "eksport JSON nie używa systemowego okna zapisu")
+require("nativeFileSaveResult" in main, "Android nie zwraca wyniku natywnego zapisu JSON")
+require("saveJsonFile" in read("src/native/native-bridge.js"), "most web nie obsługuje natywnego zapisu JSON")
+require("await downloadFile(filename" in read("src/services/export/backup.js"),
+        "eksport kopii pokazuje sukces przed zakończeniem zapisu")
 require("MAX_RELEASE_JSON_CHARS" in main and "setInstanceFollowRedirects(false)" in main, "odpowiedź aktualizatora nie jest ograniczona")
 require("removeJavascriptInterface(\"AndroidNative\")" in main, "most nie jest usuwany przy zamykaniu")
 

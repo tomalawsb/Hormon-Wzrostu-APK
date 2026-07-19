@@ -107,7 +107,8 @@ for required in (
 security_crypto = read("android/app/src/main/java/pl/tomaszwolak/dzienniczekhormonuwzrostu/SecurityCrypto.java")
 for required in ("PBKDF2_ITERATIONS = 210000", "HmacSHA256", "AES/GCM/NoPadding", "updateAAD"):
     require(required in security_crypto, f"kryptografia kopii Android nie zawiera: {required}")
-require("FLAG_SECURE" in native_main, "APK nie chroni widoku ostatnich aplikacji i zrzutów ekranu")
+require("FLAG_SECURE" not in native_main, "APK nadal blokuje zrzuty ekranu")
+require("saveJsonFile" in native_main and "ACTION_CREATE_DOCUMENT" in native_main, "APK nie ma natywnego zapisu kopii JSON")
 require("BiometricPrompt" in native_main, "APK nie obsługuje biometrii")
 require("secureStorageRead" in native_main and "secureStorageWrite" in native_main, "brak mostu szyfrowanego magazynu")
 require("androidx.biometric:biometric" in build_gradle, "brak biblioteki AndroidX Biometric")

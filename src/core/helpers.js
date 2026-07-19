@@ -184,8 +184,19 @@
     return `"${String(value ?? '').replaceAll('"', '""')}"`;
   }
 
-  function downloadFile(filename, content, type) {
+  async function downloadFile(filename, content, type) {
+    if (
+      type === 'application/json' &&
+      window.NativeBridge?.isNative &&
+      typeof window.NativeBridge.saveJsonFile === 'function'
+    ) {
+      const result = await window.NativeBridge.saveJsonFile(filename, content);
+      if (result?.success) return true;
+      if (result?.state === 'cancelled') throw new Error('Anulowano zapis pliku JSON.');
+      throw new Error('Android nie zapisał pliku JSON. Spróbuj ponownie.');
+    }
     downloadBlob(filename, new Blob([content], { type }));
+    return true;
   }
 
   function downloadBlob(filename, blob) {

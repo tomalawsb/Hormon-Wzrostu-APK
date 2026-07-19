@@ -1153,6 +1153,35 @@
       window.AndroidNative.requestBiometricUnlock?.();
     });
   }
+  function saveJsonFile(filename, content) {
+    if (!hasAndroidWebViewBridge()) {
+      return Promise.resolve({ success: false, state: "unsupported" });
+    }
+    return new Promise((resolve) => {
+      const eventName = "nativeFileSaveResult";
+      const timeout = window.setTimeout(() => {
+        window.removeEventListener(eventName, listener);
+        resolve({ success: false, state: "timeout" });
+      }, 12e4);
+      const listener = (event) => {
+        window.clearTimeout(timeout);
+        window.removeEventListener(eventName, listener);
+        resolve({
+          success: Boolean(event.detail?.success),
+          state: String(event.detail?.state || "unknown")
+        });
+      };
+      window.addEventListener(eventName, listener);
+      const started = Boolean(
+        window.AndroidNative.saveJsonFile?.(String(filename || ""), String(content ?? ""))
+      );
+      if (!started) {
+        window.clearTimeout(timeout);
+        window.removeEventListener(eventName, listener);
+        resolve({ success: false, state: "not_started" });
+      }
+    });
+  }
   async function openExternal(url) {
     const value = String(url || "").trim();
     if (!/^https:\/\//i.test(value)) return false;
@@ -1194,6 +1223,7 @@
     decryptBackup,
     biometricStatus,
     requestBiometricUnlock,
+    saveJsonFile,
     openExternal,
     exitApp
   };

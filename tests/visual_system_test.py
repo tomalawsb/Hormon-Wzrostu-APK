@@ -92,6 +92,21 @@ for source in (ROOT / "src").rglob("*.js"):
 missing_icons = (static_references | dynamic_references) - defined_icons
 require(not missing_icons, "brak definicji ikon: " + ", ".join(sorted(missing_icons)))
 require(".app-icon" in components, "brak wspólnej klasy ikon")
+require(screens.count("z-index: 13000") >= 1, "komunikaty są zasłaniane przez warstwy bezpieczeństwa")
+toasts = read("src/components/notification/toast.js")
+require("dialog[open]" in toasts and "toast-region--dialog" in toasts,
+        "błędy nie są przenoszone ponad otwarte okno dialogowe")
+require("role', 'alert'" in toasts, "komunikat błędu nie ma pilnego semantycznego alertu")
+
+backup_dialog = read("src/components/dialog/backup.html")
+require(re.search(r'id="export-json-button"[\s\S]*?#icon-upload', backup_dialog) is not None,
+        "eksport pełnej kopii nie ma strzałki w górę")
+require(re.search(r'id="export-profile-json-button"[\s\S]*?#icon-upload', backup_dialog) is not None,
+        "eksport profilu nie ma strzałki w górę")
+require(re.search(r'id="import-button"[\s\S]*?#icon-download', backup_dialog) is not None,
+        "import nie ma strzałki w dół")
+require(re.search(r'id="export-report-button"[\s\S]*?#icon-upload', settings_html) is not None,
+        "eksport raportu nie ma strzałki w górę")
 
 banned_ui_glyphs = set("⌂▦↺•⇩⌄▣‹›×◎⌁◷✓↻▥ⓘ⌕⟳●⇧↶↑↓")
 violations: list[str] = []

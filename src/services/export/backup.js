@@ -14,7 +14,7 @@ async function exportBackupScope(scope = 'all') {
       scope === 'profile'
         ? `dzienniczek-profil-${safeFilenamePart(activeProfile.name)}-${localDateISO()}.json`
         : `dzienniczek-kopia-${localDateISO()}.json`;
-    downloadFile(filename, JSON.stringify(payload, null, 2), 'application/json');
+    await downloadFile(filename, JSON.stringify(payload, null, 2), 'application/json');
     await flushSecureStorageWrites();
     try {
       localStorage.setItem(BACKUP_REMINDER_KEY, String(Date.now()));
