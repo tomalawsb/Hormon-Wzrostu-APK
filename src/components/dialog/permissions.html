@@ -1,0 +1,32 @@
+
+  <dialog id="permissions-dialog" class="permissions-dialog" aria-labelledby="permissions-title">
+    <div class="permissions-content">
+      <div class="permissions-hero" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-shield"></use></svg></div>
+      <p class="eyebrow">Pierwsze uruchomienie</p>
+      <h2 id="permissions-title">Zezwól na potrzebne funkcje</h2>
+      <p class="muted">Każdą zgodę zatwierdzasz osobno. Bez zgody na mikrofon i powiadomienia aplikacja nadal działa ręcznie.</p>
+
+      <div class="permission-cards">
+        <section class="permission-card">
+          <div><strong>Mikrofon</strong><span>Potrzebny do poleceń typu „lewy brzuch”.</span></div>
+          <button id="permission-microphone-button" class="button button--secondary button--small" type="button">Zezwól</button>
+          <span id="permission-microphone-status" class="permission-status">Nie sprawdzono</span>
+        </section>
+        <section class="permission-card">
+          <div><strong>Powiadomienia</strong><span>Przypomnienie o zastrzyku i proponowanym miejscu.</span></div>
+          <button id="permission-notification-button" class="button button--secondary button--small" type="button">Zezwól</button>
+          <span id="permission-notification-status" class="permission-status">Nie sprawdzono</span>
+        </section>
+        <section class="permission-card">
+          <div><strong>Trwałe przechowywanie</strong><span>Zmniejsza ryzyko usunięcia historii przez przeglądarkę.</span></div>
+          <button id="permission-storage-button" class="button button--secondary button--small" type="button">Włącz</button>
+          <span id="permission-storage-status" class="permission-status">Nie sprawdzono</span>
+        </section>
+      </div>
+
+      <div class="dialog-actions permissions-actions">
+        <button id="permissions-skip-button" class="button button--secondary" type="button">Pomiń na razie</button>
+        <button id="permissions-finish-button" class="button button--primary" type="button">Przejdź do aplikacji</button>
+      </div>
+    </div>
+  </dialog>

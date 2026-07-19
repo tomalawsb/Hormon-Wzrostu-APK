@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pl" class="security-pending" data-theme-mode="system">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.github.com; manifest-src 'self'; worker-src 'self'; child-src 'self' blob:; frame-src 'self' blob:; media-src 'self' blob:; form-action 'self'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0c857b">
+  <meta name="description" content="Prywatny dzienniczek podań hormonu wzrostu z obsługą głosową, klawiaturą, kalendarzem i historią.">
+  <title>Dzienniczek Hormonu v1.0.13</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Przejdź do treści</a>
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Nawigacja główna">
+      <div class="brand brand--desktop">
+        <img src="./icon-192.png" alt="" width="46" height="46">
+        <div>
+          <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.13</span></strong>
+          <span>dziennik podań</span>
+        </div>
+      </div>
+
+      <nav class="desktop-nav" aria-label="Sekcje aplikacji">
+        <button class="nav-button is-active" type="button" data-view="today" aria-current="page" title="Dzisiaj (Alt+1)">
+          <svg class="app-icon nav-icon" aria-hidden="true" focusable="false"><use href="#icon-home"></use></svg>
+          <span>Dzisiaj</span>
+          <kbd>Alt+1</kbd>
+        </button>
+        <button class="nav-button" type="button" data-view="calendar" title="Kalendarz (Alt+2)">
+          <svg class="app-icon nav-icon" aria-hidden="true" focusable="false"><use href="#icon-calendar"></use></svg>
+          <span>Kalendarz</span>
+          <kbd>Alt+2</kbd>
+        </button>
+        <button class="nav-button" type="button" data-view="history" title="Historia (Alt+3)">
+          <svg class="app-icon nav-icon" aria-hidden="true" focusable="false"><use href="#icon-history"></use></svg>
+          <span>Historia</span>
+          <kbd>Alt+3</kbd>
+        </button>
+        <button class="nav-button" type="button" data-view="more" title="Więcej (Alt+4)">
+          <svg class="app-icon nav-icon" aria-hidden="true" focusable="false"><use href="#icon-more"></use></svg>
+          <span>Więcej</span>
+          <kbd>Alt+4</kbd>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="desktop-install-button" class="text-button is-hidden" type="button">Zainstaluj aplikację</button>
+        <p id="version-label">Wersja —</p>
+      </div>
+    </aside>
+
+    <div class="app-content">
+      <header class="topbar">
+        <div class="brand brand--mobile">
+          <img src="./icon-192.png" alt="" width="42" height="42">
+          <div>
+            <strong>Dzienniczek Hormonu <span class="brand-version">v1.0.13</span></strong>
+          <span>dziennik podań</span>
+          </div>
+        </div>
+
+        <div class="topbar-date">
+          <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-calendar"></use></svg>
+          <span id="current-date-label">—</span>
+        </div>
+
+        <div class="topbar-profile">
+          <button id="active-profile-button" class="profile-switcher-button" type="button" aria-haspopup="dialog" aria-controls="profiles-dialog" title="Zmień profil dziecka">
+            <span id="active-profile-avatar" class="profile-avatar" data-profile-color="teal" aria-hidden="true">🧒</span>
+            <span class="profile-switcher-copy"><small>Profil</small><strong id="active-profile-name">Dziecko 1</strong></span>
+            <svg class="app-icon profile-switcher-chevron" aria-hidden="true" focusable="false"><use href="#icon-chevron-down"></use></svg>
+          </button>
+        </div>
+
+        <div class="topbar-actions">
+          <button id="header-install-button" class="icon-button is-hidden" type="button" aria-label="Zainstaluj aplikację" title="Zainstaluj aplikację"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-download"></use></svg></button>
+        </div>
+      </header>
+
+      <main id="main-content" tabindex="-1">

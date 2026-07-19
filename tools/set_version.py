@@ -70,25 +70,51 @@ def main() -> int:
         encoding="utf-8",
     )
 
+    shell_path = ROOT / "src" / "shell" / "start.html"
+    shell = shell_path.read_text(encoding="utf-8")
+    shell = replace_required(
+        shell,
+        r"<title>Dzienniczek Hormonu v[^<]+</title>",
+        f"<title>Dzienniczek Hormonu v{version_name}</title>",
+        "tytuł strony w źródle HTML",
+    )
+    shell = replace_required(
+        shell,
+        r'(<span class="brand-version">)v[^<]+(</span>)',
+        rf"\1v{version_name}\2",
+        "etykieta wersji w źródle HTML",
+    )
+    shell_path.write_text(shell, encoding="utf-8")
+
+    settings_html_path = ROOT / "src" / "screens" / "settings" / "index.html"
+    settings_html = settings_html_path.read_text(encoding="utf-8")
+    settings_html = replace_required(
+        settings_html,
+        r'(<strong id="settings-version-label">)v[^<]+(</strong>)',
+        rf"\1v{version_name}\2",
+        "wersja w źródle ustawień",
+    )
+    settings_html_path.write_text(settings_html, encoding="utf-8")
+
     index_path = ROOT / "index.html"
     index = index_path.read_text(encoding="utf-8")
     index = replace_required(
         index,
         r"<title>Dzienniczek Hormonu v[^<]+</title>",
         f"<title>Dzienniczek Hormonu v{version_name}</title>",
-        "tytuł strony",
+        "tytuł wygenerowanej strony",
     )
     index = replace_required(
         index,
         r'(<span class="brand-version">)v[^<]+(</span>)',
         rf"\1v{version_name}\2",
-        "etykieta wersji w interfejsie",
+        "etykieta wersji wygenerowanej strony",
     )
     index = replace_required(
         index,
         r'(<strong id="settings-version-label">)v[^<]+(</strong>)',
         rf"\1v{version_name}\2",
-        "wersja w ustawieniach",
+        "wersja w wygenerowanych ustawieniach",
     )
     index_path.write_text(index, encoding="utf-8")
 

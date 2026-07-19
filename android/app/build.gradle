@@ -5,6 +5,11 @@ plugins {
     id 'com.android.application'
 }
 
+dependencies {
+    implementation 'androidx.biometric:biometric:1.1.0'
+    implementation 'androidx.webkit:webkit:1.16.0'
+}
+
 final Properties appVersion = new Properties()
 final File versionFile = rootProject.file('version.properties')
 if (!versionFile.isFile()) {
@@ -56,6 +61,10 @@ android {
     namespace 'pl.tomaszwolak.dzienniczekhormonuwzrostu'
     compileSdk 36
 
+    buildFeatures {
+        buildConfig true
+    }
+
     defaultConfig {
         applicationId 'pl.tomaszwolak.dzienniczekhormonuwzrostu'
         minSdk 24
@@ -91,6 +100,13 @@ android {
             minifyEnabled false
             shrinkResources false
         }
+    }
+
+    lint {
+        abortOnError true
+        checkDependencies true
+        htmlReport true
+        xmlReport true
     }
 }
 

@@ -854,18 +854,26 @@
   async function exactAlarmPermission() {
     if (!isNative()) return "unsupported";
     if (hasAndroidWebViewBridge()) return String(window.AndroidNative.exactAlarmPermission?.() || "granted");
-    await initialize();
-    const result = await LocalNotifications.checkExactNotificationSetting();
-    return result.exact_alarm || "denied";
+    try {
+      await initialize();
+      const result = await LocalNotifications.checkExactNotificationSetting();
+      return result.exact_alarm || "denied";
+    } catch {
+      return "denied";
+    }
   }
   async function requestExactAlarmPermission() {
     if (!isNative()) return "unsupported";
     if (hasAndroidWebViewBridge()) return String(window.AndroidNative.requestExactAlarmPermission?.() || "granted");
-    await initialize();
-    const current = await exactAlarmPermission();
-    if (current === "granted") return current;
-    const result = await LocalNotifications.changeExactNotificationSetting();
-    return result.exact_alarm || "denied";
+    try {
+      await initialize();
+      const current = await exactAlarmPermission();
+      if (current === "granted") return current;
+      const result = await LocalNotifications.changeExactNotificationSetting();
+      return result.exact_alarm || "denied";
+    } catch {
+      return "denied";
+    }
   }
   async function requestNotificationPermission() {
     if (!isNative()) return "unsupported";
@@ -877,6 +885,75 @@
       await requestExactAlarmPermission().catch(() => "denied");
     }
     return display;
+  }
+  function parseNativeJson(raw, fallback = {}) {
+    try {
+      const parsed = JSON.parse(String(raw || ""));
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+  async function notificationDiagnostics() {
+    if (!isNative()) {
+      return {
+        platform: "web",
+        notificationPermission: "unsupported",
+        exactAlarmPermission: "unsupported",
+        configuredProfiles: 0,
+        scheduledProfiles: 0,
+        nextTriggerAt: 0,
+        scheduleMode: "none"
+      };
+    }
+    if (hasAndroidWebViewBridge()) {
+      return parseNativeJson(window.AndroidNative.notificationDiagnostics?.(), {
+        platform: "android",
+        notificationPermission: "denied",
+        exactAlarmPermission: "denied",
+        configuredProfiles: 0,
+        scheduledProfiles: 0,
+        nextTriggerAt: 0,
+        scheduleMode: "none"
+      });
+    }
+    await initialize();
+    const [permission, exact, pendingResult, channelsResult] = await Promise.all([
+      notificationPermission().catch(() => "denied"),
+      exactAlarmPermission().catch(() => "denied"),
+      LocalNotifications.getPending().catch(() => ({ notifications: [] })),
+      LocalNotifications.listChannels().catch(() => ({ channels: [] }))
+    ]);
+    const notifications = (pendingResult.notifications || []).filter(
+      (item) => item.extra?.source === SOURCE && !item.extra?.test
+    );
+    const profileIds = new Set(notifications.map((item) => String(item.extra?.profileId || "")));
+    const nextTriggerAt = notifications.reduce((next, item) => {
+      const at = new Date(item.schedule?.at || 0).getTime();
+      return Number.isFinite(at) && at > 0 && (!next || at < next) ? at : next;
+    }, 0);
+    const channel = (channelsResult.channels || []).find((item) => item.id === CHANNEL_ID) || null;
+    return {
+      platform: "android",
+      notificationPermission: permission,
+      notificationsEnabled: permission === "granted",
+      channelEnabled: !channel || Number(channel.importance) > 0,
+      exactAlarmPermission: exact,
+      configuredProfiles: profileIds.size,
+      scheduledProfiles: profileIds.size,
+      nextTriggerAt,
+      scheduleMode: notifications.length ? exact === "granted" ? "exact" : "inexact" : "none"
+    };
+  }
+  async function openNotificationSettings() {
+    if (!isNative()) return false;
+    if (hasAndroidWebViewBridge()) {
+      return Boolean(window.AndroidNative.openNotificationSettings?.());
+    }
+    return false;
+  }
+  function notificationEventsReady() {
+    if (hasAndroidWebViewBridge()) window.AndroidNative.notificationEventsReady?.();
   }
   async function microphonePermission() {
     if (!isNative()) return "unsupported";
@@ -1003,6 +1080,79 @@
     });
     return true;
   }
+  function parseNativeSecurityResult(raw, fallbackError = "security_error") {
+    try {
+      const parsed = JSON.parse(String(raw || ""));
+      return parsed && typeof parsed === "object" ? parsed : { ok: false, error: fallbackError };
+    } catch {
+      return { ok: false, error: fallbackError };
+    }
+  }
+  function secureStorageType() {
+    if (!hasAndroidWebViewBridge()) return "unsupported";
+    return String(window.AndroidNative.secureStorageType?.() || "unsupported");
+  }
+  function secureStorageRead(slot) {
+    if (!hasAndroidWebViewBridge()) return { ok: false, exists: false, error: "unsupported" };
+    return parseNativeSecurityResult(window.AndroidNative.secureStorageRead?.(String(slot || "")));
+  }
+  function secureStorageWrite(slot, value) {
+    if (!hasAndroidWebViewBridge()) return false;
+    return Boolean(
+      window.AndroidNative.secureStorageWrite?.(String(slot || ""), String(value ?? ""))
+    );
+  }
+  function secureStorageRemove(slot) {
+    if (!hasAndroidWebViewBridge()) return false;
+    return Boolean(window.AndroidNative.secureStorageRemove?.(String(slot || "")));
+  }
+  function randomBase64(byteCount = 16) {
+    if (!hasAndroidWebViewBridge()) return "";
+    return String(window.AndroidNative.randomBase64?.(Number(byteCount) || 16) || "");
+  }
+  function pinHash(pin, saltBase64) {
+    if (!hasAndroidWebViewBridge()) return "";
+    return String(window.AndroidNative.pinHash?.(String(pin || ""), String(saltBase64 || "")) || "");
+  }
+  function encryptBackup(plaintext, password) {
+    if (!hasAndroidWebViewBridge()) return { ok: false, error: "unsupported" };
+    return parseNativeSecurityResult(
+      window.AndroidNative.encryptBackup?.(String(plaintext || ""), String(password || "")),
+      "encryption_failed"
+    );
+  }
+  function decryptBackup(envelope, password) {
+    if (!hasAndroidWebViewBridge()) return { ok: false, error: "unsupported" };
+    return parseNativeSecurityResult(
+      window.AndroidNative.decryptBackup?.(String(envelope || ""), String(password || "")),
+      "decryption_failed"
+    );
+  }
+  function biometricStatus() {
+    if (!hasAndroidWebViewBridge()) return "unsupported";
+    return String(window.AndroidNative.biometricStatus?.() || "unavailable");
+  }
+  function requestBiometricUnlock() {
+    if (!hasAndroidWebViewBridge() || biometricStatus() !== "available") {
+      return Promise.resolve({ success: false, state: "unavailable" });
+    }
+    return new Promise((resolve) => {
+      const timeout = window.setTimeout(() => {
+        window.removeEventListener("nativeBiometricResult", listener);
+        resolve({ success: false, state: "timeout" });
+      }, 6e4);
+      const listener = (event) => {
+        window.clearTimeout(timeout);
+        window.removeEventListener("nativeBiometricResult", listener);
+        resolve({
+          success: Boolean(event.detail?.success),
+          state: String(event.detail?.state || "cancelled")
+        });
+      };
+      window.addEventListener("nativeBiometricResult", listener);
+      window.AndroidNative.requestBiometricUnlock?.();
+    });
+  }
   async function openExternal(url) {
     const value = String(url || "").trim();
     if (!/^https:\/\//i.test(value)) return false;
@@ -1029,8 +1179,21 @@
     requestNotificationPermission,
     exactAlarmPermission,
     requestExactAlarmPermission,
+    notificationDiagnostics,
+    openNotificationSettings,
+    notificationEventsReady,
     syncDailyReminders,
     showNotification,
+    secureStorageType,
+    secureStorageRead,
+    secureStorageWrite,
+    secureStorageRemove,
+    randomBase64,
+    pinHash,
+    encryptBackup,
+    decryptBackup,
+    biometricStatus,
+    requestBiometricUnlock,
     openExternal,
     exitApp
   };

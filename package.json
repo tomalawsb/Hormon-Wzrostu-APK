@@ -4,16 +4,39 @@
   "private": true,
   "description": "Dzienniczek Hormonu - PWA i natywna aplikacja Android WebView",
   "scripts": {
-    "build:app": "node tools/run_python.js tools/build_app.py",
-    "build:check": "node tools/run_python.js tools/build_app.py --check",
+    "build": "npm run prepare:web",
+    "build:sources": "node tools/run_python.js tools/build_web_sources.py",
+    "build:app": "node tools/run_python.js tools/build_web_sources.py --target app",
+    "build:html": "node tools/run_python.js tools/build_web_sources.py --target html",
+    "build:styles": "node tools/run_python.js tools/build_web_sources.py --target styles",
+    "build:check": "node tools/run_python.js tools/build_web_sources.py --check",
     "build:bridge": "esbuild src/native/native-bridge.js --bundle --format=iife --platform=browser --target=es2022 --outfile=native-bridge.js",
-    "prepare:web": "npm run build:app && npm run build:bridge && node tools/run_python.js tools/prepare_android_web.py",
+    "prepare:web": "npm run build:sources && npm run build:bridge && node tools/run_python.js tools/prepare_android_web.py",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "npm run lint:js && npm run format:check",
+    "lint:js": "eslint app.js service-worker.js src/native tests tools eslint.config.cjs prettier.config.cjs",
     "test:project": "node tools/run_python.js tests/smoke_test.py",
     "test:pwa": "node tools/run_python.js tests/pwa_http_test.py",
-    "test:android-project": "npm run test:project",
-    "test:release-project": "npm run test:project",
+    "test:backup": "node tests/backup_roundtrip_test.js",
+    "test:security": "node tests/security_crypto_test.js",
+    "test:webview": "node tools/run_python.js tests/webview_security_test.py",
+    "test:architecture": "node tools/run_python.js tests/architecture_test.py",
+    "test:visual": "node tools/run_python.js tests/visual_system_test.py && node tests/theme_runtime_test.js",
+    "test:today": "node tools/run_python.js tests/today_screen_test.py && node tests/today_runtime_test.js",
+    "test:calendar-history": "node tools/run_python.js tests/calendar_history_test.py && node tests/calendar_history_runtime_test.js",
+    "test:profile-stats": "node tools/run_python.js tests/profile_stats_test.py && node tests/profile_stats_runtime_test.js",
+    "test:settings": "node tools/run_python.js tests/settings_stage9_test.py && node tests/settings_navigation_runtime_test.js",
+    "test:notifications": "node tools/run_python.js tests/notifications_stage10_test.py && node tests/notifications_diagnostics_runtime_test.js",
+    "test:pwa-stage11": "node tools/run_python.js tests/pwa_stage11_test.py && node tests/service_worker_runtime_test.js",
+    "test:migrations": "node tests/migration_compatibility_test.js",
+    "test:e2e": "node tests/app_dom_e2e_test.js",
+    "test:accessibility": "node tests/accessibility_axe_test.js",
+    "test:final": "node tools/run_python.js tests/final_matrix_test.py && node tests/final_states_runtime_test.js && npm run test:migrations && npm run test:e2e && npm run test:accessibility",
+    "test:web": "npm run lint && npm run test:project && npm run test:architecture && npm run test:visual && npm run test:today && npm run test:calendar-history && npm run test:profile-stats && npm run test:settings && npm run test:notifications && npm run test:pwa-stage11 && npm run test:final && npm run test:pwa && npm run test:backup && npm run test:security && npm run test:webview",
+    "test:android": "node tools/run_android_checks.js",
     "version:set": "node tools/run_python.js tools/set_version.py",
-    "test": "npm run build:check && npm run test:project && npm run test:pwa"
+    "test": "npm run prepare:web && npm run test:web && npm run test:android"
   },
   "dependencies": {
     "@capacitor/app": "8.1.1",
@@ -21,7 +44,14 @@
     "@capacitor/local-notifications": "8.2.1"
   },
   "devDependencies": {
-    "esbuild": "0.25.6"
+    "@eslint/js": "10.0.1",
+    "axe-core": "4.12.1",
+    "esbuild": "0.25.6",
+    "eslint": "10.7.0",
+    "fake-indexeddb": "6.2.5",
+    "globals": "17.7.0",
+    "jsdom": "29.1.1",
+    "prettier": "3.9.5"
   },
   "engines": {
     "node": ">=22"

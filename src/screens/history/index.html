@@ -1,0 +1,65 @@
+
+        <section id="view-history" class="view" aria-labelledby="history-heading" hidden>
+          <div class="page-heading page-heading--split-mobile">
+            <div>
+              <p class="eyebrow">Wszystkie wpisy</p>
+              <h1 id="history-heading">Historia podań</h1>
+            </div>
+            <div class="page-heading-actions">
+              <button class="button button--primary button--small" type="button" data-open-entry>Dodaj wpis</button>
+            </div>
+          </div>
+
+          <article class="card history-card history-card--timeline">
+            <div class="history-filters" role="search" aria-label="Filtry historii">
+              <label>
+                <span>Dziecko</span>
+                <select id="history-profile-filter" aria-label="Wybierz dziecko w historii"></select>
+              </label>
+              <label class="search-field">
+                <span class="sr-only">Szukaj w historii</span>
+                <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-search"></use></svg>
+                <input id="history-search" type="search" placeholder="Szukaj daty, miejsca lub uwagi">
+              </label>
+              <label>
+                <span>Status</span>
+                <select id="status-filter">
+                  <option value="all">Wszystkie statusy</option>
+                  <option value="given">Podano</option>
+                  <option value="skipped">Pominięto</option>
+                </select>
+              </label>
+              <label>
+                <span>Miejsce</span>
+                <select id="site-filter">
+                  <option value="all">Wszystkie miejsca</option>
+                  <option value="brzuch">Brzuch</option>
+                  <option value="udo">Udo / noga</option>
+                  <option value="ramię">Ramię</option>
+                  <option value="pośladek">Pośladek</option>
+                  <option value="łopatka">Łopatka</option>
+                </select>
+              </label>
+              <label>
+                <span>Zmiany</span>
+                <select id="history-correction-filter">
+                  <option value="all">Wszystkie wpisy</option>
+                  <option value="corrected">Tylko poprawione</option>
+                  <option value="original">Bez poprawek</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="history-results-heading">
+              <div id="history-scope-label" class="history-scope-label muted" aria-live="polite">—</div>
+              <button id="history-clear-filters" class="text-button" type="button">Wyczyść filtry</button>
+            </div>
+            <div class="history-results">
+              <div id="history-list" class="history-list"></div>
+              <div id="history-empty" class="empty-state is-hidden">
+                <strong>Brak pasujących wpisów</strong>
+                <span>Zmień filtry albo dodaj pierwsze podanie.</span>
+              </div>
+            </div>
+          </article>
+        </section>

@@ -1,0 +1,174 @@
+
+* { box-sizing: border-box; }
+
+html { min-height: 100%; background: var(--bg); }
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 8% 8%, rgba(22, 184, 165, 0.08), transparent 24rem),
+    radial-gradient(circle at 92% 2%, rgba(25, 118, 210, 0.07), transparent 28rem),
+    var(--bg);
+}
+
+button, input, select, textarea { font: inherit; }
+button { color: inherit; }
+button, select { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .52; }
+
+:focus-visible {
+  outline: 3px solid rgba(25, 118, 210, .42);
+  outline-offset: 3px;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.is-hidden { display: none !important; }
+
+.skip-link {
+  position: fixed;
+  z-index: 9999;
+  top: 12px;
+  left: 12px;
+  transform: translateY(-160%);
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: white;
+  background: var(--text);
+  text-decoration: none;
+}
+.skip-link:focus { transform: translateY(0); }
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  padding: 26px 20px 20px;
+  border-right: 1px solid rgba(220, 231, 239, .9);
+  background: rgba(255, 255, 255, .88);
+  backdrop-filter: blur(18px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.brand img { border-radius: 14px; box-shadow: var(--shadow-soft); }
+.brand div { display: grid; min-width: 0; }
+.brand strong { font-size: 1.05rem; line-height: 1.18; }
+.brand span { color: var(--muted); font-size: .9rem; line-height: 1.25; }
+.brand .brand-version { color: var(--primary-strong); font-size: .88em; line-height: inherit; white-space: nowrap; }
+.brand--mobile { display: none; }
+
+.desktop-nav { display: grid; gap: 8px; }
+.nav-button {
+  width: 100%;
+  min-height: 50px;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  text-align: left;
+  font-weight: 700;
+}
+.nav-button:hover { background: #f0f6f9; }
+.nav-button.is-active { color: #087d6f; background: var(--primary-soft); }
+.nav-icon { font-size: 1.35rem; text-align: center; }
+.nav-button kbd { color: var(--muted); font-size: .7rem; font-weight: 500; opacity: .72; }
+
+.sidebar-footer {
+  margin-top: auto;
+  display: grid;
+  gap: 10px;
+  color: var(--muted);
+  font-size: .78rem;
+}
+.sidebar-footer p { margin: 0; }
+
+.app-content { min-width: 0; }
+
+.topbar {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  min-height: 76px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: calc(8px + var(--safe-top)) clamp(18px, 3vw, 42px) 14px;
+  border-bottom: 1px solid rgba(220, 231, 239, .72);
+  background: rgba(245, 248, 251, .84);
+  backdrop-filter: blur(18px);
+}
+.topbar-date {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--blue);
+  font-weight: 800;
+}
+.topbar-actions { display: flex; gap: 8px; justify-self: end; }
+
+main {
+  width: min(1320px, 100%);
+  margin: 0 auto;
+  padding: clamp(20px, 3vw, 40px);
+}
+
+.view { animation: view-in .18s ease-out; }
+@keyframes view-in { from { opacity: .25; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+
+/* Etap 5: spójne powierzchnie i fokus */
+body {
+  font-family: var(--font-family);
+  line-height: var(--line-height);
+  background:
+    radial-gradient(circle at 8% 8%, rgba(15, 159, 146, 0.08), transparent 24rem),
+    radial-gradient(circle at 92% 2%, rgba(43, 110, 166, 0.07), transparent 28rem),
+    var(--bg);
+}
+
+:focus-visible {
+  outline-color: var(--focus);
+  box-shadow: var(--shadow-focus);
+}
+
+.sidebar {
+  border-color: var(--line);
+  background: var(--surface-glass);
+}
+.nav-button:hover { background: var(--surface-soft); }
+.nav-button.is-active { color: var(--primary-dark); background: var(--primary-soft); }
+.topbar {
+  border-color: var(--line);
+  background: var(--bg-glass);
+}
+.topbar-date { color: var(--primary-dark); }

@@ -12,15 +12,16 @@ const projectRoot = path.resolve(__dirname, '..');
 const scriptPath = path.resolve(projectRoot, args[0]);
 const scriptArgs = [scriptPath, ...args.slice(1)];
 
-const candidates = process.platform === 'win32'
-  ? [
-      { command: 'py', args: ['-3', ...scriptArgs] },
-      { command: 'python', args: scriptArgs },
-    ]
-  : [
-      { command: 'python3', args: scriptArgs },
-      { command: 'python', args: scriptArgs },
-    ];
+const candidates =
+  process.platform === 'win32'
+    ? [
+        { command: 'py', args: ['-3', ...scriptArgs] },
+        { command: 'python', args: scriptArgs },
+      ]
+    : [
+        { command: 'python3', args: scriptArgs },
+        { command: 'python', args: scriptArgs },
+      ];
 
 let lastError = null;
 for (const candidate of candidates) {

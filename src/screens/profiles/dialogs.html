@@ -1,0 +1,80 @@
+
+  <dialog id="profiles-dialog" class="profile-dialog" aria-labelledby="profiles-dialog-title">
+    <div class="profile-dialog__content">
+      <div class="dialog-header dialog-header--compact">
+        <div>
+          <p class="eyebrow">Użytkownicy dzienniczka</p>
+          <h2 id="profiles-dialog-title">Dzieci i profile</h2>
+          <p class="muted">Wybierz dziecko albo zarządzaj jego profilem. Dane profili są przechowywane oddzielnie.</p>
+        </div>
+        <button id="profiles-dialog-close-button" class="icon-button" type="button" aria-label="Zamknij profile"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+      <div id="profiles-list" class="profiles-list"></div>
+      <div class="dialog-actions">
+        <button id="add-profile-button" class="button button--primary" type="button">+ Dodaj profil dziecka</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="profile-editor-dialog" class="profile-dialog profile-editor-dialog" aria-labelledby="profile-editor-title">
+    <form id="profile-editor-form" class="profile-dialog__content">
+      <div class="dialog-header dialog-header--compact">
+        <div>
+          <p class="eyebrow">Profil dziecka</p>
+          <h2 id="profile-editor-title">Dodaj profil</h2>
+          <p class="muted">Nazwa jest obowiązkowa. Ikona i kolor pomagają szybko rozpoznać profil.</p>
+        </div>
+        <button id="profile-editor-close-button" class="icon-button" type="button" aria-label="Zamknij edycję profilu"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+      <input id="profile-editor-id" type="hidden">
+      <label class="profile-name-field">
+        <span>Nazwa dziecka</span>
+        <input id="profile-name-input" maxlength="60" autocomplete="off" required placeholder="Np. Kasia">
+      </label>
+      <fieldset class="profile-choice-fieldset">
+        <legend>Ikona</legend>
+        <div id="profile-icon-options" class="profile-icon-options" role="group" aria-label="Wybierz ikonę profilu">
+          <button type="button" data-profile-icon="🧒">🧒</button><button type="button" data-profile-icon="👧">👧</button>
+          <button type="button" data-profile-icon="👦">👦</button><button type="button" data-profile-icon="🙂">🙂</button>
+          <button type="button" data-profile-icon="⭐">⭐</button><button type="button" data-profile-icon="💚">💚</button>
+          <button type="button" data-profile-icon="💙">💙</button><button type="button" data-profile-icon="💜">💜</button>
+        </div>
+      </fieldset>
+      <fieldset class="profile-choice-fieldset">
+        <legend>Kolor</legend>
+        <div id="profile-color-options" class="profile-color-options" role="group" aria-label="Wybierz kolor profilu">
+          <button type="button" data-profile-color="teal" aria-label="Turkusowy"></button>
+          <button type="button" data-profile-color="blue" aria-label="Niebieski"></button>
+          <button type="button" data-profile-color="violet" aria-label="Fioletowy"></button>
+          <button type="button" data-profile-color="rose" aria-label="Różowy"></button>
+          <button type="button" data-profile-color="amber" aria-label="Bursztynowy"></button>
+          <button type="button" data-profile-color="green" aria-label="Zielony"></button>
+        </div>
+      </fieldset>
+      <div class="dialog-actions">
+        <button id="profile-editor-cancel-button" class="button button--secondary" type="button">Anuluj</button>
+        <button class="button button--primary" type="submit">Zapisz profil</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="profile-delete-dialog" class="profile-dialog profile-delete-dialog" aria-labelledby="profile-delete-title">
+    <div class="profile-dialog__content">
+      <div class="dialog-header dialog-header--compact">
+        <div>
+          <p class="eyebrow eyebrow--danger">Nieodwracalne usunięcie</p>
+          <h2 id="profile-delete-title">Usuń profil</h2>
+        </div>
+        <button id="profile-delete-close-button" class="icon-button" type="button" aria-label="Zamknij usuwanie profilu"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+      <div id="profile-delete-warning" class="profile-delete-warning"></div>
+      <label class="profile-name-field">
+        <span>Wpisz dokładnie: <strong id="profile-delete-name">—</strong></span>
+        <input id="profile-delete-input" autocomplete="off" placeholder="Nazwa profilu">
+      </label>
+      <div class="dialog-actions">
+        <button id="profile-delete-cancel-button" class="button button--secondary" type="button">Anuluj</button>
+        <button id="profile-delete-confirm-button" class="button button--danger" type="button" disabled>Usuń profil i wszystkie dane</button>
+      </div>
+    </div>
+  </dialog>

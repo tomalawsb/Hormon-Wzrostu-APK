@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "output": "style.css",
+  "encoding": "utf-8",
+  "description": "Kolejność warstw CSS zachowująca dotychczasową kaskadę.",
+  "files": [
+    { "file": "styles/variables.css", "layer": "variables" },
+    { "file": "styles/layout.css", "layer": "layout" },
+    { "file": "styles/components.css", "layer": "components" },
+    { "file": "styles/screens.css", "layer": "screens" },
+    { "file": "styles/dark-mode.css", "layer": "theme" }
+  ]
+}

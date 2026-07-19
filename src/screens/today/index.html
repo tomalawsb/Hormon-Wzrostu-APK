@@ -1,0 +1,215 @@
+        <section id="view-today" class="view is-active" aria-labelledby="today-heading">
+          <h1 id="today-heading" class="sr-only">Dzisiejsze podanie</h1>
+
+          <nav id="today-profile-switcher" class="today-profile-switcher" aria-label="Wybierz profil lub podsumowanie wszystkich profili"></nav>
+
+          <section id="all-profiles-dashboard" class="all-profiles-dashboard" aria-labelledby="all-profiles-heading" hidden>
+            <div class="all-profiles-heading">
+              <div>
+                <p class="eyebrow">Podsumowanie dnia</p>
+                <h2 id="all-profiles-heading" tabindex="-1">Dzisiejsze podania</h2>
+              </div>
+              <strong id="all-profiles-progress" class="all-profiles-progress">—</strong>
+            </div>
+            <div id="all-profiles-list" class="all-profiles-list"></div>
+          </section>
+
+          <div id="single-profile-dashboard" class="today-dashboard-v2">
+            <article class="card today-primary-card" aria-labelledby="main-action-heading">
+              <header class="today-profile-heading">
+                <span id="today-profile-avatar" class="profile-avatar profile-avatar--large" data-profile-color="teal" aria-hidden="true">🧒</span>
+                <div class="today-profile-main">
+                  <p id="main-action-eyebrow" class="eyebrow">Aktualny profil</p>
+                  <strong id="main-profile-name" class="today-profile-name">Dziecko 1</strong>
+                </div>
+                <span id="main-status-badge" class="status-badge status-badge--neutral">Do podania</span>
+              </header>
+
+              <div class="today-primary-card__title">
+                <h2 id="main-action-heading" tabindex="-1">Dzisiejsze podanie</h2>
+                <p>Sprawdź dawkę i sugerowane miejsce. Zapis zajmuje jedno dotknięcie.</p>
+              </div>
+
+              <div class="today-plan-grid">
+                <section class="today-dose-control" aria-labelledby="today-dose-label">
+                  <span id="today-dose-label" class="today-plan-label">
+                    <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-syringe"></use></svg>
+                    Dzisiejsza dawka
+                  </span>
+                  <div class="today-dose-stepper">
+                    <button id="today-dose-decrease" class="today-stepper-button" type="button" aria-label="Zmniejsz dzisiejszą dawkę o 0,1">
+                      <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-minus"></use></svg>
+                    </button>
+                    <button id="dose-chip" class="today-dose-value" type="button" aria-label="Wpisz inną dzisiejszą dawkę">
+                      <strong id="main-dose-value">1,0 mg</strong>
+                      <span>Zmień dokładnie</span>
+                    </button>
+                    <button id="today-dose-increase" class="today-stepper-button" type="button" aria-label="Zwiększ dzisiejszą dawkę o 0,1">
+                      <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-plus"></use></svg>
+                    </button>
+                  </div>
+                  <span id="today-dose" class="sr-only">1,0 mg</span>
+                  <small id="main-time-value">godz. 20:00</small>
+                </section>
+
+                <button id="place-field" class="today-place-control" type="button" aria-label="Zmień sugerowane miejsce wkłucia">
+                  <span class="today-plan-label">
+                    <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-location"></use></svg>
+                    Sugerowane miejsce wkłucia
+                  </span>
+                  <strong id="main-place-value">—</strong>
+                  <span class="today-place-control__change">Dotknij, aby zmienić</span>
+                  <span id="selected-place" class="sr-only">Nie wybrano</span>
+                  <svg class="app-icon today-place-control__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                </button>
+              </div>
+
+              <div class="today-primary-actions">
+                <button id="recommended-save-button" class="button button--primary today-save-button" type="button">
+                  <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-check"></use></svg>
+                  Zapisz podanie
+                </button>
+                <button id="recommended-skip-button" class="button button--ghost" type="button">Oznacz jako pominięte</button>
+                <button id="recommended-edit-button" class="button button--secondary" type="button">Dodaj uwagę lub zmień szczegóły</button>
+                <button id="today-undo-button" class="button button--ghost today-undo-button is-hidden" type="button">
+                  <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-rotate"></use></svg>
+                  Cofnij ostatnią operację
+                </button>
+              </div>
+
+              <div id="today-confirmation" class="today-confirmation today-confirmation--pending" role="status" aria-live="polite">
+                <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-info"></use></svg>
+                <p id="main-action-text">Sprawdź propozycję przed zapisaniem.</p>
+              </div>
+            </article>
+
+            <div class="today-support-grid">
+              <article class="card today-support-card today-ampoule-card" aria-labelledby="ampoule-alert-title">
+                <div class="today-support-card__heading">
+                  <span class="today-support-card__icon" aria-hidden="true">
+                    <svg class="app-icon" focusable="false"><use href="#icon-ampoule"></use></svg>
+                  </span>
+                  <div>
+                    <span>Ampułka</span>
+                    <strong id="main-ampoule-value">—</strong>
+                  </div>
+                </div>
+                <div class="today-ampoule-metrics">
+                  <span id="main-dose-number-value">—</span>
+                  <strong id="main-remaining-ml-value">—</strong>
+                  <span id="main-doses-left-value">—</span>
+                  <small id="main-ampoule-open-value">—</small>
+                </div>
+                <div id="ampoule-alert" class="ampoule-alert" role="status" aria-live="polite">
+                  <strong id="ampoule-alert-title">Ampułka</strong>
+                  <span id="ampoule-alert-text">Ustaw datę rozpoczęcia ampułki, aby aplikacja mogła liczyć jej zużycie.</span>
+                </div>
+                <div class="today-support-actions">
+                  <button id="ampoule-start-main-button" class="button button--secondary button--small is-hidden" type="button">Rozpocznij ampułkę dzisiaj</button>
+                  <button id="recommended-manual-button" class="button button--secondary button--small is-hidden" type="button">Ustaw ampułkę</button>
+                </div>
+              </article>
+
+              <article class="card today-support-card today-reminder-card" aria-labelledby="today-reminder-title">
+                <div class="today-support-card__heading">
+                  <span class="today-support-card__icon" aria-hidden="true">
+                    <svg class="app-icon" focusable="false"><use href="#icon-bell"></use></svg>
+                  </span>
+                  <div>
+                    <span>Następne przypomnienie</span>
+                    <strong id="today-reminder-title">—</strong>
+                  </div>
+                </div>
+                <p id="today-reminder-text" class="muted">Sprawdzanie ustawień przypomnienia…</p>
+                <button id="today-reminder-button" class="button button--secondary button--small" type="button">Ustawienia przypomnień</button>
+              </article>
+            </div>
+
+            <details id="today-details" class="card today-details-card">
+              <summary>
+                <span>
+                  <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-more"></use></svg>
+                  Szczegóły i dodatkowe opcje
+                </span>
+                <svg class="app-icon today-details-chevron" aria-hidden="true" focusable="false"><use href="#icon-chevron-down"></use></svg>
+              </summary>
+
+              <div class="today-details-content">
+                <article class="today-entry-details" aria-labelledby="today-status-heading">
+                  <div class="card-heading-row">
+                    <div>
+                      <p class="eyebrow">Przygotowany wpis</p>
+                      <h2 id="today-status-heading">Sprawdź i zapisz</h2>
+                    </div>
+                    <span id="today-status-badge" class="status-badge status-badge--neutral">Brak wpisu</span>
+                  </div>
+
+                  <div class="summary-chips" aria-label="Data i godzina przygotowanego wpisu">
+                    <button id="date-chip" class="summary-chip summary-chip--date" type="button" title="Zmień datę">
+                      <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-calendar"></use></svg>
+                      <span>Data: <strong id="today-entry-date">Dzisiaj</strong></span>
+                    </button>
+                    <button id="time-chip" class="summary-chip" type="button" title="Zmień godzinę">
+                      <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-clock"></use></svg>
+                      <span>Godzina: <strong id="today-time">20:00</strong></span>
+                    </button>
+                  </div>
+
+                  <div class="voice-zone voice-zone--compact">
+                    <button id="voice-button" class="voice-button" type="button" aria-pressed="false" aria-describedby="voice-help" title="Uruchom obsługę głosową (Alt+M)">
+                      <span class="voice-rings" aria-hidden="true"></span>
+                      <svg class="app-icon voice-mic" aria-hidden="true" focusable="false"><use href="#icon-microphone"></use></svg>
+                      <span class="voice-button-label">Powiedz miejsce</span>
+                    </button>
+                    <p id="voice-help" class="muted">Np. „Kasia lewe udo”, „pomiń dawkę Tomkowi” albo „zapisz Kasi”.</p>
+                  </div>
+
+                  <div id="voice-result" class="recognition-result is-hidden" role="status" aria-live="polite">
+                    <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-check"></use></svg>
+                    <span>Rozpoznano: <strong id="voice-result-text"></strong></span>
+                  </div>
+
+                  <div class="primary-actions">
+                    <button id="save-button" class="button button--primary" type="button" disabled title="Zapisz przygotowany wpis (Ctrl+Enter)">
+                      <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-check"></use></svg>
+                      Zapisz podanie
+                    </button>
+                  </div>
+                  <p id="save-help" class="save-help" aria-live="polite">Sprawdź dawkę i miejsce wkłucia.</p>
+                  <button id="skip-button" class="link-button" type="button">Oznacz dawkę jako pominiętą</button>
+                </article>
+
+                <aside class="today-details-side" aria-label="Dodatkowe podsumowanie">
+                  <article class="compact-card today-last-place">
+                    <div class="info-row">
+                      <span class="info-icon info-icon--blue" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-history"></use></svg></span>
+                      <div>
+                        <span>Ostatnie miejsce wkłucia</span>
+                        <strong id="last-place">Brak wcześniejszych wpisów</strong>
+                      </div>
+                    </div>
+                    <span id="suggested-place" hidden></span>
+                    <strong id="ampoule-status" hidden>Ustaw rozpoczęcie</strong>
+                    <button id="use-suggestion-button" class="mini-button is-hidden" type="button" hidden aria-hidden="true"></button>
+                  </article>
+
+                  <article class="calendar-preview-card">
+                    <div class="section-heading-row">
+                      <h2>Ten miesiąc</h2>
+                      <button class="text-button" type="button" data-view="calendar">Pełny kalendarz</button>
+                    </div>
+                    <div id="mini-calendar" class="mini-calendar" aria-label="Podgląd bieżącego miesiąca"></div>
+                  </article>
+
+                  <article class="recent-card">
+                    <div class="section-heading-row">
+                      <h2>Ostatnie podania</h2>
+                      <button class="text-button" type="button" data-view="history">Cała historia</button>
+                    </div>
+                    <div id="recent-list" class="recent-list"></div>
+                  </article>
+                </aside>
+              </div>
+            </details>
+          </div>
+        </section>

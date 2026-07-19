@@ -1,0 +1,59 @@
+
+  <dialog id="backup-dialog" class="data-dialog data-sheet-dialog" aria-labelledby="backup-dialog-title">
+    <div class="data-dialog__content">
+      <div class="dialog-header dialog-header--compact data-dialog__header">
+        <div>
+          <p class="eyebrow">Kopia zapasowa</p>
+          <h2 id="backup-dialog-title">Dane aplikacji</h2>
+          <p class="muted">Eksport jest szyfrowany hasłem. Przed każdym importem aplikacja tworzy lokalną, zaszyfrowaną kopię bezpieczeństwa.</p>
+        </div>
+        <button id="backup-close-button" class="icon-button" type="button" aria-label="Zamknij kopię zapasową"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+      <div class="backup-password-grid">
+        <label>
+          <span>Hasło kopii (minimum 8 znaków)</span>
+          <input id="backup-password" type="password" minlength="8" maxlength="256" autocomplete="off" placeholder="Wymagane przy eksporcie i imporcie">
+        </label>
+        <label>
+          <span>Powtórz hasło przy eksporcie</span>
+          <input id="backup-password-confirm" type="password" minlength="8" maxlength="256" autocomplete="off" placeholder="Niepotrzebne przy imporcie">
+        </label>
+      </div>
+      <div class="backup-option-grid">
+        <button id="export-json-button" class="backup-option" type="button">
+          <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-download"></use></svg></span>
+          <span><strong>Zapisz wszystkie profile</strong><small>Zaszyfrowany plik historii, ustawień, ampułek i przypomnień</small></span>
+        </button>
+        <button id="export-profile-json-button" class="backup-option" type="button">
+          <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-users"></use></svg></span>
+          <span><strong>Zapisz aktywny profil</strong><small>Kopia tylko aktualnie wybranego dziecka</small></span>
+        </button>
+        <button id="import-button" class="backup-option" type="button">
+          <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-upload"></use></svg></span>
+          <span><strong>Wczytaj kopię</strong><small>Obsługuje szyfrowany .ghbackup i starszy JSON</small></span>
+        </button>
+        <button id="restore-auto-backup-button" class="backup-option backup-option--recovery" type="button" hidden>
+          <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-backup"></use></svg></span>
+          <span><strong>Przywróć stan sprzed importu</strong><small id="auto-backup-summary">Brak lokalnej kopii bezpieczeństwa</small></span>
+        </button>
+      </div>
+      <section id="import-preview" class="backup-import-preview" aria-labelledby="import-preview-title" hidden>
+        <div class="backup-import-preview__heading">
+          <div>
+            <p class="eyebrow">Podgląd importu</p>
+            <h3 id="import-preview-title">Sprawdź kopię przed przywróceniem</h3>
+          </div>
+        </div>
+        <div id="import-preview-summary" class="backup-import-summary"></div>
+        <div class="backup-import-profiles">
+          <strong>Profile w pliku</strong>
+          <ul id="import-preview-profiles"></ul>
+        </div>
+        <p id="import-preview-warning" class="backup-import-warning"></p>
+        <div class="backup-import-actions">
+          <button id="import-cancel-button" class="button button--ghost" type="button">Anuluj</button>
+          <button id="import-confirm-button" class="button button--primary" type="button">Przywróć dane</button>
+        </div>
+      </section>
+    </div>
+  </dialog>

@@ -36,6 +36,7 @@ version = json.loads(read("app-version.json"))
 android_version = properties("android/version.properties")
 version_name = android_version.get("VERSION_NAME", "")
 version_code = android_version.get("VERSION_CODE", "")
+scripts = package.get("scripts", {})
 
 require(re.fullmatch(r"\d+\.\d+\.\d+", version_name) is not None, "VERSION_NAME musi mieć format X.Y.Z")
 require(version_code.isdigit() and int(version_code) > 0, "VERSION_CODE musi być dodatnią liczbą")
@@ -46,8 +47,18 @@ require(lock.get("packages", {}).get("", {}).get("version") == version_name, "g�
 require(version.get("version") == version_name, "app-version.json ma inną wersję")
 require(manifest.get("name") == f"Dzienniczek Hormonu v{version_name}", "manifest PWA ma inną wersję")
 require(manifest.get("short_name") == "Dzienniczek Hormonu", "nieprawidłowa krótka nazwa PWA")
-require(f"<title>Dzienniczek Hormonu v{version_name}</title>" in read("index.html"), "tytuł HTML ma inną wersję")
+index = read("index.html")
+require(f"<title>Dzienniczek Hormonu v{version_name}</title>" in index, "tytuł HTML ma inną wersję")
+require(f'<span class="brand-version">v{version_name}</span>' in index, "nagłówek HTML ma inną wersję")
+require(f'<strong id="settings-version-label">v{version_name}</strong>' in index, "ustawienia HTML mają inną wersję")
 require(f"**Wersja: v{version_name}**" in read("README.md"), "README ma inną bieżącą wersję")
+require(scripts.get("test", "").startswith("npm run prepare:web &&"), "npm test nie uruchamia prepare:web")
+require("npm run test:android" in scripts.get("test", ""), "npm test nie uruchamia kontroli Androida")
+require("eslint" in package.get("devDependencies", {}), "brak ESLint")
+require("prettier" in package.get("devDependencies", {}), "brak Prettier")
+require("npm run test:security" in scripts.get("test:web", ""), "testy web nie uruchamiają testu bezpieczeństwa")
+require("npm run test:webview" in scripts.get("test:web", ""), "testy web nie uruchamiają kontroli WebView")
+require("npm run test:architecture" in scripts.get("test:web", ""), "testy web nie uruchamiają kontroli architektury")
 
 strings = read("android/app/src/main/res/values/strings.xml")
 require(strings.count("Dzienniczek Hormonu") >= 2, "nieprawidłowa nazwa Android")
@@ -61,6 +72,7 @@ require("applicationId 'pl.tomaszwolak.dzienniczekhormonuwzrostu'" in build_grad
 require("namespace 'pl.tomaszwolak.dzienniczekhormonuwzrostu'" in build_gradle, "zmieniono namespace Androida")
 require("ANDROID_KEYSTORE_FILE" in build_gradle, "Gradle nie obsługuje bezpiecznego podpisu z sekretów")
 require("DzienniczekHormonu/signing/signing.properties" in build_gradle, "Gradle nie obsługuje prywatnego katalogu Windows")
+require("lint {" in build_gradle and "abortOnError true" in build_gradle, "brak Android Lint")
 
 debug_block = re.search(r"debug\s*\{(?P<body>.*?)\n\s*\}", build_gradle, re.DOTALL)
 require(debug_block is not None, "brak konfiguracji debug")
@@ -68,17 +80,47 @@ require("signingConfig" not in debug_block.group("body"), "debug nie może używ
 
 native_bridge = read("src/native/native-bridge.js")
 require(re.search(r"const SCHEDULE_DAYS\s*=\s*(?:9\d|[1-9]\d{2,})\s*;", native_bridge) is not None, "harmonogram przypomnień jest krótszy niż 90 dni")
-require("PERMISSIONS_ONBOARDING_REVISION = 'permissions-v2'" in read("src/app/00_bootstrap.js"), "brak wersjonowania ekranu zgód")
-require("isPermissionsOnboardingCompleted()" in read("src/app/90_permissions_reminders.js"), "brak wymuszenia ekranu zgód po aktualizacji")
-require("migrateLegacyStoredData" in read("src/app/10_data_storage.js"), "brak migracji starszych danych")
-require("BACKUP_STORAGE_KEY" in read("src/app/10_data_storage.js"), "brak kopii danych przed zapisem")
-require("file:///android_asset/web/index.html" in read("android/app/src/main/java/pl/tomaszwolak/dzienniczekhormonuwzrostu/MainActivity.java"), "nieprawidłowa ścieżka startowa WebView")
+require("PERMISSIONS_ONBOARDING_REVISION = 'permissions-v2'" in read("src/core/config.js"), "brak wersjonowania ekranu zgód")
+require("isPermissionsOnboardingCompleted()" in read("src/screens/settings/permissions.js"), "brak wymuszenia ekranu zgód po aktualizacji")
+require("migrateLegacyStoredData" in read("src/services/storage/schema.js"), "brak migracji starszych danych")
+require("BACKUP_STORAGE_KEY" in read("src/services/storage/schema.js"), "brak kopii danych przed zapisem")
+require("appassets.androidplatform.net" in read("android/app/src/main/java/pl/tomaszwolak/dzienniczekhormonuwzrostu/MainActivity.java"), "WebView nie używa zaufanej domeny zasobów")
+require("file:///android_asset" not in read("android/app/src/main/java/pl/tomaszwolak/dzienniczekhormonuwzrostu/MainActivity.java"), "WebView nadal startuje z file://")
 
 native_main = read("android/app/src/main/java/pl/tomaszwolak/dzienniczekhormonuwzrostu/MainActivity.java")
 require(native_main.startswith("package pl.tomaszwolak.dzienniczekhormonuwzrostu;"), "MainActivity ma obcy pakiet")
-require("extends Activity" in native_main, "APK nie używa natywnej klasy projektu")
+require("extends FragmentActivity" in native_main, "APK nie używa klasy zgodnej z BiometricPrompt")
 require("extends BridgeActivity" not in native_main, "pozostała stara klasa Capacitor")
 require("capacitor" not in read("android/settings.gradle").lower(), "projekt nadal dołącza obcy runtime Capacitor")
+
+secure_store = read("android/app/src/main/java/pl/tomaszwolak/dzienniczekhormonuwzrostu/SecureDataStore.java")
+for required in (
+    "AndroidKeyStore",
+    "AES/GCM/NoPadding",
+    "setKeySize(256)",
+    "setRandomizedEncryptionRequired(true)",
+    "updateAAD",
+):
+    require(required in secure_store, f"bezpieczny magazyn Android nie zawiera: {required}")
+security_crypto = read("android/app/src/main/java/pl/tomaszwolak/dzienniczekhormonuwzrostu/SecurityCrypto.java")
+for required in ("PBKDF2_ITERATIONS = 210000", "HmacSHA256", "AES/GCM/NoPadding", "updateAAD"):
+    require(required in security_crypto, f"kryptografia kopii Android nie zawiera: {required}")
+require("FLAG_SECURE" in native_main, "APK nie chroni widoku ostatnich aplikacji i zrzutów ekranu")
+require("BiometricPrompt" in native_main, "APK nie obsługuje biometrii")
+require("secureStorageRead" in native_main and "secureStorageWrite" in native_main, "brak mostu szyfrowanego magazynu")
+require("androidx.biometric:biometric" in build_gradle, "brak biblioteki AndroidX Biometric")
+require("androidx.webkit:webkit" in build_gradle, "brak biblioteki AndroidX Webkit")
+
+data_storage = read("src/services/storage/schema.js") + read("src/services/storage/entries.js")
+require("localStorage.getItem(STORAGE_KEY)" not in data_storage, "dane medyczne nadal są czytane z localStorage")
+require("localStorage.setItem(STORAGE_KEY" not in data_storage, "dane medyczne nadal są zapisywane do localStorage")
+security_module = read("src/services/encryption/storage.js") + read("src/services/encryption/backup.js")
+for required in ("AES-GCM", "PBKDF2", "indexedDB", "encryptBackupPayload", "assertSafeJsonValue"):
+    require(required in security_module, f"moduł bezpieczeństwa web nie zawiera: {required}")
+require("security-pending" in index, "interfejs nie ma bezpiecznej osłony startowej")
+require("security-unlock-pin" in index, "interfejs nie ma blokady PIN")
+worker = read("service-worker.js")
+require("encryptedStateVersion" in worker and "REMINDER_STATE_AAD" in worker, "stan przypomnień service workera nie jest szyfrowany")
 
 assets = ("index.html", "app.js", "native-bridge.js", "style.css", "manifest.json", "app-version.json", "service-worker.js", "icon-192.png", "icon-512.png")
 for name in assets:
@@ -99,13 +141,28 @@ for required in (
     "pull_request:",
     "push:",
     "actions/upload-artifact@v4",
-    "assembleDebug",
     "assembleRelease",
     "bundleRelease",
     "ANDROID_KEYSTORE_BASE64",
+    "ANDROID_CHECK_REQUIRED",
+    "run: npm test",
     "gh release create",
 ):
     require(required in workflow, f"workflow nie zawiera: {required}")
+
+android_checks = read("tools/run_android_checks.js")
+for required in ("lintDebug", "assembleDebug", "app-debug.apk"):
+    require(required in android_checks, f"kontrola Androida nie zawiera: {required}")
+
+for obsolete in (
+    ".github/workflows/apply-ui-fix-v107.yml",
+    "tools/apply_fix_1012.py",
+    "tools/apply_fix_1013.py",
+    "tools/apply_ui_fix_v107.py",
+    ".release-1.0.12",
+    "release-1.0.13-trigger.txt",
+):
+    require(not (ROOT / obsolete).exists(), f"pozostał martwy plik: {obsolete}")
 
 ignore = read(".gitignore")
 require("android/signing/*" in ignore, "katalog podpisu nie jest ignorowany")
@@ -131,25 +188,25 @@ require("ANDROID_KEYSTORE_BASE64" in signing_script, "skrypt nie przygotowuje se
 require("keytool" in signing_script, "skrypt nie potrafi utworzyć nowego klucza")
 require(signing_script.isascii(), "KONFIGURUJ_PODPIS.ps1 zawiera znaki spoza ASCII i może nie działać w Windows PowerShell 5.1")
 
-updater = read("src/app/115_updates.js")
+updater = read("src/services/updates/index.js")
 require("tomalawsb/Hormon-Wzrostu-APK/releases/latest" in updater, "aktualizator wskazuje złe repozytorium")
 require("browser_download_url" in updater, "aktualizator nie pobiera adresu APK")
 require("openExternalUrl" in native_main, "Android nie potrafi otworzyć pobierania aktualizacji")
 require("appVersion()" in native_main, "APK nie udostępnia rzeczywistego numeru wersji")
 require("latestReleaseJson()" in native_main, "APK nie sprawdza GitHub Release przez natywny most")
-require((ROOT / "src/app/116_native_version_ui_fixes.js").is_file(), "brak poprawki wersji i propozycji dla APK")
+require((ROOT / "src/platform/android-webview-adapter.js").is_file(), "brak poprawki wersji i propozycji dla APK")
 require("check-update-button" in read("index.html"), "brak przycisku sprawdzania aktualizacji")
 
 require("settings-version-label" in read("index.html"), "brak numeru wersji w ustawieniach")
 require("Sprawdź aktualizacje" in read("index.html"), "brak przycisku Sprawdź aktualizacje")
-require("autoDownload: true" in read("src/app/00_bootstrap.js"), "przycisk aktualizacji nie rozpoczyna pobierania")
-require("today-profile-switcher'].hidden = !multiple" in read("src/app/19_today_dashboard.js"), "pojedynczy profil jest nadal dublowany")
-require("currentRemaining" in read("src/app/40_ampoules.js"), "brak rzeczywistego stanu ampułki")
+require("autoDownload: true" in read("src/core/events.js"), "przycisk aktualizacji nie rozpoczyna pobierania")
+require("today-profile-switcher'].hidden = !multiple" in read("src/screens/today/dashboard.js"), "pojedynczy profil jest nadal dublowany")
+require("currentRemaining" in read("src/components/ampoule-card/model.js"), "brak rzeczywistego stanu ampułki")
 require("AKTUALIZUJ_I_WYSLIJ.cmd" in [path.name for path in ROOT.iterdir()], "brak skryptu jednej operacji")
 require("dzienniczek-hormonu-v" + version_name in read("service-worker.js"), "cache PWA ma starą wersję")
 
 result = subprocess.run(
-    [sys.executable, str(ROOT / "tools/build_app.py"), "--check", "--root", str(ROOT)],
+    [sys.executable, str(ROOT / "tools/build_web_sources.py"), "--check", "--root", str(ROOT)],
     capture_output=True,
     text=True,
 )

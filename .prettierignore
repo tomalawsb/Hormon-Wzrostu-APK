@@ -1,0 +1,31 @@
+node_modules/
+www/
+android/app/src/main/assets/web/
+android/app/build/
+android/build/
+android/.gradle/
+dist/
+GOTOWE_APK/
+
+# Pliki wynikowe generowane z src/.
+app.js
+native-bridge.js
+index.html
+style.css
+
+# Fragmenty zachowują dotychczasowy wynik bajt w bajt; część z nich nie jest
+# samodzielnym dokumentem lub modułem. Format i składnię kontrolują pliki wynikowe.
+src/core/
+src/screens/
+src/components/
+src/services/
+src/platform/
+src/shell/
+src/styles/
+
+# Pliki binarne i skrypty Windows zachowane bez zmian.
+*.jar
+*.png
+*.cmd
+*.ps1
+*.zip

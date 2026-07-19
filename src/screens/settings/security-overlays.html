@@ -1,0 +1,33 @@
+
+  <div id="security-startup-cover" class="security-cover security-cover--startup" role="status" aria-live="polite">
+    <div class="security-cover__card">
+      <span class="security-cover__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-lock"></use></svg></span>
+      <h1>Bezpieczne uruchamianie</h1>
+      <p id="security-startup-message">Otwieranie zaszyfrowanego magazynu danych…</p>
+    </div>
+  </div>
+
+  <div id="security-privacy-cover" class="security-cover security-cover--privacy" aria-hidden="true" hidden>
+    <div class="security-cover__card">
+      <span class="security-cover__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-lock"></use></svg></span>
+      <strong>Dzienniczek jest chroniony</strong>
+    </div>
+  </div>
+
+  <section id="security-lock-screen" class="security-cover security-cover--lock" aria-labelledby="security-lock-title" hidden>
+    <form id="security-unlock-form" class="security-cover__card security-unlock-card">
+      <span class="security-cover__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-lock"></use></svg></span>
+      <h1 id="security-lock-title">Odblokuj aplikację</h1>
+      <p id="security-unlock-message">Wpisz PIN, aby kontynuować.</p>
+      <label>
+        <span>PIN</span>
+        <input id="security-unlock-pin" type="password" inputmode="numeric" pattern="[0-9]{6,12}" minlength="6" maxlength="12" autocomplete="current-password" required>
+      </label>
+      <p id="security-unlock-error" class="security-unlock-error" role="alert"></p>
+      <button class="button button--primary" type="submit">Odblokuj</button>
+      <button id="security-unlock-biometric" class="button button--secondary" type="button" hidden>Użyj biometrii</button>
+    </form>
+  </section>
+
+  <div id="toast-region" class="toast-region" role="status" aria-live="polite" aria-atomic="true"></div>
+  <div id="live-region" class="sr-only" aria-live="assertive" aria-atomic="true"></div>

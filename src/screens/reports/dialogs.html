@@ -1,0 +1,50 @@
+
+
+  <dialog id="report-preview-dialog" class="data-dialog report-preview-dialog" aria-labelledby="report-preview-title">
+    <div class="data-dialog__content data-dialog__content--preview">
+      <div class="dialog-header dialog-header--compact data-dialog__header">
+        <div>
+          <p class="eyebrow">Raport</p>
+          <h2 id="report-preview-title">Podgląd / Drukuj</h2>
+          <p class="muted">Podgląd przedstawia układ tabeli używany podczas drukowania.</p>
+        </div>
+        <button id="report-preview-close-button" class="icon-button" type="button" aria-label="Zamknij podgląd"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+      <div class="report-preview-actions">
+        <button id="report-print-button" class="button button--primary" type="button">Drukuj</button>
+      </div>
+      <div class="report-preview-scroll">
+        <iframe id="report-preview-frame" class="report-preview-frame" title="Podgląd raportu do wydruku"></iframe>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="export-report-dialog" class="data-dialog data-sheet-dialog" aria-labelledby="export-report-title">
+    <div class="data-dialog__content">
+      <div class="dialog-header dialog-header--compact data-dialog__header">
+        <div>
+          <p class="eyebrow">Eksport raportu</p>
+          <h2 id="export-report-title">Wybierz format</h2>
+          <p class="muted">Kliknięcie kafelka od razu zapisze raport w wybranym formacie.</p>
+        </div>
+        <button id="export-report-close-button" class="icon-button" type="button" aria-label="Zamknij eksport raportu"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+      <div class="format-tile-grid">
+        <button id="export-pdf-button" class="format-tile" type="button" title="Eksportuj raport do pliku PDF">
+          <span class="format-icon format-icon--pdf" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-report"></use></svg></span>
+          <strong>PDF</strong>
+          <small>Plik gotowy do zapisania</small>
+        </button>
+        <button id="export-word-button" class="format-tile" type="button" title="Eksportuj raport do Word (.docx) (Alt+W)">
+          <span class="format-icon format-icon--word" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-report"></use></svg></span>
+          <strong>Word (.docx)</strong>
+          <small>Edytowalny dokument</small>
+        </button>
+        <button id="export-csv-button" class="format-tile" type="button" title="Eksportuj historię do CSV">
+          <span class="format-icon format-icon--csv" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-report"></use></svg></span>
+          <strong>CSV</strong>
+          <small>Tabela do arkusza</small>
+        </button>
+      </div>
+    </div>
+  </dialog>

@@ -2,6 +2,42 @@
 
 **Wersja: v1.0.13**
 
+## Kontrola projektu od zera
+
+```text
+npm ci
+npm test
+```
+
+`npm test` przygotowuje zasoby webowe, uruchamia ESLint, Prettier, testy PWA,
+test eksportu/importu oraz kontrolę Android Lint i APK debug. Bez lokalnego
+Android SDK część androidowa jest pomijana; w workflow CI jest obowiązkowa.
+
+## Bezpieczeństwo danych
+
+Dane medyczne są szyfrowane lokalnie. APK używa Android Keystore, a PWA
+Web Crypto i IndexedDB. Kopie danych mają zaszyfrowany format `.ghbackup`.
+Opis wdrożenia i lista kontroli: [ETAP_2_BEZPIECZENSTWO.md](ETAP_2_BEZPIECZENSTWO.md).
+
+## Bezpieczeństwo WebView
+
+APK używa `WebViewAssetLoader`, zamkniętej listy lokalnych zasobów, blokady obcej
+nawigacji i ograniczonego mostu JavaScript–Android. PWA i dokument APK mają CSP.
+Opis wdrożenia: [ETAP_3_WEBVIEW.md](ETAP_3_WEBVIEW.md).
+
+## Architektura interfejsu
+
+Kod, HTML i CSS są składane z części przypisanych do ekranów, komponentów oraz
+usług. Zmiany wykonuje się w `src/`, a `app.js`, `index.html` i `style.css` są
+plikami wynikowymi. Opis struktury: [ETAP_4_ARCHITEKTURA.md](ETAP_4_ARCHITEKTURA.md).
+
+## System wizualny
+
+Interfejs korzysta ze wspólnych tokenów kolorów, odstępów, typografii i stanów
+komponentów. Dostępne są motywy jasny, ciemny i automatyczny, zgodny z telefonem.
+Ikony interfejsu pochodzą z jednego sprite'a SVG. Opis wdrożenia:
+[ETAP_5_SYSTEM_WIZUALNY.md](ETAP_5_SYSTEM_WIZUALNY.md).
+
 ## Najprostsza aktualizacja
 
 Po wprowadzeniu zmian uruchom `AKTUALIZUJ_I_WYSLIJ.cmd`. Skrypt sam:
@@ -28,5 +64,3 @@ Aplikacja sprawdza najnowsze wydanie w:
 ## Pierwsza konfiguracja
 
 1. Uruchom `KONFIGURUJ_PODPIS.cmd` i utwórz nowy klucz.
-
-<!-- trigger-fix-1.0.11 -->

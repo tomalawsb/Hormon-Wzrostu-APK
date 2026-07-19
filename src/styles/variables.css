@@ -1,0 +1,82 @@
+:root {
+  color-scheme: light;
+  --safe-top: max(env(safe-area-inset-top), 28px);
+  --safe-bottom: env(safe-area-inset-bottom);
+
+  /* Neutralne powierzchnie */
+  --bg: #f3f7f9;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-soft: #f7fafb;
+  --surface-muted: #edf3f5;
+  --surface-glass: rgba(255, 255, 255, 0.9);
+  --bg-glass: rgba(243, 247, 249, 0.9);
+  --overlay: rgba(9, 34, 40, 0.58);
+  --text: #13323a;
+  --text-strong: #0d282f;
+  --muted: #5f747a;
+  --line: #d8e4e7;
+  --line-strong: #bdd0d5;
+  --border: var(--line);
+
+  /* Turkus oznacza akcję i markę */
+  --primary: #0c857b;
+  --primary-dark: #08756d;
+  --primary-strong: #08756d;
+  --primary-hover: #096f68;
+  --primary-soft: #e4f6f3;
+  --primary-contrast: #ffffff;
+  --primary-border: rgba(15, 159, 146, 0.36);
+
+  /* Kolory semantyczne */
+  --blue: #2b6ea6;
+  --blue-soft: #eaf3fb;
+  --success: #2f8f5b;
+  --success-dark: #1f6e44;
+  --success-soft: #e8f5ed;
+  --danger: #c44343;
+  --danger-dark: #9e3030;
+  --danger-soft: #fdecec;
+  --danger-border: rgba(196, 67, 67, 0.38);
+  --warning: #b87912;
+  --warning-dark: #855508;
+  --warning-soft: #fff3d9;
+  --warning-border: rgba(184, 121, 18, 0.42);
+  --status-given: #287d4f;
+  --status-given-contrast: #ffffff;
+  --status-given-soft: var(--success-soft);
+  --status-skipped: var(--danger);
+  --status-skipped-soft: var(--danger-soft);
+  --focus: rgba(15, 159, 146, 0.42);
+
+  /* Typografia */
+  --font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --line-height: 1.5;
+
+  /* Odstępy i kształty */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+  --space-8: 48px;
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+  --control-height: 48px;
+  --icon-size: 20px;
+
+  --shadow: 0 12px 34px rgba(32, 66, 74, 0.1);
+  --shadow-soft: 0 6px 20px rgba(32, 66, 74, 0.08);
+  --shadow-focus: 0 0 0 4px rgba(15, 159, 146, 0.14);
+  --sidebar-width: 270px;
+  --mobile-nav-height: 74px;
+  font-family: var(--font-family);
+}

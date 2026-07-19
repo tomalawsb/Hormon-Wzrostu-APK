@@ -1,0 +1,54 @@
+
+        <section id="view-calendar" class="view" aria-labelledby="calendar-heading" hidden>
+          <div class="page-heading page-heading--split-mobile">
+            <div>
+              <p class="eyebrow">Przegląd miesięczny</p>
+              <h1 id="calendar-heading">Kalendarz podań</h1>
+            </div>
+            <div class="page-heading-actions">
+              <button id="calendar-today-button" class="button button--secondary button--small" type="button">Dzisiaj</button>
+              <button class="button button--primary button--small" type="button" data-open-entry>Dodaj wpis</button>
+            </div>
+          </div>
+
+          <div class="calendar-layout">
+            <article class="card calendar-card">
+              <div class="calendar-toolbar">
+                <button id="calendar-prev" class="icon-button" type="button" aria-label="Poprzedni miesiąc"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-chevron-left"></use></svg></button>
+                <div class="calendar-toolbar-title">
+                  <h2 id="calendar-month-label">—</h2>
+                  <span id="calendar-month-summary" class="muted" aria-live="polite">—</span>
+                </div>
+                <button id="calendar-next" class="icon-button" type="button" aria-label="Następny miesiąc"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg></button>
+              </div>
+              <div class="calendar-profile-toolbar">
+                <label>
+                  <span>Widok dziecka</span>
+                  <select id="calendar-profile-filter" aria-label="Wybierz dziecko w kalendarzu"></select>
+                </label>
+                <span id="calendar-scope-label" class="muted">—</span>
+              </div>
+              <div class="calendar-weekdays" aria-hidden="true">
+                <span>Pn</span><span>Wt</span><span>Śr</span><span>Cz</span><span>Pt</span><span>So</span><span>Nd</span>
+              </div>
+              <div id="calendar-grid" class="calendar-grid" role="grid" aria-labelledby="calendar-month-label"></div>
+              <div class="calendar-legend">
+                <span><i class="legend-dot legend-dot--given"></i> Podano</span>
+                <span><i class="legend-dot legend-dot--skipped"></i> Pominięto</span>
+                <span><i class="legend-dot legend-dot--today"></i> Dzisiaj</span>
+              </div>
+              <div id="calendar-profile-legend" class="calendar-profile-legend" aria-label="Legenda dzieci"></div>
+            </article>
+
+            <aside class="card day-details-card">
+              <div class="section-heading-row">
+                <div>
+                  <p class="eyebrow">Wybrany dzień</p>
+                  <h2 id="selected-day-label">—</h2>
+                </div>
+                <button id="add-for-selected-day" class="mini-button" type="button">Dodaj</button>
+              </div>
+              <div id="selected-day-entries" class="day-entry-list"></div>
+            </aside>
+          </div>
+        </section>

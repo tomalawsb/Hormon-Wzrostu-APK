@@ -1,0 +1,75 @@
+
+  <dialog id="entry-dialog" class="entry-dialog" aria-labelledby="entry-dialog-title">
+    <form id="entry-form" method="dialog">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">Wpis podania</p>
+          <h2 id="entry-dialog-title">Dodaj wpis</h2>
+          <p class="muted entry-limit-note">Można zapisać tylko jeden wpis dla każdego dnia w wybranym profilu.</p>
+        </div>
+        <button id="dialog-close-button" class="icon-button" type="button" aria-label="Zamknij"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+
+      <input id="entry-id" type="hidden">
+      <div class="form-grid">
+        <label>
+          <span>Data</span>
+          <input id="entry-date" type="date" required>
+        </label>
+        <label>
+          <span>Godzina</span>
+          <input id="entry-time" type="time" required>
+        </label>
+        <label class="form-field--given-only">
+          <span>Dawka</span>
+          <input id="entry-dose" inputmode="decimal" autocomplete="off" required>
+        </label>
+        <label class="form-field--given-only">
+          <span>Jednostka</span>
+          <select id="entry-unit">
+            <option value="mg">mg</option>
+            <option value="ml">ml</option>
+            <option value="IU">IU / j.m.</option>
+            <option value="j.m.">j.m.</option>
+          </select>
+        </label>
+        <label class="form-field--given-only">
+          <span>Strona</span>
+          <select id="entry-side" required>
+            <option value="">Wybierz</option>
+            <option value="lewa">Lewa</option>
+            <option value="prawa">Prawa</option>
+          </select>
+        </label>
+        <label class="form-field--given-only">
+          <span>Miejsce</span>
+          <select id="entry-site" required>
+            <option value="">Wybierz</option>
+            <option value="brzuch">Brzuch</option>
+            <option value="udo">Udo / noga</option>
+            <option value="ramię">Ramię</option>
+            <option value="pośladek">Pośladek</option>
+            <option value="łopatka">Łopatka</option>
+          </select>
+        </label>
+        <label>
+          <span>Status</span>
+          <select id="entry-status">
+            <option value="given">Podano</option>
+            <option value="skipped">Pominięto</option>
+          </select>
+        </label>
+        <label class="form-field--wide">
+          <span>Uwagi</span>
+          <textarea id="entry-note" rows="3" placeholder="Opcjonalnie, np. lekkie zaczerwienienie"></textarea>
+        </label>
+      </div>
+
+      <div class="dialog-actions">
+        <button id="delete-entry-button" class="button button--danger button--small is-hidden" type="button">Usuń</button>
+        <span class="dialog-spacer"></span>
+        <button id="dialog-cancel-button" class="button button--secondary button--small" type="button">Anuluj</button>
+        <button class="button button--primary button--small" type="submit">Zapisz wpis</button>
+      </div>
+    </form>
+  </dialog>
