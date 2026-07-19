@@ -2,6 +2,8 @@
 
 **Wersja: v2.0-1907262315**
 
+Wersja 2.0-1907262315 naprawia otwieranie pliku aktualizacji APK na Androidzie 11–16 oraz zawiera poprawkę automatycznej kopii przed importem.
+
 Numer po myślniku oznacza moment przygotowania wersji w formacie `DDMMRRHHMM`, czyli `1907262007` = 19 lipca 2026, godz. 20:07.
 
 ## Kontrola projektu od zera
