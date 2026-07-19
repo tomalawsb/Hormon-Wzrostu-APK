@@ -35,6 +35,7 @@ function finishPermissionsOnboarding() {
   if (el['permissions-dialog'].open) el['permissions-dialog'].close();
   scheduleDailyReminder();
   showToast('Ustawienia zgód zostały zapisane.', 'success');
+  finishFirstRunAndOfferPwaInstall();
 }
 
 function skipPermissionsOnboarding(options = {}) {
@@ -44,6 +45,7 @@ function skipPermissionsOnboarding(options = {}) {
   if (el['permissions-dialog'].open) el['permissions-dialog'].close();
   if (!options.silent)
     showToast('Pominięto konfigurację zgód. Możesz wrócić do niej w ustawieniach.', 'success');
+  if (!options.silent) finishFirstRunAndOfferPwaInstall();
 }
 
 async function requestMicrophonePermission() {

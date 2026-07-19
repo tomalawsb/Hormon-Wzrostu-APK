@@ -34,6 +34,7 @@
       'import-preview-warning', 'import-confirm-button', 'import-cancel-button',
       'backup-password', 'backup-password-confirm', 'import-file', 'clear-data-button', 'data-backup-section', 'header-install-button',
       'desktop-install-button', 'settings-install-button', 'version-label', 'permissions-dialog',
+      'pwa-install-dialog', 'pwa-install-dialog-note', 'pwa-install-confirm-button', 'pwa-install-later-button',
       'permission-microphone-button', 'permission-notification-button', 'permission-storage-button',
       'permission-microphone-status', 'permission-notification-status', 'permission-storage-status',
       'permissions-finish-button', 'permissions-skip-button', 'microphone-permission-settings', 'notification-permission-settings',

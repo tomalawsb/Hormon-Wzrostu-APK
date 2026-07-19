@@ -9,6 +9,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: android-${{ github.workflow }}-${{ github.ref }}
@@ -61,6 +63,33 @@ jobs:
         env:
           ANDROID_CHECK_REQUIRED: '1'
         run: npm test
+
+      - name: Spakuj aktualną wersję PWA
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          mkdir -p dist
+          cd www
+          zip -r ../dist/Dzienniczek_Hormonu_PWA_${{ github.run_number }}.zip .
+
+      - name: Udostępnij PWA jako artefakt
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dzienniczek-Hormonu-PWA-${{ github.run_number }}
+          path: www/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Przygotuj GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+
+      - name: Wyślij PWA do GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: www
 
       - name: Udostępnij APK debug jako artefakt
         uses: actions/upload-artifact@v4
@@ -140,6 +169,20 @@ jobs:
             dist/*.apk \
             dist/*.aab \
             dist/SHA256SUMS.txt \
+            dist/Dzienniczek_Hormonu_PWA_*.zip \
             --target "$GITHUB_SHA" \
             --title "Dzienniczek Hormonu $RELEASE_TAG" \
             --notes "Automatyczne wydanie wersji $VERSION_NAME (versionCode $VERSION_CODE)."
+
+  deploy-pwa:
+    name: Publikacja PWA
+    if: github.event_name != 'pull_request'
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Opublikuj aktualną wersję PWA
+        id: deployment
+        uses: actions/deploy-pages@v4

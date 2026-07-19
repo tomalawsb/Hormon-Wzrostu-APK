@@ -4,20 +4,69 @@
   "encoding": "utf-8",
   "description": "Kolejność fragmentów interfejsu HTML.",
   "fragments": [
-    { "file": "shell/start.html", "layer": "shell" },
-    { "file": "components/icon/sprite.html", "layer": "component" },
-    { "file": "screens/today/index.html", "layer": "screen" },
-    { "file": "screens/calendar/index.html", "layer": "screen" },
-    { "file": "screens/history/index.html", "layer": "screen" },
-    { "file": "screens/settings/index.html", "layer": "screen" },
-    { "file": "components/bottom-navigation/index.html", "layer": "component" },
-    { "file": "screens/profiles/dialogs.html", "layer": "screen" },
-    { "file": "components/dialog/permissions.html", "layer": "component" },
-    { "file": "components/dialog/entry.html", "layer": "component" },
-    { "file": "components/injection-site/dialog.html", "layer": "component" },
-    { "file": "screens/reports/dialogs.html", "layer": "screen" },
-    { "file": "components/dialog/backup.html", "layer": "component" },
-    { "file": "screens/settings/security-overlays.html", "layer": "screen" },
-    { "file": "shell/end.html", "layer": "shell" }
+    {
+      "file": "shell/start.html",
+      "layer": "shell"
+    },
+    {
+      "file": "components/icon/sprite.html",
+      "layer": "component"
+    },
+    {
+      "file": "screens/today/index.html",
+      "layer": "screen"
+    },
+    {
+      "file": "screens/calendar/index.html",
+      "layer": "screen"
+    },
+    {
+      "file": "screens/history/index.html",
+      "layer": "screen"
+    },
+    {
+      "file": "screens/settings/index.html",
+      "layer": "screen"
+    },
+    {
+      "file": "components/bottom-navigation/index.html",
+      "layer": "component"
+    },
+    {
+      "file": "screens/profiles/dialogs.html",
+      "layer": "screen"
+    },
+    {
+      "file": "components/dialog/permissions.html",
+      "layer": "component"
+    },
+    {
+      "file": "components/dialog/pwa-install.html",
+      "layer": "component"
+    },
+    {
+      "file": "components/dialog/entry.html",
+      "layer": "component"
+    },
+    {
+      "file": "components/injection-site/dialog.html",
+      "layer": "component"
+    },
+    {
+      "file": "screens/reports/dialogs.html",
+      "layer": "screen"
+    },
+    {
+      "file": "components/dialog/backup.html",
+      "layer": "component"
+    },
+    {
+      "file": "screens/settings/security-overlays.html",
+      "layer": "screen"
+    },
+    {
+      "file": "shell/end.html",
+      "layer": "shell"
+    }
   ]
 }

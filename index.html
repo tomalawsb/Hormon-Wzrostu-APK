@@ -1095,7 +1095,11 @@
                       <h2>Informacje</h2>
                     </div>
                     <p>Aplikacja zapisuje historię leczenia. Nie dobiera dawki i nie zastępuje zaleceń lekarza.</p>
-                    <button id="settings-install-button" class="button button--primary button--small is-hidden" type="button">Zainstaluj aplikację</button>
+                    <div class="settings-install-callout">
+                      <div class="settings-install-callout__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-download"></use></svg></div>
+                      <div><strong>Zainstaluj wersję PWA</strong><span>Dodaj aplikację do ekranu telefonu lub pulpitu komputera.</span></div>
+                      <button id="settings-install-button" class="button button--primary settings-install-button is-hidden" type="button">Zainstaluj aplikację teraz</button>
+                    </div>
                   </article>
 
                   <details id="settings-advanced-permissions" class="settings-advanced">
@@ -1249,6 +1253,25 @@
       <div class="dialog-actions permissions-actions">
         <button id="permissions-skip-button" class="button button--secondary" type="button">Pomiń na razie</button>
         <button id="permissions-finish-button" class="button button--primary" type="button">Przejdź do aplikacji</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="pwa-install-dialog" class="permissions-dialog pwa-install-dialog" aria-labelledby="pwa-install-title">
+    <div class="permissions-content">
+      <div class="permissions-hero pwa-install-hero" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-download"></use></svg></div>
+      <p class="eyebrow">Wersja PWA</p>
+      <h2 id="pwa-install-title">Zainstalować Dzienniczek Hormonu?</h2>
+      <p class="muted">Po instalacji aplikacja otrzyma własną ikonę i będzie uruchamiana jak zwykły program. Twoje dane pozostają na tym urządzeniu.</p>
+      <div class="pwa-install-benefits" aria-label="Zalety instalacji">
+        <span>Szybkie uruchamianie z ekranu telefonu lub komputera</span>
+        <span>Działanie także bez internetu po pobraniu zasobów</span>
+        <span>Automatyczne pobieranie nowych wersji PWA</span>
+      </div>
+      <p id="pwa-install-dialog-note" class="settings-warning is-hidden">Przeglądarka nie udostępniła jeszcze automatycznej instalacji. Użyj opcji „Zainstaluj aplikację” albo „Dodaj do ekranu głównego” w menu przeglądarki.</p>
+      <div class="dialog-actions permissions-actions">
+        <button id="pwa-install-later-button" class="button button--secondary" type="button">Może później</button>
+        <button id="pwa-install-confirm-button" class="button button--primary" type="button">Zainstaluj aplikację</button>
       </div>
     </div>
   </dialog>

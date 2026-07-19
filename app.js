@@ -191,6 +191,7 @@
       'import-preview-warning', 'import-confirm-button', 'import-cancel-button',
       'backup-password', 'backup-password-confirm', 'import-file', 'clear-data-button', 'data-backup-section', 'header-install-button',
       'desktop-install-button', 'settings-install-button', 'version-label', 'permissions-dialog',
+      'pwa-install-dialog', 'pwa-install-dialog-note', 'pwa-install-confirm-button', 'pwa-install-later-button',
       'permission-microphone-button', 'permission-notification-button', 'permission-storage-button',
       'permission-microphone-status', 'permission-notification-status', 'permission-storage-status',
       'permissions-finish-button', 'permissions-skip-button', 'microphone-permission-settings', 'notification-permission-settings',
@@ -422,6 +423,12 @@
     el['permissions-finish-button'].addEventListener('click', finishPermissionsOnboarding);
     el['permissions-skip-button'].addEventListener('click', skipPermissionsOnboarding);
     el['open-permissions-button'].addEventListener('click', openPermissionsDialog);
+    el['pwa-install-confirm-button'].addEventListener('click', confirmFirstRunPwaInstall);
+    el['pwa-install-later-button'].addEventListener('click', postponeFirstRunPwaInstall);
+    el['pwa-install-dialog'].addEventListener('cancel', (event) => {
+      event.preventDefault();
+      postponeFirstRunPwaInstall();
+    });
     el['permissions-dialog'].addEventListener('cancel', (event) => {
       if (!isPermissionsOnboardingCompleted()) {
         event.preventDefault();
@@ -442,10 +449,13 @@
       event.preventDefault();
       deferredInstallPrompt = event;
       updateOnlineInstallState();
+      if (pwaInstallQuestionPending) showFirstRunPwaInstallQuestion();
     });
     window.addEventListener('appinstalled', () => {
       deferredInstallPrompt = null;
       updateOnlineInstallState();
+      markPwaInstallQuestionCompleted();
+      if (el['pwa-install-dialog']?.open) el['pwa-install-dialog'].close();
       showToast('Aplikacja została zainstalowana.', 'success');
     });
 
@@ -3577,10 +3587,12 @@ function showSettingsOverview({ focus = true } = {}) {
 function renderSettingsNavigation() {
   if (!el['settings-layout'] || !el['settings-category-list'] || !el['settings-panels']) return;
   const mobile = isMobileSettingsLayout();
-  const showDetail = !mobile || settingsDetailOpen;
+  const showDetail = settingsDetailOpen;
   el['settings-layout'].classList.toggle('is-mobile-detail', mobile && settingsDetailOpen);
   el['settings-layout'].classList.toggle('is-mobile-overview', mobile && !settingsDetailOpen);
-  el['settings-section-back-button'].classList.toggle('is-hidden', !(mobile && settingsDetailOpen));
+  el['settings-layout'].classList.toggle('is-settings-detail', settingsDetailOpen);
+  el['settings-layout'].classList.toggle('is-settings-overview', !settingsDetailOpen);
+  el['settings-section-back-button'].classList.toggle('is-hidden', !settingsDetailOpen);
   if (el['settings-profile-context']) {
     el['settings-profile-context'].hidden = !PROFILE_SETTINGS_SECTIONS.has(activeSettingsSection);
   }
@@ -7894,6 +7906,7 @@ function finishPermissionsOnboarding() {
   if (el['permissions-dialog'].open) el['permissions-dialog'].close();
   scheduleDailyReminder();
   showToast('Ustawienia zgód zostały zapisane.', 'success');
+  finishFirstRunAndOfferPwaInstall();
 }
 
 function skipPermissionsOnboarding(options = {}) {
@@ -7903,6 +7916,7 @@ function skipPermissionsOnboarding(options = {}) {
   if (el['permissions-dialog'].open) el['permissions-dialog'].close();
   if (!options.silent)
     showToast('Pominięto konfigurację zgód. Możesz wrócić do niej w ustawieniach.', 'success');
+  if (!options.silent) finishFirstRunAndOfferPwaInstall();
 }
 
 async function requestMicrophonePermission() {
@@ -9141,33 +9155,94 @@ function handleGlobalKeyboard(event) {
     el['history-search'].focus();
   }
 }
+const PWA_INSTALL_QUESTION_KEY = 'dzienniczek-hormonu-pwa-install-question-v1';
+let pwaInstallQuestionPending = false;
 
-function installPwa() {
+function isPwaInstallQuestionCompleted() {
+  try {
+    return localStorage.getItem(PWA_INSTALL_QUESTION_KEY) === 'done';
+  } catch {
+    return false;
+  }
+}
+
+function markPwaInstallQuestionCompleted() {
+  try {
+    localStorage.setItem(PWA_INSTALL_QUESTION_KEY, 'done');
+  } catch {}
+}
+
+function canOfferPwaInstallation() {
+  return !isNativeAndroidApp() && !isStandalonePwa();
+}
+
+function showFirstRunPwaInstallQuestion() {
+  if (!canOfferPwaInstallation() || isPwaInstallQuestionCompleted()) return;
+  pwaInstallQuestionPending = true;
+  window.setTimeout(() => {
+    if (el['permissions-dialog']?.open) return;
+    pwaInstallQuestionPending = false;
+    el['pwa-install-dialog-note']?.classList.toggle('is-hidden', Boolean(deferredInstallPrompt));
+    if (!el['pwa-install-dialog']?.open) el['pwa-install-dialog']?.showModal();
+  }, 220);
+}
+
+function finishFirstRunAndOfferPwaInstall() {
+  if (!canOfferPwaInstallation() || isPwaInstallQuestionCompleted()) return;
+  showFirstRunPwaInstallQuestion();
+}
+
+async function confirmFirstRunPwaInstall() {
+  markPwaInstallQuestionCompleted();
+  if (el['pwa-install-dialog']?.open) el['pwa-install-dialog'].close();
+  await installPwa();
+}
+
+function postponeFirstRunPwaInstall() {
+  markPwaInstallQuestionCompleted();
+  if (el['pwa-install-dialog']?.open) el['pwa-install-dialog'].close();
+  showToast('Aplikację możesz zainstalować później w Ustawieniach → Informacje o aplikacji.', 'success');
+}
+
+async function installPwa() {
+  if (!canOfferPwaInstallation()) {
+    showToast('Aplikacja jest już zainstalowana.', 'success');
+    return false;
+  }
   if (!deferredInstallPrompt) {
-    showToast(
-      'Opcja instalacji pojawi się w obsługiwanej przeglądarce po otwarciu aplikacji przez HTTPS.'
-    );
-    return;
+    showToast('Otwórz menu przeglądarki i wybierz „Zainstaluj aplikację” lub „Dodaj do ekranu głównego”.');
+    return false;
   }
   deferredInstallPrompt.prompt();
-  deferredInstallPrompt.userChoice.finally(() => {
+  try {
+    const choice = await deferredInstallPrompt.userChoice;
+    if (choice?.outcome === 'accepted') markPwaInstallQuestionCompleted();
+  } finally {
     deferredInstallPrompt = null;
     updateOnlineInstallState();
     refreshPwaRuntimeStatus();
-  });
+  }
+  return true;
 }
 
 function updateOnlineInstallState() {
-  const standalone =
-    window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  const visible = Boolean(deferredInstallPrompt) && !standalone;
-  [
-    el['header-install-button'],
-    el['desktop-install-button'],
-    el['settings-install-button'],
-  ].forEach((button) => {
-    button.classList.toggle('is-hidden', !visible);
+  const standalone = isStandalonePwa();
+  const native = isNativeAndroidApp();
+  const browserPwa = !native && !standalone;
+  [el['header-install-button'], el['desktop-install-button']].forEach((button) => {
+    button?.classList.toggle('is-hidden', !browserPwa || !deferredInstallPrompt);
   });
+  if (el['settings-install-button']) {
+    el['settings-install-button'].classList.toggle('is-hidden', !browserPwa);
+    el['settings-install-button'].disabled = false;
+    el['settings-install-button'].textContent = deferredInstallPrompt
+      ? 'Zainstaluj aplikację teraz'
+      : 'Jak zainstalować aplikację';
+  }
+  if (el['pwa-install-dialog-note']) {
+    el['pwa-install-dialog-note'].classList.toggle('is-hidden', Boolean(deferredInstallPrompt));
+  }
+  if (pwaInstallQuestionPending && deferredInstallPrompt) showFirstRunPwaInstallQuestion();
   if (el['pwa-maintenance-controls']) refreshPwaRuntimeStatus();
 }
 let trackedPwaRegistration = null;

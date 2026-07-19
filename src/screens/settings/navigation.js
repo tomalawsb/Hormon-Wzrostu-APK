@@ -70,10 +70,12 @@ function showSettingsOverview({ focus = true } = {}) {
 function renderSettingsNavigation() {
   if (!el['settings-layout'] || !el['settings-category-list'] || !el['settings-panels']) return;
   const mobile = isMobileSettingsLayout();
-  const showDetail = !mobile || settingsDetailOpen;
+  const showDetail = settingsDetailOpen;
   el['settings-layout'].classList.toggle('is-mobile-detail', mobile && settingsDetailOpen);
   el['settings-layout'].classList.toggle('is-mobile-overview', mobile && !settingsDetailOpen);
-  el['settings-section-back-button'].classList.toggle('is-hidden', !(mobile && settingsDetailOpen));
+  el['settings-layout'].classList.toggle('is-settings-detail', settingsDetailOpen);
+  el['settings-layout'].classList.toggle('is-settings-overview', !settingsDetailOpen);
+  el['settings-section-back-button'].classList.toggle('is-hidden', !settingsDetailOpen);
   if (el['settings-profile-context']) {
     el['settings-profile-context'].hidden = !PROFILE_SETTINGS_SECTIONS.has(activeSettingsSection);
   }

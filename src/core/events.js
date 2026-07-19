@@ -195,6 +195,12 @@
     el['permissions-finish-button'].addEventListener('click', finishPermissionsOnboarding);
     el['permissions-skip-button'].addEventListener('click', skipPermissionsOnboarding);
     el['open-permissions-button'].addEventListener('click', openPermissionsDialog);
+    el['pwa-install-confirm-button'].addEventListener('click', confirmFirstRunPwaInstall);
+    el['pwa-install-later-button'].addEventListener('click', postponeFirstRunPwaInstall);
+    el['pwa-install-dialog'].addEventListener('cancel', (event) => {
+      event.preventDefault();
+      postponeFirstRunPwaInstall();
+    });
     el['permissions-dialog'].addEventListener('cancel', (event) => {
       if (!isPermissionsOnboardingCompleted()) {
         event.preventDefault();
@@ -215,10 +221,13 @@
       event.preventDefault();
       deferredInstallPrompt = event;
       updateOnlineInstallState();
+      if (pwaInstallQuestionPending) showFirstRunPwaInstallQuestion();
     });
     window.addEventListener('appinstalled', () => {
       deferredInstallPrompt = null;
       updateOnlineInstallState();
+      markPwaInstallQuestionCompleted();
+      if (el['pwa-install-dialog']?.open) el['pwa-install-dialog'].close();
       showToast('Aplikacja została zainstalowana.', 'success');
     });
 
