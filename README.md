@@ -1,6 +1,6 @@
 # Dzienniczek Hormonu — Android APK
 
-**Wersja: v2.0-1907262242**
+**Wersja: v2.0-1907262300**
 
 Numer po myślniku oznacza moment przygotowania wersji w formacie `DDMMRRHHMM`, czyli `1907262007` = 19 lipca 2026, godz. 20:07.
 

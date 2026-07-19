@@ -8,6 +8,10 @@ import android.util.Base64;
 
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.SecureRandom;
@@ -26,20 +30,26 @@ final class SecureDataStore {
     private static final int IV_BYTES = 12;
     private static final int TAG_BITS = 128;
     private static final int MAX_PLAINTEXT_BYTES = 12 * 1024 * 1024;
+    private static final int MAX_ENCRYPTED_BYTES = 18 * 1024 * 1024;
+    private static final String AUTO_IMPORT_BACKUP_SLOT =
+            "dzienniczek-hormonu-wzrostu-auto-import-backup-v1";
+    private static final String AUTO_IMPORT_BACKUP_FILE = "auto_import_backup_v1.enc";
     static final String REMINDER_SCHEDULE_SLOT = "dzienniczek-hormonu-reminder-schedule-v1";
 
     private final SharedPreferences preferences;
+    private final File autoImportBackupFile;
     private final SecureRandom random = new SecureRandom();
 
     SecureDataStore(Context context) {
         preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        autoImportBackupFile = new File(context.getFilesDir(), AUTO_IMPORT_BACKUP_FILE);
     }
 
     String readResult(String slot) {
         JSONObject result = new JSONObject();
         try {
             requireSlot(slot);
-            String encoded = preferences.getString(slot, "");
+            String encoded = readEncryptedEnvelope(slot);
             result.put("ok", true);
             if (encoded == null || encoded.isEmpty()) {
                 result.put("exists", false);
@@ -64,7 +74,7 @@ final class SecureDataStore {
     String readValue(String slot) {
         try {
             requireSlot(slot);
-            String encoded = preferences.getString(slot, "");
+            String encoded = readEncryptedEnvelope(slot);
             return encoded == null || encoded.isEmpty() ? "" : decrypt(slot, encoded);
         } catch (Exception error) {
             return "";
@@ -76,7 +86,11 @@ final class SecureDataStore {
             requireSlot(slot);
             String value = plaintext == null ? "" : plaintext;
             if (value.getBytes(StandardCharsets.UTF_8).length > MAX_PLAINTEXT_BYTES) return false;
-            return preferences.edit().putString(slot, encrypt(slot, value)).commit();
+            String encrypted = encrypt(slot, value);
+            if (AUTO_IMPORT_BACKUP_SLOT.equals(slot)) {
+                return writeAutoImportBackupFile(encrypted);
+            }
+            return preferences.edit().putString(slot, encrypted).commit();
         } catch (Exception error) {
             return false;
         }
@@ -85,10 +99,73 @@ final class SecureDataStore {
     boolean remove(String slot) {
         try {
             requireSlot(slot);
-            return preferences.edit().remove(slot).commit();
+            boolean preferencesRemoved = preferences.edit().remove(slot).commit();
+            if (!AUTO_IMPORT_BACKUP_SLOT.equals(slot)) return preferencesRemoved;
+            return deleteAutoImportBackupFile() && preferencesRemoved;
         } catch (Exception error) {
             return false;
         }
+    }
+
+
+    private String readEncryptedEnvelope(String slot) throws Exception {
+        if (!AUTO_IMPORT_BACKUP_SLOT.equals(slot)) {
+            return preferences.getString(slot, "");
+        }
+        if (autoImportBackupFile.isFile()) {
+            long length = autoImportBackupFile.length();
+            if (length <= 0 || length > MAX_ENCRYPTED_BYTES) {
+                throw new IllegalArgumentException("Invalid automatic backup file size");
+            }
+            try (FileInputStream input = new FileInputStream(autoImportBackupFile);
+                 ByteArrayOutputStream output = new ByteArrayOutputStream((int) length)) {
+                byte[] buffer = new byte[8192];
+                int read;
+                int total = 0;
+                while ((read = input.read(buffer)) != -1) {
+                    total += read;
+                    if (total > MAX_ENCRYPTED_BYTES) {
+                        throw new IllegalArgumentException("Automatic backup file is too large");
+                    }
+                    output.write(buffer, 0, read);
+                }
+                return output.toString(StandardCharsets.UTF_8.name());
+            }
+        }
+        return preferences.getString(slot, "");
+    }
+
+    private boolean writeAutoImportBackupFile(String encrypted) {
+        File temporary = new File(autoImportBackupFile.getParentFile(), AUTO_IMPORT_BACKUP_FILE + ".tmp");
+        byte[] bytes = encrypted.getBytes(StandardCharsets.UTF_8);
+        if (bytes.length <= 0 || bytes.length > MAX_ENCRYPTED_BYTES) return false;
+        try (FileOutputStream output = new FileOutputStream(temporary, false)) {
+            output.write(bytes);
+            output.flush();
+            output.getFD().sync();
+        } catch (Exception error) {
+            temporary.delete();
+            return false;
+        } finally {
+            Arrays.fill(bytes, (byte) 0);
+        }
+        if (autoImportBackupFile.exists() && !autoImportBackupFile.delete()) {
+            temporary.delete();
+            return false;
+        }
+        if (!temporary.renameTo(autoImportBackupFile)) {
+            temporary.delete();
+            return false;
+        }
+        preferences.edit().remove(AUTO_IMPORT_BACKUP_SLOT).apply();
+        return true;
+    }
+
+    private boolean deleteAutoImportBackupFile() {
+        File temporary = new File(autoImportBackupFile.getParentFile(), AUTO_IMPORT_BACKUP_FILE + ".tmp");
+        boolean temporaryRemoved = !temporary.exists() || temporary.delete();
+        boolean backupRemoved = !autoImportBackupFile.exists() || autoImportBackupFile.delete();
+        return temporaryRemoved && backupRemoved;
     }
 
     private String encrypt(String slot, String plaintext) throws Exception {
@@ -153,7 +230,7 @@ final class SecureDataStore {
     private static void requireSlot(String slot) {
         if (!"dzienniczek-hormonu-wzrostu-v1".equals(slot)
                 && !"dzienniczek-hormonu-wzrostu-v1-backup".equals(slot)
-                && !"dzienniczek-hormonu-wzrostu-auto-import-backup-v1".equals(slot)
+                && !AUTO_IMPORT_BACKUP_SLOT.equals(slot)
                 && !REMINDER_SCHEDULE_SLOT.equals(slot)) {
             throw new IllegalArgumentException("Invalid secure storage slot");
         }
