@@ -335,11 +335,11 @@ public class MainActivity extends FragmentActivity {
 
         @Override
         public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-            if (request != null && request.isForMainFrame()) {
+            if (failingUrl != null) {
                 bridgeEnabled = false;
                 denyPendingWebPermission();
             }
-            super.onReceivedError(view, request, error);
+            super.onReceivedError(view, errorCode, description, failingUrl);
         }
 
         @Override
