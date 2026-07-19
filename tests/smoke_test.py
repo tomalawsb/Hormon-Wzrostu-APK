@@ -161,7 +161,7 @@ for obsolete in (
     "tools/apply_fix_1013.py",
     "tools/apply_ui_fix_v107.py",
     ".release-1.0.12",
-    "release-1.0-1907261907-trigger.txt",
+    "release-1.0-1907261820-trigger.txt",
 ):
     require(not (ROOT / obsolete).exists(), f"pozostał martwy plik: {obsolete}")
 

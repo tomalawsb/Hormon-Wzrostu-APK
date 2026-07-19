@@ -12,6 +12,24 @@ const appPath = path.join(root, 'app.js');
 const marker = '\n})();\n';
 let source = fs.readFileSync(appPath, 'utf8');
 
+const exportSource = fs.readFileSync(path.join(root, 'src/services/export/backup.js'), 'utf8');
+const dialogSource = fs.readFileSync(path.join(root, 'src/components/dialog/backup.html'), 'utf8');
+const importSource = fs.readFileSync(path.join(root, 'src/screens/settings/import.js'), 'utf8');
+assert.ok(
+  !exportSource.includes('encryptBackupPayload(payload'),
+  'Eksport nadal wymaga szyfrowania hasłem.'
+);
+assert.ok(!dialogSource.includes('id="backup-password"'), 'Okno kopii nadal pokazuje pole hasła.');
+assert.ok(dialogSource.includes('plik JSON bez hasła'), 'Brak informacji o kopii JSON bez hasła.');
+assert.ok(
+  importSource.includes('decryptBackupEnvelope'),
+  'Usunięto obsługę starszych kopii .ghbackup.'
+);
+assert.ok(
+  importSource.includes('window.prompt'),
+  'Starsza kopia .ghbackup nie pyta o hasło przy imporcie.'
+);
+
 assert.ok(source.endsWith(marker), 'Nie rozpoznano końca app.js.');
 
 const injectedCheck = String.raw`

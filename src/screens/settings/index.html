@@ -70,9 +70,9 @@
             </aside>
 
             <div class="settings-content">
-              <button id="settings-section-back-button" class="back-button settings-section-back is-hidden" type="button" aria-label="Wróć do wszystkich ustawień">
-                <svg class="app-icon back-button__icon" aria-hidden="true" focusable="false"><use href="#icon-chevron-left"></use></svg>
-                <span>Wszystkie ustawienia</span>
+              <button id="settings-section-back-button" class="back-button settings-section-back is-hidden" type="button" aria-label="Wróć do wszystkich ustawień" hidden>
+                <span class="settings-section-back__arrow" aria-hidden="true">←</span>
+                <span>Wstecz do wszystkich ustawień</span>
               </button>
               <div id="settings-panels" class="settings-panels">
                 <section class="settings-panel settings-panel-stack profile-health-dashboard" data-settings-panel="profiles" role="tabpanel">
@@ -602,7 +602,7 @@
                     </div>
                     <div class="settings-version-row">
                       <span>Zainstalowana wersja</span>
-                      <strong id="settings-version-label">v1.0-1907261907</strong>
+                      <strong id="settings-version-label">v1.0-1907261901</strong>
                     </div>
                     <p id="update-status" class="muted" role="status" aria-live="polite">Sprawdź, czy jest dostępna nowsza wersja aplikacji.</p>
                     <div class="dialog-actions dialog-actions--start">

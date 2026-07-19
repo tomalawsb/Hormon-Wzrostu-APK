@@ -2410,6 +2410,8 @@ function constantTimeEqual(left, right) {
   return difference === 0;
 }
 
+// Zachowane wyłącznie do testów zgodności starszych kopii .ghbackup.
+// eslint-disable-next-line no-unused-vars
 async function encryptBackupPayload(payload, password) {
   validateBackupPassword(password);
   const plaintext = JSON.stringify(payload);
@@ -3592,7 +3594,10 @@ function renderSettingsNavigation() {
   el['settings-layout'].classList.toggle('is-mobile-overview', mobile && !settingsDetailOpen);
   el['settings-layout'].classList.toggle('is-settings-detail', settingsDetailOpen);
   el['settings-layout'].classList.toggle('is-settings-overview', !settingsDetailOpen);
-  el['settings-section-back-button'].classList.toggle('is-hidden', !settingsDetailOpen);
+  if (el['settings-section-back-button']) {
+    el['settings-section-back-button'].hidden = !settingsDetailOpen;
+    el['settings-section-back-button'].classList.toggle('is-hidden', !settingsDetailOpen);
+  }
   if (el['settings-profile-context']) {
     el['settings-profile-context'].hidden = !PROFILE_SETTINGS_SECTIONS.has(activeSettingsSection);
   }
@@ -6375,7 +6380,7 @@ function openBackupPanel() {
   clearPendingImportPreview();
   renderAutomaticBackupState();
   openDataDialog(el['backup-dialog'], el['backup-panel-button']);
-  window.setTimeout(() => el['backup-password']?.focus(), 30);
+  window.setTimeout(() => el['export-json-button']?.focus(), 30);
 }
 function withProfileContext(profileId, callback) {
   const previousProfileId = data.activeProfileId;
@@ -7236,35 +7241,29 @@ async function exportActiveProfileJson() {
 }
 
 async function exportBackupScope(scope = 'all') {
-  const password = String(el['backup-password']?.value || '');
-  const confirmation = String(el['backup-password-confirm']?.value || '');
   try {
-    validateBackupPassword(password);
-    if (password !== confirmation) throw new Error('Hasło i jego powtórzenie nie są takie same.');
     const activeProfile = getActiveProfile();
     const payload = createBackupPayload(scope, activeProfile.id);
-    const encrypted = await encryptBackupPayload(payload, password);
     const filename =
       scope === 'profile'
-        ? `dzienniczek-profil-${safeFilenamePart(activeProfile.name)}-${localDateISO()}.ghbackup`
-        : `dzienniczek-kopia-${localDateISO()}.ghbackup`;
-    downloadFile(filename, JSON.stringify(encrypted, null, 2), 'application/json');
+        ? `dzienniczek-profil-${safeFilenamePart(activeProfile.name)}-${localDateISO()}.json`
+        : `dzienniczek-kopia-${localDateISO()}.json`;
+    downloadFile(filename, JSON.stringify(payload, null, 2), 'application/json');
     await flushSecureStorageWrites();
     try {
       localStorage.setItem(BACKUP_REMINDER_KEY, String(Date.now()));
     } catch (error) {
       console.warn(error);
     }
-    if (el['backup-password-confirm']) el['backup-password-confirm'].value = '';
     showToast(
       scope === 'profile'
-        ? `Pobrano zaszyfrowaną kopię profilu „${activeProfile.name}”.`
-        : 'Pobrano zaszyfrowaną kopię wszystkich profili.',
+        ? `Pobrano kopię profilu „${activeProfile.name}”.`
+        : 'Pobrano kopię wszystkich profili.',
       'success'
     );
   } catch (error) {
     console.error(error);
-    showToast(error.message || 'Nie udało się zaszyfrować kopii.', 'error', 7000);
+    showToast(error.message || 'Nie udało się utworzyć kopii zapasowej.', 'error', 7000);
   }
 }
 
@@ -7553,7 +7552,7 @@ async function importJson(event) {
   if (!file) return;
   try {
     if (file.size > MAX_BACKUP_FILE_SIZE * 2)
-      throw new Error('Plik jest zbyt duży. Maksymalny rozmiar zaszyfrowanej kopii to 20 MB.');
+      throw new Error('Plik jest zbyt duży. Maksymalny rozmiar kopii to 20 MB.');
     const text = await file.text();
     const envelopeOrBackup = JSON.parse(text);
     assertSafeJsonValue(envelopeOrBackup);
@@ -7561,15 +7560,21 @@ async function importJson(event) {
     if (!encrypted && file.size > MAX_BACKUP_FILE_SIZE) {
       throw new Error('Jawny plik JSON jest zbyt duży. Maksymalny rozmiar to 10 MB.');
     }
-    const parsed = encrypted
-      ? await decryptBackupEnvelope(envelopeOrBackup, String(el['backup-password']?.value || ''))
-      : envelopeOrBackup;
+    let parsed = envelopeOrBackup;
+    if (encrypted) {
+      const password = window.prompt(
+        'To starsza, zaszyfrowana kopia .ghbackup. Podaj hasło użyte przy jej tworzeniu:'
+      );
+      if (password === null) throw new Error('Anulowano odczyt zaszyfrowanej kopii.');
+      if (!password) throw new Error('Nie podano hasła do starszej zaszyfrowanej kopii.');
+      parsed = await decryptBackupEnvelope(envelopeOrBackup, password);
+    }
     assertSafeJsonValue(parsed);
     pendingImportPreview = {
       ...inspectBackupPayload(parsed),
       filename: file.name || (encrypted ? 'kopia.ghbackup' : 'kopia.json'),
       encrypted,
-      plaintextLegacy: !encrypted,
+      plainJson: !encrypted,
     };
     renderImportPreview();
   } catch (error) {
@@ -7606,9 +7611,9 @@ function renderImportPreview() {
   el['import-preview-profiles'].innerHTML = summary.profileNames
     .map((name) => `<li>${escapeHtml(name)}</li>`)
     .join('');
-  el['import-preview-warning'].textContent = preview.plaintextLegacy
-    ? `${modeLabel} Uwaga: to starsza, niezaszyfrowana kopia JSON.`
-    : `${modeLabel} Kopia jest zaszyfrowana i uwierzytelniona.`;
+  el['import-preview-warning'].textContent = preview.encrypted
+    ? `${modeLabel} To starsza kopia .ghbackup, odszyfrowana podanym hasłem.`
+    : `${modeLabel} To kopia JSON bez hasła.`;
   el['import-confirm-button'].textContent =
     preview.mode === 'add-profile' ? 'Dodaj profil' : 'Zastąp wszystkie dane';
   container.hidden = false;
@@ -7790,8 +7795,6 @@ function restoreAutomaticImportBackup() {
 
 function closeBackupPanel() {
   clearPendingImportPreview();
-  if (el['backup-password']) el['backup-password'].value = '';
-  if (el['backup-password-confirm']) el['backup-password-confirm'].value = '';
   closeDataDialog(el['backup-dialog']);
 }
 

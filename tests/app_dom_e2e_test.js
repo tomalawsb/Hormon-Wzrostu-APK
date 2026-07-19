@@ -9,6 +9,7 @@ const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
 const { JSDOM } = require('jsdom');
 
 const root = path.resolve(__dirname, '..');
+const appVersion = JSON.parse(fs.readFileSync(path.join(root, 'app-version.json'), 'utf8')).version;
 
 function waitFor(condition, timeoutMs = 5000) {
   const startedAt = Date.now();
@@ -65,7 +66,7 @@ async function main() {
   window.fetch = async (input) => {
     const url = String(input?.url || input);
     if (url.includes('app-version.json')) {
-      return new Response(JSON.stringify({ version: '1.0-1907261907' }), {
+      return new Response(JSON.stringify({ version: appVersion }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });

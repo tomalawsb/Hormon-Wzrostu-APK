@@ -9,5 +9,5 @@ function openBackupPanel() {
   clearPendingImportPreview();
   renderAutomaticBackupState();
   openDataDialog(el['backup-dialog'], el['backup-panel-button']);
-  window.setTimeout(() => el['backup-password']?.focus(), 30);
+  window.setTimeout(() => el['export-json-button']?.focus(), 30);
 }

@@ -1,6 +1,6 @@
 {
   "name": "dzienniczek-hormonu",
-  "version": "1.0.0-1907261907",
+  "version": "1.0.0-1907261901",
   "private": true,
   "description": "Dzienniczek Hormonu - PWA i natywna aplikacja Android WebView",
   "scripts": {
@@ -14,6 +14,7 @@
     "prepare:web": "npm run build:sources && npm run build:bridge && node tools/run_python.js tools/prepare_android_web.py",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "release:prepare": "npm run format && npm test",
     "lint": "npm run lint:js && npm run format:check",
     "lint:js": "eslint app.js service-worker.js src/native tests tools eslint.config.cjs prettier.config.cjs",
     "test:project": "node tools/run_python.js tests/smoke_test.py",

@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SEMVER_RE = re.compile(r"\d+\.\d+\.\d+")
+VERSION_RE = re.compile(r"(?:\d+\.\d+\.\d+|\d+\.\d+-\d{10})")
 
 
 def fail(message: str) -> None:
@@ -35,8 +35,8 @@ def main() -> int:
 
     version_name = sys.argv[1].strip()
     version_code_raw = sys.argv[2].strip()
-    if not SEMVER_RE.fullmatch(version_name):
-        fail("wersja musi mieć format X.Y.Z, np. 1.0.4")
+    if not VERSION_RE.fullmatch(version_name):
+        fail("wersja musi mieć format X.Y.Z albo X.Y-DDMMRRHHMM, np. 1.0-1907261820")
     if not version_code_raw.isdigit() or int(version_code_raw) < 1:
         fail("versionCode musi być dodatnią liczbą całkowitą")
     version_code = int(version_code_raw)
@@ -56,13 +56,14 @@ def main() -> int:
 
     package_path = ROOT / "package.json"
     package = load_json(package_path)
-    package["version"] = version_name
+    package_version = version_name if re.fullmatch(r"\d+\.\d+\.\d+", version_name) else version_name.replace("-", ".0-", 1)
+    package["version"] = package_version
     save_json(package_path, package)
 
     lock_path = ROOT / "package-lock.json"
     lock = load_json(lock_path)
-    lock["version"] = version_name
-    lock.setdefault("packages", {}).setdefault("", {})["version"] = version_name
+    lock["version"] = package_version
+    lock.setdefault("packages", {}).setdefault("", {})["version"] = package_version
     save_json(lock_path, lock)
 
     version_file.write_text(
@@ -129,9 +130,15 @@ def main() -> int:
     service_worker = service_worker_path.read_text(encoding="utf-8")
     service_worker = replace_required(
         service_worker,
-        r"^const CACHE_NAME = 'dzienniczek-hormonu-v[^']+';$",
-        f"const CACHE_NAME = 'dzienniczek-hormonu-v{version_name}';",
-        "cache service workera",
+        r"^const CACHE_VERSION = 'v[^']+';$",
+        f"const CACHE_VERSION = 'v{version_name}';",
+        "wersja cache service workera",
+    )
+    service_worker = replace_required(
+        service_worker,
+        r"^const CACHE_NAMESPACE = 'dzienniczek-hormonu-v[^']+';$",
+        f"const CACHE_NAMESPACE = 'dzienniczek-hormonu-v{version_name}';",
+        "przestrzeń nazw cache service workera",
     )
     service_worker_path.write_text(service_worker, encoding="utf-8")
 

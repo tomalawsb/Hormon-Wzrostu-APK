@@ -125,6 +125,21 @@ assert.equal(context.el['settings-profile-context'].hidden, true);
 vm.runInContext("openSettingsSection('nieznana', { focus: false })", context);
 assert.equal(vm.runInContext('activeSettingsSection', context), 'profiles');
 
+vm.runInContext("openSettingsSection('treatment', { focus: false })", context);
+assert.equal(context.el['settings-section-back-button'].hidden, false);
+assert.equal(
+  context.el['settings-section-back-button'].classList.contains('is-hidden'),
+  false,
+  'Przycisk powrotu powinien być widoczny na podstronie ustawień.'
+);
+vm.runInContext('showSettingsOverview({ focus: false })', context);
+assert.equal(context.el['settings-section-back-button'].hidden, true);
+assert.equal(
+  context.el['settings-section-back-button'].classList.contains('is-hidden'),
+  true,
+  'Przycisk powrotu powinien być ukryty na liście wszystkich ustawień.'
+);
+
 buttons.forEach((button) => {
   const target = button.dataset.settingsTarget;
   assert.equal(button.id, `settings-tab-${target}`);

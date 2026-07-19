@@ -1,6 +1,6 @@
 # Dzienniczek Hormonu — Android APK
 
-**Wersja: v1.0-1907261907**
+**Wersja: v1.0-1907261901**
 
 ## Kontrola projektu od zera
 
@@ -16,7 +16,7 @@ Android SDK część androidowa jest pomijana; w workflow CI jest obowiązkowa.
 ## Bezpieczeństwo danych
 
 Dane medyczne są szyfrowane lokalnie. APK używa Android Keystore, a PWA
-Web Crypto i IndexedDB. Kopie danych mają zaszyfrowany format `.ghbackup`.
+Web Crypto i IndexedDB. Nowe kopie danych są zapisywane jako pliki `.json` bez hasła; import starszych, zaszyfrowanych kopii `.ghbackup` nadal jest obsługiwany.
 Opis wdrożenia i lista kontroli: [ETAP_2_BEZPIECZENSTWO.md](ETAP_2_BEZPIECZENSTWO.md).
 
 ## Bezpieczeństwo WebView
@@ -64,3 +64,5 @@ Aplikacja sprawdza najnowsze wydanie w:
 ## Pierwsza konfiguracja
 
 1. Uruchom `KONFIGURUJ_PODPIS.cmd` i utwórz nowy klucz.
+
+Skrypt `AKTUALIZUJ_I_WYSLIJ.cmd` przed testami automatycznie poprawia formatowanie plików zmienianych przez numer wersji.

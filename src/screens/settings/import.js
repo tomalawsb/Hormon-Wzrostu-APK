@@ -5,7 +5,7 @@ async function importJson(event) {
   if (!file) return;
   try {
     if (file.size > MAX_BACKUP_FILE_SIZE * 2)
-      throw new Error('Plik jest zbyt duży. Maksymalny rozmiar zaszyfrowanej kopii to 20 MB.');
+      throw new Error('Plik jest zbyt duży. Maksymalny rozmiar kopii to 20 MB.');
     const text = await file.text();
     const envelopeOrBackup = JSON.parse(text);
     assertSafeJsonValue(envelopeOrBackup);
@@ -13,15 +13,21 @@ async function importJson(event) {
     if (!encrypted && file.size > MAX_BACKUP_FILE_SIZE) {
       throw new Error('Jawny plik JSON jest zbyt duży. Maksymalny rozmiar to 10 MB.');
     }
-    const parsed = encrypted
-      ? await decryptBackupEnvelope(envelopeOrBackup, String(el['backup-password']?.value || ''))
-      : envelopeOrBackup;
+    let parsed = envelopeOrBackup;
+    if (encrypted) {
+      const password = window.prompt(
+        'To starsza, zaszyfrowana kopia .ghbackup. Podaj hasło użyte przy jej tworzeniu:'
+      );
+      if (password === null) throw new Error('Anulowano odczyt zaszyfrowanej kopii.');
+      if (!password) throw new Error('Nie podano hasła do starszej zaszyfrowanej kopii.');
+      parsed = await decryptBackupEnvelope(envelopeOrBackup, password);
+    }
     assertSafeJsonValue(parsed);
     pendingImportPreview = {
       ...inspectBackupPayload(parsed),
       filename: file.name || (encrypted ? 'kopia.ghbackup' : 'kopia.json'),
       encrypted,
-      plaintextLegacy: !encrypted,
+      plainJson: !encrypted,
     };
     renderImportPreview();
   } catch (error) {
@@ -58,9 +64,9 @@ function renderImportPreview() {
   el['import-preview-profiles'].innerHTML = summary.profileNames
     .map((name) => `<li>${escapeHtml(name)}</li>`)
     .join('');
-  el['import-preview-warning'].textContent = preview.plaintextLegacy
-    ? `${modeLabel} Uwaga: to starsza, niezaszyfrowana kopia JSON.`
-    : `${modeLabel} Kopia jest zaszyfrowana i uwierzytelniona.`;
+  el['import-preview-warning'].textContent = preview.encrypted
+    ? `${modeLabel} To starsza kopia .ghbackup, odszyfrowana podanym hasłem.`
+    : `${modeLabel} To kopia JSON bez hasła.`;
   el['import-confirm-button'].textContent =
     preview.mode === 'add-profile' ? 'Dodaj profil' : 'Zastąp wszystkie dane';
   container.hidden = false;
@@ -242,7 +248,5 @@ function restoreAutomaticImportBackup() {
 
 function closeBackupPanel() {
   clearPendingImportPreview();
-  if (el['backup-password']) el['backup-password'].value = '';
-  if (el['backup-password-confirm']) el['backup-password-confirm'].value = '';
   closeDataDialog(el['backup-dialog']);
 }

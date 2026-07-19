@@ -5,24 +5,14 @@
         <div>
           <p class="eyebrow">Kopia zapasowa</p>
           <h2 id="backup-dialog-title">Dane aplikacji</h2>
-          <p class="muted">Eksport jest szyfrowany hasłem. Przed każdym importem aplikacja tworzy lokalną, zaszyfrowaną kopię bezpieczeństwa.</p>
+          <p class="muted">Kopia jest zapisywana jako zwykły plik JSON bez hasła. Przed każdym importem aplikacja tworzy lokalną kopię bezpieczeństwa.</p>
         </div>
         <button id="backup-close-button" class="icon-button" type="button" aria-label="Zamknij kopię zapasową"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
-      </div>
-      <div class="backup-password-grid">
-        <label>
-          <span>Hasło kopii (minimum 8 znaków)</span>
-          <input id="backup-password" type="password" minlength="8" maxlength="256" autocomplete="off" placeholder="Wymagane przy eksporcie i imporcie">
-        </label>
-        <label>
-          <span>Powtórz hasło przy eksporcie</span>
-          <input id="backup-password-confirm" type="password" minlength="8" maxlength="256" autocomplete="off" placeholder="Niepotrzebne przy imporcie">
-        </label>
       </div>
       <div class="backup-option-grid">
         <button id="export-json-button" class="backup-option" type="button">
           <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-download"></use></svg></span>
-          <span><strong>Zapisz wszystkie profile</strong><small>Zaszyfrowany plik historii, ustawień, ampułek i przypomnień</small></span>
+          <span><strong>Zapisz wszystkie profile</strong><small>Plik JSON z historią, ustawieniami, ampułkami i przypomnieniami</small></span>
         </button>
         <button id="export-profile-json-button" class="backup-option" type="button">
           <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-users"></use></svg></span>
@@ -30,7 +20,7 @@
         </button>
         <button id="import-button" class="backup-option" type="button">
           <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-upload"></use></svg></span>
-          <span><strong>Wczytaj kopię</strong><small>Obsługuje szyfrowany .ghbackup i starszy JSON</small></span>
+          <span><strong>Wczytaj kopię</strong><small>Obsługuje bieżący JSON oraz starsze zaszyfrowane pliki .ghbackup</small></span>
         </button>
         <button id="restore-auto-backup-button" class="backup-option backup-option--recovery" type="button" hidden>
           <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-backup"></use></svg></span>

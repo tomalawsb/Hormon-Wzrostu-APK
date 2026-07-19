@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0c857b">
   <meta name="description" content="Prywatny dzienniczek podań hormonu wzrostu z obsługą głosową, klawiaturą, kalendarzem i historią.">
-  <title>Dzienniczek Hormonu v1.0-1907261907</title>
+  <title>Dzienniczek Hormonu v1.0-1907261901</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icon-192.png">
@@ -21,7 +21,7 @@
       <div class="brand brand--desktop">
         <img src="./icon-192.png" alt="" width="46" height="46">
         <div>
-          <strong>Dzienniczek Hormonu <span class="brand-version">v1.0-1907261907</span></strong>
+          <strong>Dzienniczek Hormonu <span class="brand-version">v1.0-1907261901</span></strong>
           <span>dziennik podań</span>
         </div>
       </div>
@@ -60,7 +60,7 @@
         <div class="brand brand--mobile">
           <img src="./icon-192.png" alt="" width="42" height="42">
           <div>
-            <strong>Dzienniczek Hormonu <span class="brand-version">v1.0-1907261907</span></strong>
+            <strong>Dzienniczek Hormonu <span class="brand-version">v1.0-1907261901</span></strong>
           <span>dziennik podań</span>
           </div>
         </div>
@@ -531,9 +531,9 @@
             </aside>
 
             <div class="settings-content">
-              <button id="settings-section-back-button" class="back-button settings-section-back is-hidden" type="button" aria-label="Wróć do wszystkich ustawień">
-                <svg class="app-icon back-button__icon" aria-hidden="true" focusable="false"><use href="#icon-chevron-left"></use></svg>
-                <span>Wszystkie ustawienia</span>
+              <button id="settings-section-back-button" class="back-button settings-section-back is-hidden" type="button" aria-label="Wróć do wszystkich ustawień" hidden>
+                <span class="settings-section-back__arrow" aria-hidden="true">←</span>
+                <span>Wstecz do wszystkich ustawień</span>
               </button>
               <div id="settings-panels" class="settings-panels">
                 <section class="settings-panel settings-panel-stack profile-health-dashboard" data-settings-panel="profiles" role="tabpanel">
@@ -1063,7 +1063,7 @@
                     </div>
                     <div class="settings-version-row">
                       <span>Zainstalowana wersja</span>
-                      <strong id="settings-version-label">v1.0-1907261907</strong>
+                      <strong id="settings-version-label">v1.0-1907261901</strong>
                     </div>
                     <p id="update-status" class="muted" role="status" aria-live="polite">Sprawdź, czy jest dostępna nowsza wersja aplikacji.</p>
                     <div class="dialog-actions dialog-actions--start">
@@ -1424,24 +1424,14 @@
         <div>
           <p class="eyebrow">Kopia zapasowa</p>
           <h2 id="backup-dialog-title">Dane aplikacji</h2>
-          <p class="muted">Eksport jest szyfrowany hasłem. Przed każdym importem aplikacja tworzy lokalną, zaszyfrowaną kopię bezpieczeństwa.</p>
+          <p class="muted">Kopia jest zapisywana jako zwykły plik JSON bez hasła. Przed każdym importem aplikacja tworzy lokalną kopię bezpieczeństwa.</p>
         </div>
         <button id="backup-close-button" class="icon-button" type="button" aria-label="Zamknij kopię zapasową"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
-      </div>
-      <div class="backup-password-grid">
-        <label>
-          <span>Hasło kopii (minimum 8 znaków)</span>
-          <input id="backup-password" type="password" minlength="8" maxlength="256" autocomplete="off" placeholder="Wymagane przy eksporcie i imporcie">
-        </label>
-        <label>
-          <span>Powtórz hasło przy eksporcie</span>
-          <input id="backup-password-confirm" type="password" minlength="8" maxlength="256" autocomplete="off" placeholder="Niepotrzebne przy imporcie">
-        </label>
       </div>
       <div class="backup-option-grid">
         <button id="export-json-button" class="backup-option" type="button">
           <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-download"></use></svg></span>
-          <span><strong>Zapisz wszystkie profile</strong><small>Zaszyfrowany plik historii, ustawień, ampułek i przypomnień</small></span>
+          <span><strong>Zapisz wszystkie profile</strong><small>Plik JSON z historią, ustawieniami, ampułkami i przypomnieniami</small></span>
         </button>
         <button id="export-profile-json-button" class="backup-option" type="button">
           <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-users"></use></svg></span>
@@ -1449,7 +1439,7 @@
         </button>
         <button id="import-button" class="backup-option" type="button">
           <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-upload"></use></svg></span>
-          <span><strong>Wczytaj kopię</strong><small>Obsługuje szyfrowany .ghbackup i starszy JSON</small></span>
+          <span><strong>Wczytaj kopię</strong><small>Obsługuje bieżący JSON oraz starsze zaszyfrowane pliki .ghbackup</small></span>
         </button>
         <button id="restore-auto-backup-button" class="backup-option backup-option--recovery" type="button" hidden>
           <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-backup"></use></svg></span>

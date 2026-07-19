@@ -75,7 +75,10 @@ function renderSettingsNavigation() {
   el['settings-layout'].classList.toggle('is-mobile-overview', mobile && !settingsDetailOpen);
   el['settings-layout'].classList.toggle('is-settings-detail', settingsDetailOpen);
   el['settings-layout'].classList.toggle('is-settings-overview', !settingsDetailOpen);
-  el['settings-section-back-button'].classList.toggle('is-hidden', !settingsDetailOpen);
+  if (el['settings-section-back-button']) {
+    el['settings-section-back-button'].hidden = !settingsDetailOpen;
+    el['settings-section-back-button'].classList.toggle('is-hidden', !settingsDetailOpen);
+  }
   if (el['settings-profile-context']) {
     el['settings-profile-context'].hidden = !PROFILE_SETTINGS_SECTIONS.has(activeSettingsSection);
   }
