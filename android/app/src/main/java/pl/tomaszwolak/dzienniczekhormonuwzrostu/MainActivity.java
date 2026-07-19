@@ -331,7 +331,15 @@ public class MainActivity extends FragmentActivity {
             if (bridgeEnabled) dispatchPendingNotificationAction();
         }
 
-        @Override         @SuppressWarnings("deprecation")         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {             if (failingUrl != null) {                 bridgeEnabled = false;                 denyPendingWebPermission();             }             super.onReceivedError(view, errorCode, description, failingUrl);         }
+                @Override
+        @SuppressWarnings("deprecation")
+        public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+            if (failingUrl != null) {
+                bridgeEnabled = false;
+                denyPendingWebPermission();
+            }
+            super.onReceivedError(view, errorCode, description, failingUrl);
+        }
 
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
