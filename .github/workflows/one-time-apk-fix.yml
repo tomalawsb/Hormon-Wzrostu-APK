@@ -1,0 +1,48 @@
+name: Jednorazowe dokończenie poprawki APK
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/one-time-apk-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  synchronize-version:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Pobierz projekt
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ustaw Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Zainstaluj zależności
+        run: npm ci --no-audit --no-fund
+
+      - name: Ustaw i zsynchronizuj wersję
+        shell: bash
+        run: |
+          printf 'VERSION_NAME=2.0-1907262300\nVERSION_CODE=1907262208\n' > android/version.properties
+          python3 tools/set_version.py 2.0-1907262315 1907262315
+          npm run prepare:web
+
+      - name: Usuń jednorazowy workflow i zapisz wynik
+        shell: bash
+        run: |
+          rm .github/workflows/one-time-apk-fix.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Dokończ wydanie poprawki APK 2.0-1907262315'
+          git push origin HEAD:main
