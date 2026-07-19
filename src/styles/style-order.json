@@ -8,6 +8,7 @@
     { "file": "styles/layout.css", "layer": "layout" },
     { "file": "styles/components.css", "layer": "components" },
     { "file": "styles/screens.css", "layer": "screens" },
+    { "file": "styles/font-settings.css", "layer": "screens" },
     { "file": "styles/dark-mode.css", "layer": "theme" }
   ]
 }
