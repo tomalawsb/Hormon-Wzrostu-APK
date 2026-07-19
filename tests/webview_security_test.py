@@ -84,13 +84,18 @@ require("shouldInterceptRequest" in main and "blockedWebResponse()" in main, "ob
 require("shouldOverrideUrlLoading" in main and "isForMainFrame" in main, "nawigacja nie jest kontrolowana")
 require("isTrustedInternalFrame" in main and '"srcdoc".equalsIgnoreCase(value)' in main, "lokalny podgląd raportu nie ma bezpiecznego wyjątku")
 require("handler.cancel()" in main, "błędy TLS nie są bezwarunkowo odrzucane")
+require("WebResourceError" not in main, "przy webkit 1.16.0 nie wolno nadpisywać finalnego callbacku WebResourceError")
 require(
-    "request != null && request.isForMainFrame()" in main,
-    "błąd pojedynczego zasobu może wyłączyć cały most Androida",
+    main.count("public void onReceivedError(") == 1,
+    "MainActivity musi zawierać tylko zgodny callback onReceivedError",
 )
 require(
-    "Build.VERSION.SDK_INT < Build.VERSION_CODES.M" in main,
-    "stary callback błędów WebView nie jest ograniczony do starszych Androidów",
+    "public void onReceivedError(WebView view, int errorCode, String description, String failingUrl)" in main,
+    "brak callbacku onReceivedError zgodnego z webkit 1.16.0",
+)
+require(
+    "failingUrl != null && failingUrl.equals(view.getUrl())" in main,
+    "błąd pojedynczego zasobu może wyłączyć cały most Androida",
 )
 require('"https".equalsIgnoreCase(parsed.getScheme())' in main, "linki zewnętrzne nie są ograniczone do HTTPS")
 require("Intent.CATEGORY_BROWSABLE" in main, "linki zewnętrzne nie używają bezpiecznego intentu przeglądarki")

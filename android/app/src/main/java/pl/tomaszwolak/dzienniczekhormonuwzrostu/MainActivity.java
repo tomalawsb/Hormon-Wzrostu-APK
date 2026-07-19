@@ -20,7 +20,6 @@ import android.webkit.PermissionRequest;
 import android.webkit.SslErrorHandler;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
-import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -332,25 +331,11 @@ public class MainActivity extends FragmentActivity {
             if (bridgeEnabled) dispatchPendingNotificationAction();
         }
 
-        @Override
-        public void onReceivedError(
-                WebView view,
-                WebResourceRequest request,
-                WebResourceError error
-        ) {
-            if (request != null && request.isForMainFrame()) {
-                bridgeEnabled = false;
-                denyPendingWebPermission();
-            }
-            super.onReceivedError(view, request, error);
-        }
 
         @Override
         @SuppressWarnings("deprecation")
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M
-                    && failingUrl != null
-                    && failingUrl.equals(view.getUrl())) {
+            if (failingUrl != null && failingUrl.equals(view.getUrl())) {
                 bridgeEnabled = false;
                 denyPendingWebPermission();
             }

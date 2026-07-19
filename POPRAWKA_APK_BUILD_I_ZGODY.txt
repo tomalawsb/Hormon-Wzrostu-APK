@@ -1,0 +1,8 @@
+Dzienniczek Hormonu v2.0-1907262207
+
+Poprawka APK:
+- usunięto niekompatybilny callback WebResourceError z MainActivity.java;
+- pozostawiono callback onReceivedError zgodny z AndroidX WebKit 1.16.0;
+- błąd pojedynczego zasobu nie wyłącza już mostu Androida;
+- zachowano poprawkę zamykania okna zgód;
+- dodano test, który blokuje ponowne wprowadzenie tej regresji.
