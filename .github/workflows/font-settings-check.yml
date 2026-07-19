@@ -1,0 +1,38 @@
+name: Diagnostyka ustawień czcionki
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  font-settings-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Pobierz kod
+        uses: actions/checkout@v4
+
+      - name: Ustaw Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Zainstaluj zależności
+        run: npm ci --no-audit --no-fund
+
+      - name: Zbuduj pliki webowe
+        run: npm run prepare:web
+
+      - name: Sprawdź składnię JavaScript
+        run: npm run lint:js
+
+      - name: Sprawdź formatowanie
+        run: npm run format:check
+
+      - name: Uruchom test wyglądu
+        run: node tests/theme_runtime_test.js
