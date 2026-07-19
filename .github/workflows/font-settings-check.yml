@@ -26,6 +26,13 @@ jobs:
       - name: Zainstaluj zależności
         run: npm ci --no-audit --no-fund
 
+      - name: Synchronizuj pliki wersji
+        shell: bash
+        run: |
+          VERSION_NAME="$(awk -F= '$1=="VERSION_NAME" {print $2}' android/version.properties)"
+          VERSION_CODE="$(awk -F= '$1=="VERSION_CODE" {print $2}' android/version.properties)"
+          node tools/run_python.js tools/set_version.py "$VERSION_NAME" "$VERSION_CODE" --sync
+
       - name: Zbuduj pliki webowe
         run: npm run prepare:web
 
