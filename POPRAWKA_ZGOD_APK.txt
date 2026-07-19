@@ -1,0 +1,9 @@
+Dzienniczek Hormonu v2.0-1907262141
+
+Poprawka APK:
+- okno zgód zawsze zamyka się po „Przejdź do aplikacji” lub „Pomiń na razie”;
+- błąd zapisu nie może już uwięzić użytkownika w oknie zgód;
+- pojedynczy błąd zasobu WebView nie wyłącza całego mostu Androida;
+- dodano test regresji okna zgód.
+
+PWA pozostaje bez zmian funkcjonalnych.

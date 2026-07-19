@@ -84,6 +84,14 @@ require("shouldInterceptRequest" in main and "blockedWebResponse()" in main, "ob
 require("shouldOverrideUrlLoading" in main and "isForMainFrame" in main, "nawigacja nie jest kontrolowana")
 require("isTrustedInternalFrame" in main and '"srcdoc".equalsIgnoreCase(value)' in main, "lokalny podgląd raportu nie ma bezpiecznego wyjątku")
 require("handler.cancel()" in main, "błędy TLS nie są bezwarunkowo odrzucane")
+require(
+    "request != null && request.isForMainFrame()" in main,
+    "błąd pojedynczego zasobu może wyłączyć cały most Androida",
+)
+require(
+    "Build.VERSION.SDK_INT < Build.VERSION_CODES.M" in main,
+    "stary callback błędów WebView nie jest ograniczony do starszych Androidów",
+)
 require('"https".equalsIgnoreCase(parsed.getScheme())' in main, "linki zewnętrzne nie są ograniczone do HTTPS")
 require("Intent.CATEGORY_BROWSABLE" in main, "linki zewnętrzne nie używają bezpiecznego intentu przeglądarki")
 require('android:usesCleartextTraffic="false"' in manifest, "manifest dopuszcza nieszyfrowany ruch")

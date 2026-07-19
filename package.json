@@ -1,6 +1,6 @@
 {
   "name": "dzienniczek-hormonu",
-  "version": "2.0.0-1907262012",
+  "version": "2.0.0-1907262151",
   "private": true,
   "description": "Dzienniczek Hormonu - PWA i natywna aplikacja Android WebView",
   "scripts": {
@@ -27,7 +27,7 @@
     "test:today": "node tools/run_python.js tests/today_screen_test.py && node tests/today_runtime_test.js",
     "test:calendar-history": "node tools/run_python.js tests/calendar_history_test.py && node tests/calendar_history_runtime_test.js",
     "test:profile-stats": "node tools/run_python.js tests/profile_stats_test.py && node tests/profile_stats_runtime_test.js",
-    "test:settings": "node tools/run_python.js tests/settings_stage9_test.py && node tests/settings_navigation_runtime_test.js",
+    "test:settings": "node tools/run_python.js tests/settings_stage9_test.py && node tests/settings_navigation_runtime_test.js && node tests/permissions_onboarding_runtime_test.js",
     "test:notifications": "node tools/run_python.js tests/notifications_stage10_test.py && node tests/notifications_diagnostics_runtime_test.js",
     "test:pwa-stage11": "node tools/run_python.js tests/pwa_stage11_test.py && node tests/service_worker_runtime_test.js",
     "test:migrations": "node tests/migration_compatibility_test.js",

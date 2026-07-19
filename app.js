@@ -7902,24 +7902,52 @@ async function openPermissionsDialog() {
   if (!el['permissions-dialog'].open) el['permissions-dialog'].showModal();
 }
 
-function finishPermissionsOnboarding() {
+function closePermissionsDialog() {
+  const dialog = el['permissions-dialog'];
+  if (!dialog?.open) return;
+  try {
+    dialog.close();
+  } catch (error) {
+    console.warn('Nie udało się standardowo zamknąć okna zgód:', error);
+    dialog.removeAttribute('open');
+  }
+}
+
+function completePermissionsOnboarding({ skipped = false, silent = false } = {}) {
   data.meta.onboardingCompleted = true;
-  if (!persistData()) return;
+
+  // Zamknięcie pierwszego uruchomienia nie może zależeć od działania magazynu Androida.
+  // Najpierw zapisujemy lekki znacznik i zdejmujemy modal, a dane medyczne zapisujemy osobno.
   markPermissionsOnboardingCompleted();
-  if (el['permissions-dialog'].open) el['permissions-dialog'].close();
-  scheduleDailyReminder();
-  showToast('Ustawienia zgód zostały zapisane.', 'success');
-  finishFirstRunAndOfferPwaInstall();
+  closePermissionsDialog();
+
+  const saved = persistData();
+  if (!saved) {
+    console.warn('Stan konfiguracji zgód nie został zapisany w głównym magazynie.');
+  }
+
+  if (!skipped) scheduleDailyReminder();
+  if (!silent) {
+    showToast(
+      skipped
+        ? 'Pominięto konfigurację zgód. Możesz wrócić do niej w ustawieniach.'
+        : 'Ustawienia zgód zostały zapisane.',
+      'success'
+    );
+    finishFirstRunAndOfferPwaInstall();
+  }
+  return saved;
+}
+
+function finishPermissionsOnboarding() {
+  return completePermissionsOnboarding();
 }
 
 function skipPermissionsOnboarding(options = {}) {
-  data.meta.onboardingCompleted = true;
-  if (!persistData()) return;
-  markPermissionsOnboardingCompleted();
-  if (el['permissions-dialog'].open) el['permissions-dialog'].close();
-  if (!options.silent)
-    showToast('Pominięto konfigurację zgód. Możesz wrócić do niej w ustawieniach.', 'success');
-  if (!options.silent) finishFirstRunAndOfferPwaInstall();
+  return completePermissionsOnboarding({
+    skipped: true,
+    silent: Boolean(options?.silent),
+  });
 }
 
 async function requestMicrophonePermission() {
