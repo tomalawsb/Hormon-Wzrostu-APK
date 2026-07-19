@@ -30,8 +30,12 @@ def replace_required(text: str, pattern: str, replacement: str, description: str
 
 
 def main() -> int:
-    if len(sys.argv) != 3:
-        fail("użycie: set_version.py WERSJA VERSION_CODE, np. 2.0-1907262007 1907262007")
+    sync_existing = len(sys.argv) == 4 and sys.argv[3] == "--sync"
+    if len(sys.argv) not in (3, 4) or (len(sys.argv) == 4 and not sync_existing):
+        fail(
+            "użycie: set_version.py WERSJA VERSION_CODE [--sync], "
+            "np. 2.0-1907262007 1907262007"
+        )
 
     version_name = sys.argv[1].strip()
     version_code_raw = sys.argv[2].strip()
@@ -51,12 +55,22 @@ def main() -> int:
         )
         if match:
             current_code = int(match.group(1))
-    if version_code <= current_code:
+    if sync_existing:
+        if version_code < current_code:
+            fail(
+                f"synchronizowana wersja ({version_code}) nie może być starsza "
+                f"od obecnej ({current_code})"
+            )
+    elif version_code <= current_code:
         fail(f"nowy versionCode ({version_code}) musi być większy od obecnego ({current_code})")
 
     package_path = ROOT / "package.json"
     package = load_json(package_path)
-    package_version = version_name if re.fullmatch(r"\d+\.\d+\.\d+", version_name) else version_name.replace("-", ".0-", 1)
+    package_version = (
+        version_name
+        if re.fullmatch(r"\d+\.\d+\.\d+", version_name)
+        else version_name.replace("-", ".0-", 1)
+    )
     package["version"] = package_version
     save_json(package_path, package)
 
@@ -152,7 +166,8 @@ def main() -> int:
     )
     readme_path.write_text(readme, encoding="utf-8")
 
-    print(f"Ustawiono wersję {version_name}, versionCode {version_code}.")
+    action = "Zsynchronizowano" if sync_existing else "Ustawiono"
+    print(f"{action} wersję {version_name}, versionCode {version_code}.")
     print("Uruchom npm run prepare:web oraz npm test przed budowaniem.")
     print(f"Po wysłaniu na main GitHub automatycznie utworzy wydanie v{version_name}.")
     return 0
