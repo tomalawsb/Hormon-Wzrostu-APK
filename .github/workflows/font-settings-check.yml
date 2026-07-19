@@ -11,7 +11,7 @@ permissions:
 jobs:
   font-settings-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Pobierz kod
         uses: actions/checkout@v4
@@ -34,5 +34,44 @@ jobs:
       - name: Sprawdź formatowanie
         run: npm run format:check
 
-      - name: Uruchom test wyglądu
-        run: node tests/theme_runtime_test.js
+      - name: Test projektu
+        run: npm run test:project
+
+      - name: Test architektury
+        run: npm run test:architecture
+
+      - name: Test wyglądu
+        run: npm run test:visual
+
+      - name: Test ekranu dzisiaj
+        run: npm run test:today
+
+      - name: Test kalendarza i historii
+        run: npm run test:calendar-history
+
+      - name: Test profili i statystyk
+        run: npm run test:profile-stats
+
+      - name: Test ustawień
+        run: npm run test:settings
+
+      - name: Test powiadomień
+        run: npm run test:notifications
+
+      - name: Test PWA etapu 11
+        run: npm run test:pwa-stage11
+
+      - name: Testy końcowe
+        run: npm run test:final
+
+      - name: Test PWA HTTP
+        run: npm run test:pwa
+
+      - name: Test kopii
+        run: npm run test:backup
+
+      - name: Test bezpieczeństwa
+        run: npm run test:security
+
+      - name: Test WebView
+        run: npm run test:webview
