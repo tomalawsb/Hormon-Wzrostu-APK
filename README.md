@@ -1,6 +1,6 @@
 # Dzienniczek Hormonu — Android APK
 
-**Wersja: v1.0-1907261901**
+**Wersja: v1.0-1907261927**
 
 ## Kontrola projektu od zera
 

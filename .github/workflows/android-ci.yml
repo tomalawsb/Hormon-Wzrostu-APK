@@ -59,6 +59,10 @@ jobs:
       - name: Zainstaluj zależności
         run: npm ci --no-audit --no-fund
 
+      - name: Nadaj uprawnienia Gradle Wrapperowi
+        shell: bash
+        run: chmod +x android/gradlew
+
       - name: Przygotuj i sprawdź cały projekt
         env:
           ANDROID_CHECK_REQUIRED: '1'
@@ -165,14 +169,7 @@ jobs:
             echo "Wydanie $RELEASE_TAG już istnieje."
             exit 0
           fi
-          gh release create "$RELEASE_TAG" \
-            dist/*.apk \
-            dist/*.aab \
-            dist/SHA256SUMS.txt \
-            dist/Dzienniczek_Hormonu_PWA_*.zip \
-            --target "$GITHUB_SHA" \
-            --title "Dzienniczek Hormonu $RELEASE_TAG" \
-            --notes "Automatyczne wydanie wersji $VERSION_NAME (versionCode $VERSION_CODE)."
+          gh release create "$RELEASE_TAG"             dist/*.apk             dist/*.aab             dist/SHA256SUMS.txt             dist/Dzienniczek_Hormonu_PWA_*.zip             --target "$GITHUB_SHA"             --title "Dzienniczek Hormonu $RELEASE_TAG"             --notes "Automatyczne wydanie wersji $VERSION_NAME (versionCode $VERSION_CODE)."
 
   deploy-pwa:
     name: Publikacja PWA
