@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 9,
+  "schemaVersion": 10,
   "output": "app.js",
   "encoding": "utf-8",
   "description": "Jawna kolejność modułów aplikacji. Pliki są łączone w jedno prywatne IIFE bez zmiany zachowania.",
@@ -16,6 +16,7 @@
     { "file": "components/injection-site/model.js", "layer": "component" },
     { "file": "services/storage/entries.js", "layer": "service" },
     { "file": "services/encryption/storage.js", "layer": "service" },
+    { "file": "services/encryption/android-storage-recovery.js", "layer": "service" },
     { "file": "screens/settings/security.js", "layer": "screen" },
     { "file": "services/encryption/backup.js", "layer": "service" },
     { "file": "screens/profiles/index.js", "layer": "screen" },
