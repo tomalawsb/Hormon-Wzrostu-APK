@@ -1,0 +1,147 @@
+:root[data-font-size="small"] {
+  font-size: 90%;
+}
+
+:root[data-font-size="standard"] {
+  font-size: 100%;
+}
+
+:root[data-font-size="large"] {
+  font-size: 112.5%;
+}
+
+:root[data-font-size="xlarge"] {
+  font-size: 125%;
+}
+
+:root[data-font-style="system"] {
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+:root[data-font-style="readable"] {
+  --font-family: Arial, Helvetica, "Liberation Sans", sans-serif;
+}
+
+:root[data-font-style="classic"] {
+  --font-family: Georgia, "Times New Roman", serif;
+}
+
+.typography-settings {
+  display: grid;
+  gap: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.typography-settings__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.typography-settings__heading h3 {
+  margin: 2px 0 0;
+  font-size: 1.12rem;
+}
+
+.font-option-group {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  margin: 0;
+}
+
+.font-option-group legend {
+  margin-bottom: 8px;
+  color: var(--text-strong);
+  font-weight: 850;
+}
+
+.font-option-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.font-option-grid--styles {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.font-option {
+  position: relative;
+  display: grid;
+  min-height: 76px;
+  align-content: center;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-soft);
+  cursor: pointer;
+}
+
+.font-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.font-option strong {
+  color: var(--text-strong);
+}
+
+.font-option small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.font-option:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: 0 0 0 2px rgba(12, 133, 123, 0.12);
+}
+
+.font-option:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.font-preview {
+  display: grid;
+  gap: 5px;
+  padding: 15px 16px;
+  border: 1px dashed var(--primary-border);
+  border-radius: 14px;
+  background: var(--surface-soft);
+}
+
+.font-preview strong {
+  font-size: 1.08rem;
+}
+
+.font-preview span {
+  color: var(--muted);
+}
+
+@media (max-width: 720px) {
+  .font-option-grid,
+  .font-option-grid--styles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .typography-settings__heading {
+    display: grid;
+  }
+
+  .font-option-grid,
+  .font-option-grid--styles {
+    grid-template-columns: 1fr;
+  }
+}
