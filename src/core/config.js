@@ -21,6 +21,10 @@
   const ALLOWED_AMPOULE_STATUSES = new Set(['active', 'paused', 'finished']);
   const ALLOWED_THEME_MODES = new Set(['system', 'light', 'dark']);
   const DEFAULT_THEME_MODE = 'system';
+  const ALLOWED_FONT_SIZES = new Set(['small', 'standard', 'large', 'xlarge']);
+  const DEFAULT_FONT_SIZE = 'standard';
+  const ALLOWED_FONT_STYLES = new Set(['system', 'readable', 'classic']);
+  const DEFAULT_FONT_STYLE = 'system';
   const DEFAULT_AMPOULE_VOLUME_ML = '10';
   const DATA_SCHEMA_VERSION = 13;
   const DEFAULT_PROFILE_ID = 'profile-1';
