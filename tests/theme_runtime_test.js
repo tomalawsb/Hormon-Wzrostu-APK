@@ -23,9 +23,20 @@ const controls = {
 
 const context = vm.createContext({
   console,
-  data: { appSettings: { appearance: { theme: 'nieprawidłowy' } } },
+  data: {
+    appSettings: {
+      appearance: {
+        theme: 'nieprawidłowy',
+        fontSize: 'gigantyczna',
+        fontStyle: 'fantazyjna',
+      },
+    },
+  },
   document: {
     documentElement: { dataset: {}, style: {} },
+    getElementById() {
+      return null;
+    },
     querySelector(selector) {
       return selector === 'meta[name="theme-color"]' ? themeMeta : null;
     },
@@ -68,18 +79,30 @@ const context = vm.createContext({
 vm.runInContext(
   `const ALLOWED_THEME_MODES = new Set(['system', 'light', 'dark']);
    const DEFAULT_THEME_MODE = 'system';
+   const ALLOWED_FONT_SIZES = new Set(['small', 'standard', 'large', 'xlarge']);
+   const DEFAULT_FONT_SIZE = 'standard';
+   const ALLOWED_FONT_STYLES = new Set(['system', 'readable', 'classic']);
+   const DEFAULT_FONT_STYLE = 'system';
    ${source}`,
   context
 );
 
 function requireResult(condition, message) {
-  if (!condition) throw new Error(`BŁĄD MOTYWU: ${message}`);
+  if (!condition) throw new Error(`BŁĄD WYGLĄDU: ${message}`);
 }
 
 vm.runInContext('getAppearanceSettings()', context);
 requireResult(
   context.data.appSettings.appearance.theme === 'system',
-  'błędna wartość nie wraca do trybu automatycznego'
+  'błędna wartość motywu nie wraca do trybu automatycznego'
+);
+requireResult(
+  context.data.appSettings.appearance.fontSize === 'standard',
+  'błędna wielkość czcionki nie wraca do standardowej'
+);
+requireResult(
+  context.data.appSettings.appearance.fontStyle === 'system',
+  'błędny styl czcionki nie wraca do systemowego'
 );
 
 vm.runInContext("applyThemePreference('dark')", context);
@@ -88,6 +111,11 @@ requireResult(
   'nie można włączyć motywu ciemnego'
 );
 requireResult(themeMeta.content === '#0b2529', 'motyw ciemny nie aktualizuje koloru systemowego');
+requireResult(
+  context.document.documentElement.dataset.fontSize === 'standard' &&
+    context.document.documentElement.dataset.fontStyle === 'system',
+  'uruchomienie wyglądu nie stosuje domyślnej czcionki'
+);
 
 vm.runInContext('bindThemePreferences()', context);
 requireResult(typeof changeListener === 'function', 'kontrolka Wygląd nie ma zdarzenia zmiany');
@@ -113,6 +141,41 @@ requireResult(
   'zmiana motywu nie została utrwalona lub potwierdzona'
 );
 
+vm.runInContext(
+  `handleTypographyChange({
+    target: {
+      closest() { return { name: 'font-size', value: 'xlarge' }; }
+    }
+  })`,
+  context
+);
+requireResult(
+  context.data.appSettings.appearance.fontSize === 'xlarge',
+  'bardzo duża czcionka nie została zapisana'
+);
+requireResult(
+  context.document.documentElement.dataset.fontSize === 'xlarge',
+  'bardzo duża czcionka nie została zastosowana'
+);
+
+vm.runInContext(
+  `handleTypographyChange({
+    target: {
+      closest() { return { name: 'font-style', value: 'classic' }; }
+    }
+  })`,
+  context
+);
+requireResult(
+  context.data.appSettings.appearance.fontStyle === 'classic',
+  'klasyczny styl czcionki nie został zapisany'
+);
+requireResult(
+  context.document.documentElement.dataset.fontStyle === 'classic',
+  'klasyczny styl czcionki nie został zastosowany'
+);
+requireResult(persisted === 3, 'ustawienia czcionki nie zostały utrwalone');
+
 context.data.appSettings.appearance.theme = 'system';
 systemDark = true;
 mediaListener({ matches: true });
@@ -125,4 +188,6 @@ requireResult(
   'panel ustawień nie pokazuje aktywnego trybu automatycznego'
 );
 
-console.log('Test działania motywu: OK — zapis, jasny, ciemny i reakcja na ustawienie telefonu.');
+console.log(
+  'Test wyglądu: OK — motyw, wielkość i styl czcionki są sanitizowane, stosowane i zapisywane.'
+);
