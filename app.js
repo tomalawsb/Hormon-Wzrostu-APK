@@ -21,6 +21,10 @@
   const ALLOWED_AMPOULE_STATUSES = new Set(['active', 'paused', 'finished']);
   const ALLOWED_THEME_MODES = new Set(['system', 'light', 'dark']);
   const DEFAULT_THEME_MODE = 'system';
+  const ALLOWED_FONT_SIZES = new Set(['small', 'standard', 'large', 'xlarge']);
+  const DEFAULT_FONT_SIZE = 'standard';
+  const ALLOWED_FONT_STYLES = new Set(['system', 'readable', 'classic']);
+  const DEFAULT_FONT_STYLE = 'system';
   const DEFAULT_AMPOULE_VOLUME_ML = '10';
   const DATA_SCHEMA_VERSION = 13;
   const DEFAULT_PROFILE_ID = 'profile-1';
@@ -992,16 +996,39 @@ function buildProfileAmpouleUsageStats(profile) {
 }
 const THEME_COLOR_LIGHT = '#0c857b';
 const THEME_COLOR_DARK = '#0b2529';
+const FONT_SIZE_LABELS = Object.freeze({
+  small: 'Mała',
+  standard: 'Standardowa',
+  large: 'Duża',
+  xlarge: 'Bardzo duża',
+});
+const FONT_STYLE_LABELS = Object.freeze({
+  system: 'Systemowa',
+  readable: 'Czytelna',
+  classic: 'Klasyczna',
+});
 let themeMediaQuery = null;
 let themeMediaListenerBound = false;
 
 function defaultAppearanceSettings() {
-  return { theme: DEFAULT_THEME_MODE };
+  return {
+    theme: DEFAULT_THEME_MODE,
+    fontSize: DEFAULT_FONT_SIZE,
+    fontStyle: DEFAULT_FONT_STYLE,
+  };
 }
 
 function sanitizeAppearanceSettings(settings = {}) {
-  const requested = typeof settings?.theme === 'string' ? settings.theme : '';
-  return { theme: ALLOWED_THEME_MODES.has(requested) ? requested : DEFAULT_THEME_MODE };
+  const requestedTheme = typeof settings?.theme === 'string' ? settings.theme : '';
+  const requestedFontSize = typeof settings?.fontSize === 'string' ? settings.fontSize : '';
+  const requestedFontStyle = typeof settings?.fontStyle === 'string' ? settings.fontStyle : '';
+  return {
+    theme: ALLOWED_THEME_MODES.has(requestedTheme) ? requestedTheme : DEFAULT_THEME_MODE,
+    fontSize: ALLOWED_FONT_SIZES.has(requestedFontSize) ? requestedFontSize : DEFAULT_FONT_SIZE,
+    fontStyle: ALLOWED_FONT_STYLES.has(requestedFontStyle)
+      ? requestedFontStyle
+      : DEFAULT_FONT_STYLE,
+  };
 }
 
 function getAppearanceSettings(container = data) {
@@ -1022,12 +1049,19 @@ function resolveTheme(mode = DEFAULT_THEME_MODE) {
   return systemPrefersDark() ? 'dark' : 'light';
 }
 
+function applyTypographyPreference(settings = getAppearanceSettings()) {
+  const safe = sanitizeAppearanceSettings(settings);
+  document.documentElement.dataset.fontSize = safe.fontSize;
+  document.documentElement.dataset.fontStyle = safe.fontStyle;
+}
+
 function applyThemePreference(mode = getAppearanceSettings().theme) {
   const safeMode = ALLOWED_THEME_MODES.has(mode) ? mode : DEFAULT_THEME_MODE;
   const resolved = resolveTheme(safeMode);
   document.documentElement.dataset.themeMode = safeMode;
   document.documentElement.dataset.theme = resolved;
   document.documentElement.style.colorScheme = resolved;
+  applyTypographyPreference();
   const themeMeta = document.querySelector('meta[name="theme-color"]');
   if (themeMeta) {
     themeMeta.setAttribute('content', resolved === 'dark' ? THEME_COLOR_DARK : THEME_COLOR_LIGHT);
@@ -1035,8 +1069,63 @@ function applyThemePreference(mode = getAppearanceSettings().theme) {
   return resolved;
 }
 
+function ensureTypographyControls() {
+  if (typeof document.getElementById !== 'function') return;
+  if (document.getElementById('font-size-control')) return;
+  const card = document.querySelector(
+    '[data-settings-panel="appearance"] .appearance-settings-card'
+  );
+  if (!card) return;
+
+  const section = document.createElement('section');
+  section.className = 'typography-settings';
+  section.setAttribute('aria-labelledby', 'typography-settings-title');
+  section.innerHTML = `
+    <div class="typography-settings__heading">
+      <div>
+        <p class="eyebrow">Tekst w programie</p>
+        <h3 id="typography-settings-title">Czcionka</h3>
+      </div>
+      <span id="font-status" class="profile-count-badge">Standardowa · Systemowa</span>
+    </div>
+    <fieldset id="font-size-control" class="font-option-group">
+      <legend>Wielkość czcionki</legend>
+      <div class="font-option-grid">
+        <label class="font-option"><input id="font-size-small" type="radio" name="font-size" value="small"><strong>Mała</strong><small>90%</small></label>
+        <label class="font-option"><input id="font-size-standard" type="radio" name="font-size" value="standard"><strong>Standardowa</strong><small>100%</small></label>
+        <label class="font-option"><input id="font-size-large" type="radio" name="font-size" value="large"><strong>Duża</strong><small>112%</small></label>
+        <label class="font-option"><input id="font-size-xlarge" type="radio" name="font-size" value="xlarge"><strong>Bardzo duża</strong><small>125%</small></label>
+      </div>
+    </fieldset>
+    <fieldset id="font-style-control" class="font-option-group">
+      <legend>Styl czcionki</legend>
+      <div class="font-option-grid font-option-grid--styles">
+        <label class="font-option"><input id="font-style-system" type="radio" name="font-style" value="system"><strong>Systemowa</strong><small>Zgodna z telefonem</small></label>
+        <label class="font-option"><input id="font-style-readable" type="radio" name="font-style" value="readable"><strong>Czytelna</strong><small>Proste kształty liter</small></label>
+        <label class="font-option"><input id="font-style-classic" type="radio" name="font-style" value="classic"><strong>Klasyczna</strong><small>Litery szeryfowe</small></label>
+      </div>
+    </fieldset>
+    <div id="font-preview" class="font-preview" aria-live="polite">
+      <strong>Przykładowy tekst programu</strong>
+      <span>Historia podań, ustawienia i przypomnienia.</span>
+    </div>`;
+
+  const guide = card.querySelector('.visual-status-guide');
+  if (guide) card.insertBefore(section, guide);
+  else card.appendChild(section);
+}
+
 function bindThemePreferences() {
+  ensureTypographyControls();
   el['theme-mode-control']?.addEventListener('change', handleThemeModeChange);
+  document.getElementById?.('font-size-control')?.addEventListener(
+    'change',
+    handleTypographyChange
+  );
+  document.getElementById?.('font-style-control')?.addEventListener(
+    'change',
+    handleTypographyChange
+  );
   if (themeMediaListenerBound || !window.matchMedia) return;
   themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
   const listener = () => {
@@ -1062,9 +1151,36 @@ function handleThemeModeChange(event) {
   showToast('Wygląd aplikacji został zmieniony.', 'success');
 }
 
+function handleTypographyChange(event) {
+  const input = event.target.closest('input[name="font-size"], input[name="font-style"]');
+  if (!input) return;
+  const settings = getAppearanceSettings();
+  const previous = { ...settings };
+
+  if (input.name === 'font-size' && ALLOWED_FONT_SIZES.has(input.value)) {
+    settings.fontSize = input.value;
+  } else if (input.name === 'font-style' && ALLOWED_FONT_STYLES.has(input.value)) {
+    settings.fontStyle = input.value;
+  } else {
+    return;
+  }
+
+  applyTypographyPreference(settings);
+  if (!persistData()) {
+    Object.assign(settings, previous);
+    applyTypographyPreference(settings);
+    renderAppearanceSettings();
+    return;
+  }
+  renderAppearanceSettings();
+  showToast('Ustawienia czcionki zostały zmienione.', 'success');
+}
+
 function renderAppearanceSettings() {
+  ensureTypographyControls();
   if (!el['theme-mode-control']) return;
-  const mode = getAppearanceSettings().theme;
+  const settings = getAppearanceSettings();
+  const mode = settings.theme;
   const control = el[`theme-${mode}`];
   if (control) control.checked = true;
   const resolved = resolveTheme(mode);
@@ -1075,6 +1191,15 @@ function renderAppearanceSettings() {
         : mode === 'dark'
           ? 'Ciemny'
           : 'Jasny';
+  }
+
+  const sizeControl = document.getElementById?.(`font-size-${settings.fontSize}`);
+  const styleControl = document.getElementById?.(`font-style-${settings.fontStyle}`);
+  if (sizeControl) sizeControl.checked = true;
+  if (styleControl) styleControl.checked = true;
+  const fontStatus = document.getElementById?.('font-status');
+  if (fontStatus) {
+    fontStatus.textContent = `${FONT_SIZE_LABELS[settings.fontSize]} · ${FONT_STYLE_LABELS[settings.fontStyle]}`;
   }
 }
 
@@ -2087,6 +2212,186 @@ function handleSecureStorageFailure(error) {
     startupWarnings.push('Bezpieczny zapis danych nie działa.');
   }
 }
+
+/* eslint-disable no-func-assign */
+
+const ANDROID_STORAGE_FALLBACK_MARKER = 'dzienniczek-android-storage-fallback-v1';
+let androidStorageFallbackPromise = null;
+let lastSecureStorageErrorToastAt = 0;
+
+function androidStorageFallbackRequested() {
+  try {
+    return localStorage.getItem(ANDROID_STORAGE_FALLBACK_MARKER) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function setAndroidStorageFallbackRequested(enabled) {
+  try {
+    if (enabled) localStorage.setItem(ANDROID_STORAGE_FALLBACK_MARKER, '1');
+    else localStorage.removeItem(ANDROID_STORAGE_FALLBACK_MARKER);
+  } catch {
+    // WebView może chwilowo odrzucić localStorage. Sam IndexedDB nadal może działać.
+  }
+}
+
+const originalHasNativeSecureStorage = hasNativeSecureStorage;
+hasNativeSecureStorage = function hasRecoverableNativeSecureStorage() {
+  if (androidStorageFallbackRequested()) return false;
+  return originalHasNativeSecureStorage();
+};
+
+function activateAndroidStorageFallback() {
+  setAndroidStorageFallbackRequested(true);
+  if (!androidStorageFallbackPromise) {
+    androidStorageFallbackPromise = createBrowserSecureStorageAdapter()
+      .then((adapter) => {
+        secureStorageAdapter = adapter;
+        secureStorageTypeLabel = `${adapter.label} · tryb zapasowy APK`;
+        secureStorageFailed = false;
+        return adapter;
+      })
+      .catch((error) => {
+        androidStorageFallbackPromise = null;
+        setAndroidStorageFallbackRequested(false);
+        throw error;
+      });
+  }
+  return androidStorageFallbackPromise;
+}
+
+function queueAndroidFallbackWrite(slot, normalizedValue) {
+  secureStorageCache.set(slot, normalizedValue);
+  secureWriteQueue = secureWriteQueue
+    .then(() => activateAndroidStorageFallback())
+    .then((adapter) => adapter.write(slot, normalizedValue))
+    .then(() => {
+      secureStorageFailed = false;
+      secureBroadcastChannel?.postMessage({ type: 'changed', slot });
+    })
+    .catch(handleSecureStorageFailure);
+  return true;
+}
+
+function queueAndroidFallbackRemove(slot) {
+  secureStorageCache.delete(slot);
+  secureWriteQueue = secureWriteQueue
+    .then(() => activateAndroidStorageFallback())
+    .then((adapter) => adapter.remove(slot))
+    .then(() => {
+      secureStorageFailed = false;
+      secureBroadcastChannel?.postMessage({ type: 'changed', slot });
+    })
+    .catch(handleSecureStorageFailure);
+  return true;
+}
+
+secureStorageSet = function recoverableSecureStorageSet(slot, value) {
+  if (!secureStorageReady || !SECURE_STORAGE_SLOTS.includes(slot)) return false;
+  const normalizedValue = String(value ?? '');
+
+  if (secureStorageAdapter.synchronous) {
+    let saved = false;
+    try {
+      saved = secureStorageAdapter.writeSync(slot, normalizedValue);
+    } catch (error) {
+      console.warn('Natywny magazyn Android odrzucił zapis. Włączam tryb zapasowy.', error);
+    }
+    if (saved) {
+      secureStorageCache.set(slot, normalizedValue);
+      secureStorageFailed = false;
+      return true;
+    }
+    return queueAndroidFallbackWrite(slot, normalizedValue);
+  }
+
+  secureStorageCache.set(slot, normalizedValue);
+  secureWriteQueue = secureWriteQueue
+    .then(() => secureStorageAdapter.write(slot, normalizedValue))
+    .then(() => {
+      secureStorageFailed = false;
+      secureBroadcastChannel?.postMessage({ type: 'changed', slot });
+    })
+    .catch(handleSecureStorageFailure);
+  return true;
+};
+
+secureStorageRemove = function recoverableSecureStorageRemove(slot) {
+  if (!secureStorageReady || !SECURE_STORAGE_SLOTS.includes(slot)) return false;
+
+  if (secureStorageAdapter.synchronous) {
+    let removed = false;
+    try {
+      removed = secureStorageAdapter.removeSync(slot);
+    } catch (error) {
+      console.warn('Natywny magazyn Android odrzucił usunięcie. Włączam tryb zapasowy.', error);
+    }
+    if (removed) {
+      secureStorageCache.delete(slot);
+      secureStorageFailed = false;
+      return true;
+    }
+    return queueAndroidFallbackRemove(slot);
+  }
+
+  secureStorageCache.delete(slot);
+  secureWriteQueue = secureWriteQueue
+    .then(() => secureStorageAdapter.remove(slot))
+    .then(() => {
+      secureStorageFailed = false;
+      secureBroadcastChannel?.postMessage({ type: 'changed', slot });
+    })
+    .catch(handleSecureStorageFailure);
+  return true;
+};
+
+flushSecureStorageWrites = async function flushRecoverableSecureStorageWrites() {
+  await secureWriteQueue;
+  if (secureStorageFailed) throw new Error('Bezpieczny magazyn danych zgłosił błąd zapisu.');
+};
+
+handleSecureStorageFailure = function handleRecoverableSecureStorageFailure(error) {
+  secureStorageFailed = true;
+  console.error('Błąd bezpiecznego magazynu:', error);
+  const now = Date.now();
+  if (now - lastSecureStorageErrorToastAt < 5000) return;
+  lastSecureStorageErrorToastAt = now;
+  if (el['toast-region']) {
+    showToast(
+      'Nie udało się zapisać danych także w zapasowym magazynie. Nie zamykaj aplikacji i wyeksportuj kopię.',
+      'error',
+      12000
+    );
+  } else {
+    startupWarnings.push('Bezpieczny zapis danych nie działa.');
+  }
+};
+
+saveAutomaticImportBackup = function saveNonBlockingAutomaticImportBackup(
+  reason = 'przed importem'
+) {
+  try {
+    const payload = createBackupPayload('all', data.activeProfileId, {
+      automatic: true,
+      reason,
+      savedAt: new Date().toISOString(),
+    });
+    if (!secureStorageSet(AUTO_IMPORT_BACKUP_KEY, JSON.stringify(payload))) {
+      throw new Error('Bezpieczny magazyn odrzucił automatyczną kopię.');
+    }
+    renderAutomaticBackupState();
+    return true;
+  } catch (error) {
+    console.warn('Nie udało się utworzyć dodatkowej kopii przed importem:', error);
+    showToast(
+      'Nie utworzono dodatkowej kopii przed importem. Import będzie kontynuowany.',
+      '',
+      6500
+    );
+    return true;
+  }
+};
 
 function resetRuntimeStateAfterSecureLoad() {
   todayDashboardMode = getAvailableProfiles().length > 1 ? 'all' : 'profile';

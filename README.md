@@ -1,6 +1,6 @@
 # Dzienniczek Hormonu — Android APK
 
-**Wersja: v2.0-1907262315**
+**Wersja: v2.0-2007260717**
 
 Wersja 2.0-1907262315 naprawia otwieranie pliku aktualizacji APK na Androidzie 11–16 oraz zawiera poprawkę automatycznej kopii przed importem.
 

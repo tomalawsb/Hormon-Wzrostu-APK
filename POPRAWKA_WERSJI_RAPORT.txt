@@ -1,0 +1,18 @@
+Naprawa kanału aktualizacji
+==========================
+
+Wersja: 2.0-2007260012
+versionCode: 2007260012
+
+Wykonano:
+- zsynchronizowano package.json i package-lock.json,
+- zsynchronizowano app-version.json,
+- zachowano android/version.properties,
+- zaktualizowano wersję w źródłach HTML, wygenerowanym index.html, manifest.json,
+  service-worker.js i README.md,
+- przebudowano app.js, index.html, style.css i native-bridge.js,
+- przygotowano katalog www,
+- zsynchronizowano android/app/src/main/assets/web.
+
+Wynik npm test: OK.
+Android Lint/APK: pominięto lokalnie z powodu braku Android SDK; workflow CI wymusza tę kontrolę.
