@@ -104,7 +104,14 @@ require("UPDATE_DOWNLOAD_HOST" in main and '"github.com"' in main,
 require("UPDATE_DOWNLOAD_PATH_PREFIX" in main and 'releases/download/' in main,
         "natywne pobieranie nie jest ograniczone do zasobu wydania")
 require('endsWith(".apk")' in main, "Android może otworzyć plik inny niż APK")
-require("Intent.CATEGORY_BROWSABLE" in main, "linki zewnętrzne nie używają bezpiecznego intentu przeglądarki")
+require("startActivity(new Intent(Intent.ACTION_VIEW, uri))" in main,
+        "plik APK nie jest otwierany bezpośrednim intentem ACTION_VIEW")
+require("resolveActivity(" not in main,
+        "aktualizator nadal blokuje pobieranie przez zawodny test resolveActivity")
+require("Looper.getMainLooper()" in main and "runOnUiThread" in main,
+        "otwieranie pliku APK nie jest wykonywane bezpiecznie na głównym wątku")
+require("CountDownLatch" in main and "TimeUnit.SECONDS" in main,
+        "most Androida nie czeka na rzeczywisty wynik uruchomienia pobierania")
 require('android:usesCleartextTraffic="false"' in manifest, "manifest dopuszcza nieszyfrowany ruch")
 
 expected_assets = {

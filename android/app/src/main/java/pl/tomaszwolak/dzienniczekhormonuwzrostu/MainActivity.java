@@ -11,7 +11,9 @@ import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Looper;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Window;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
@@ -41,7 +43,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
@@ -51,6 +56,7 @@ import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewClientCompat;
 
 public class MainActivity extends FragmentActivity {
+    private static final String LOG_TAG = "DzienniczekHormonu";
     static final String ACTION_OPEN_REMINDER =
             "pl.tomaszwolak.dzienniczekhormonuwzrostu.OPEN_REMINDER";
     private static final int REQ_MICROPHONE = 4101;
@@ -749,16 +755,42 @@ public class MainActivity extends FragmentActivity {
 
 
     private boolean openExternalUrlNative(String rawUrl) {
+        Uri uri = validatedExternalHttpsUri(rawUrl);
+        if (uri == null) return false;
+
+        AtomicBoolean opened = new AtomicBoolean(false);
+        Runnable launchDownload = () -> {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                opened.set(true);
+            } catch (Exception error) {
+                Log.e(LOG_TAG, "Nie udało się otworzyć pliku APK aktualizacji.", error);
+            }
+        };
+
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            launchDownload.run();
+            return opened.get();
+        }
+
+        CountDownLatch completed = new CountDownLatch(1);
+        runOnUiThread(() -> {
+            try {
+                launchDownload.run();
+            } finally {
+                completed.countDown();
+            }
+        });
+
         try {
-            Uri uri = validatedExternalHttpsUri(rawUrl);
-            if (uri == null) return false;
-            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-            intent.addCategory(Intent.CATEGORY_BROWSABLE);
-            intent.setSelector(null);
-            if (intent.resolveActivity(getPackageManager()) == null) return false;
-            startActivity(intent);
-            return true;
-        } catch (Exception error) {
+            if (!completed.await(5, TimeUnit.SECONDS)) {
+                Log.e(LOG_TAG, "Przekroczono czas otwierania pliku APK aktualizacji.");
+                return false;
+            }
+            return opened.get();
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            Log.e(LOG_TAG, "Przerwano otwieranie pliku APK aktualizacji.", error);
             return false;
         }
     }
