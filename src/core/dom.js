@@ -65,7 +65,8 @@
       'update-status', 'settings-version-label', 'pwa-maintenance-controls', 'pwa-worker-status',
       'pwa-cache-status', 'pwa-online-status', 'pwa-install-status', 'refresh-pwa-resources-button',
       'apply-pwa-update-button', 'theme-mode-control', 'theme-system',
-      'theme-light', 'theme-dark', 'theme-status'
+      'theme-light', 'theme-dark', 'theme-elegant', 'theme-amber',
+      'theme-silver', 'theme-lavender', 'theme-status'
     ];
     ids.forEach((id) => { el[id] = document.getElementById(id); });
   }

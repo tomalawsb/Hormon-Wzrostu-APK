@@ -19,7 +19,15 @@
   const ALLOWED_SITES = new Set(['brzuch', 'udo', 'ramię', 'pośladek', 'łopatka']);
   const ALLOWED_STATUSES = new Set(['given', 'skipped']);
   const ALLOWED_AMPOULE_STATUSES = new Set(['active', 'paused', 'finished']);
-  const ALLOWED_THEME_MODES = new Set(['system', 'light', 'dark']);
+  const ALLOWED_THEME_MODES = new Set([
+    'system',
+    'light',
+    'dark',
+    'elegant',
+    'amber',
+    'silver',
+    'lavender',
+  ]);
   const DEFAULT_THEME_MODE = 'system';
   const ALLOWED_FONT_SIZES = new Set(['small', 'standard', 'large', 'xlarge']);
   const DEFAULT_FONT_SIZE = 'standard';

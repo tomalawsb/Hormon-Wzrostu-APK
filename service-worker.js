@@ -1,5 +1,5 @@
-const CACHE_VERSION = 'v2.0-2007260807';
-const CACHE_NAMESPACE = 'dzienniczek-hormonu-v2.0-2007260807';
+const CACHE_VERSION = 'v2.0-2007260834';
+const CACHE_NAMESPACE = 'dzienniczek-hormonu-v2.0-2007260834';
 const APP_CACHE_PREFIX = 'dzienniczek-hormonu-v';
 const DOCUMENT_CACHE = `${CACHE_NAMESPACE}-documents`;
 const SCRIPT_CACHE = `${CACHE_NAMESPACE}-scripts`;

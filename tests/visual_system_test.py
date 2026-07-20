@@ -62,13 +62,18 @@ require(primary is not None and contrast(primary.group(1), "#ffffff") >= 4.5,
 require(given is not None and contrast(given.group(1), "#ffffff") >= 4.5,
         "zielony status podania nie ma kontrastu WCAG AA")
 
-for mode in ("system", "light", "dark"):
+for mode in ("system", "light", "dark", "elegant", "amber", "silver", "lavender"):
     require(f'value="{mode}"' in settings_html, f"brak wyboru motywu {mode}")
 require('data-settings-target="appearance"' in settings_html, "brak kategorii Wygląd")
 require('data-settings-panel="appearance"' in settings_html, "brak panelu Wygląd")
 require('id="theme-mode-control"' in settings_html, "brak dostępnej grupy wyboru motywu")
 require("prefers-color-scheme: dark" in dark_mode, "tryb automatyczny nie reaguje na telefon")
 require(':root[data-theme="dark"]' in dark_mode, "brak jawnego motywu ciemnego")
+for custom_mode in ("elegant", "amber", "silver", "lavender"):
+    require(
+        f':root[data-theme="{custom_mode}"]' in dark_mode,
+        f"brak palety motywu {custom_mode}",
+    )
 require("matchMedia('(prefers-color-scheme: dark)')" in theme, "brak nasłuchiwania zmiany motywu telefonu")
 require("Configuration.UI_MODE_NIGHT_YES" in android_main, "tło startowe WebView nie respektuje motywu telefonu")
 require("persistData()" in theme, "wybór motywu nie jest zapisywany")
@@ -124,5 +129,5 @@ require(index.count('id="icon-home"') == 1, "sprite ikon jest powielony lub nie 
 
 print(
     "Test systemu wizualnego: OK — "
-    f"3 motywy, {len(defined_icons)} ikon SVG, semantyczne statusy i wspólne tokeny"
+    f"7 motywów, {len(defined_icons)} ikon SVG, semantyczne statusy i wspólne tokeny"
 )

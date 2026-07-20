@@ -19,7 +19,15 @@
   const ALLOWED_SITES = new Set(['brzuch', 'udo', 'ramię', 'pośladek', 'łopatka']);
   const ALLOWED_STATUSES = new Set(['given', 'skipped']);
   const ALLOWED_AMPOULE_STATUSES = new Set(['active', 'paused', 'finished']);
-  const ALLOWED_THEME_MODES = new Set(['system', 'light', 'dark']);
+  const ALLOWED_THEME_MODES = new Set([
+    'system',
+    'light',
+    'dark',
+    'elegant',
+    'amber',
+    'silver',
+    'lavender',
+  ]);
   const DEFAULT_THEME_MODE = 'system';
   const ALLOWED_FONT_SIZES = new Set(['small', 'standard', 'large', 'xlarge']);
   const DEFAULT_FONT_SIZE = 'standard';
@@ -226,7 +234,8 @@
       'update-status', 'settings-version-label', 'pwa-maintenance-controls', 'pwa-worker-status',
       'pwa-cache-status', 'pwa-online-status', 'pwa-install-status', 'refresh-pwa-resources-button',
       'apply-pwa-update-button', 'theme-mode-control', 'theme-system',
-      'theme-light', 'theme-dark', 'theme-status'
+      'theme-light', 'theme-dark', 'theme-elegant', 'theme-amber',
+      'theme-silver', 'theme-lavender', 'theme-status'
     ];
     ids.forEach((id) => { el[id] = document.getElementById(id); });
   }
@@ -994,8 +1003,30 @@ function buildProfileAmpouleUsageStats(profile) {
     measuredDoses,
   };
 }
-const THEME_COLOR_LIGHT = '#0c857b';
-const THEME_COLOR_DARK = '#0b2529';
+const THEME_PRESENTATION = Object.freeze({
+  light: Object.freeze({ label: 'Jasny', colorScheme: 'light', themeColor: '#0c857b' }),
+  dark: Object.freeze({ label: 'Ciemny', colorScheme: 'dark', themeColor: '#0b2529' }),
+  elegant: Object.freeze({
+    label: 'Elegancki',
+    colorScheme: 'dark',
+    themeColor: '#1b1e21',
+  }),
+  amber: Object.freeze({
+    label: 'Bursztynowy',
+    colorScheme: 'light',
+    themeColor: '#a95600',
+  }),
+  silver: Object.freeze({
+    label: 'Srebrny',
+    colorScheme: 'light',
+    themeColor: '#526874',
+  }),
+  lavender: Object.freeze({
+    label: 'Lawendowy',
+    colorScheme: 'light',
+    themeColor: '#6a55a3',
+  }),
+});
 const FONT_SIZE_LABELS = Object.freeze({
   small: 'Mała',
   standard: 'Standardowa',
@@ -1044,9 +1075,12 @@ function systemPrefersDark() {
 }
 
 function resolveTheme(mode = DEFAULT_THEME_MODE) {
-  if (mode === 'dark') return 'dark';
-  if (mode === 'light') return 'light';
-  return systemPrefersDark() ? 'dark' : 'light';
+  if (mode === 'system') return systemPrefersDark() ? 'dark' : 'light';
+  return ALLOWED_THEME_MODES.has(mode) ? mode : 'light';
+}
+
+function themeColorScheme(theme) {
+  return THEME_PRESENTATION[theme]?.colorScheme || 'light';
 }
 
 function applyTypographyPreference(settings = getAppearanceSettings()) {
@@ -1060,11 +1094,14 @@ function applyThemePreference(mode = getAppearanceSettings().theme) {
   const resolved = resolveTheme(safeMode);
   document.documentElement.dataset.themeMode = safeMode;
   document.documentElement.dataset.theme = resolved;
-  document.documentElement.style.colorScheme = resolved;
+  document.documentElement.style.colorScheme = themeColorScheme(resolved);
   applyTypographyPreference();
   const themeMeta = document.querySelector('meta[name="theme-color"]');
   if (themeMeta) {
-    themeMeta.setAttribute('content', resolved === 'dark' ? THEME_COLOR_DARK : THEME_COLOR_LIGHT);
+    themeMeta.setAttribute(
+      'content',
+      THEME_PRESENTATION[resolved]?.themeColor || THEME_PRESENTATION.light.themeColor
+    );
   }
   return resolved;
 }
@@ -1188,9 +1225,7 @@ function renderAppearanceSettings() {
     el['theme-status'].textContent =
       mode === 'system'
         ? `Automatyczny · teraz ${resolved === 'dark' ? 'ciemny' : 'jasny'}`
-        : mode === 'dark'
-          ? 'Ciemny'
-          : 'Jasny';
+        : THEME_PRESENTATION[mode]?.label || THEME_PRESENTATION.light.label;
   }
 
   const sizeControl = document.getElementById?.(`font-size-${settings.fontSize}`);

@@ -1,8 +1,8 @@
 # Dzienniczek Hormonu — Android APK
 
-**Wersja: v2.0-2007260807**
+**Wersja: v2.0-2007260834**
 
-Wersja 2.0-1907262315 naprawia otwieranie pliku aktualizacji APK na Androidzie 11–16 oraz zawiera poprawkę automatycznej kopii przed importem.
+Wersja 2.0-2007260823 dodaje cztery nowe motywy kolorystyczne: Elegancki, Bursztynowy, Srebrny i Lawendowy. Zachowuje także poprawkę pobierania aktualizacji APK.
 
 Numer po myślniku oznacza moment przygotowania wersji w formacie `DDMMRRHHMM`, czyli `1907262007` = 19 lipca 2026, godz. 20:07.
 
@@ -38,7 +38,7 @@ plikami wynikowymi. Opis struktury: [ETAP_4_ARCHITEKTURA.md](ETAP_4_ARCHITEKTURA
 ## System wizualny
 
 Interfejs korzysta ze wspólnych tokenów kolorów, odstępów, typografii i stanów
-komponentów. Dostępne są motywy jasny, ciemny i automatyczny, zgodny z telefonem.
+komponentów. Dostępnych jest siedem motywów: automatyczny, jasny, ciemny, Elegancki, Bursztynowy, Srebrny i Lawendowy.
 Ikony interfejsu pochodzą z jednego sprite'a SVG. Opis wdrożenia:
 [ETAP_5_SYSTEM_WIZUALNY.md](ETAP_5_SYSTEM_WIZUALNY.md).
 

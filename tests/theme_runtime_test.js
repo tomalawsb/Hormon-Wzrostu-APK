@@ -19,6 +19,10 @@ const controls = {
   system: { checked: false },
   light: { checked: false },
   dark: { checked: false },
+  elegant: { checked: false },
+  amber: { checked: false },
+  silver: { checked: false },
+  lavender: { checked: false },
 };
 
 const context = vm.createContext({
@@ -65,6 +69,10 @@ const context = vm.createContext({
     'theme-system': controls.system,
     'theme-light': controls.light,
     'theme-dark': controls.dark,
+    'theme-elegant': controls.elegant,
+    'theme-amber': controls.amber,
+    'theme-silver': controls.silver,
+    'theme-lavender': controls.lavender,
     'theme-status': { textContent: '' },
   },
   persistData() {
@@ -77,7 +85,7 @@ const context = vm.createContext({
 });
 
 vm.runInContext(
-  `const ALLOWED_THEME_MODES = new Set(['system', 'light', 'dark']);
+  `const ALLOWED_THEME_MODES = new Set(['system', 'light', 'dark', 'elegant', 'amber', 'silver', 'lavender']);
    const DEFAULT_THEME_MODE = 'system';
    const ALLOWED_FONT_SIZES = new Set(['small', 'standard', 'large', 'xlarge']);
    const DEFAULT_FONT_SIZE = 'standard';
@@ -141,6 +149,27 @@ requireResult(
   'zmiana motywu nie została utrwalona lub potwierdzona'
 );
 
+changeListener({
+  target: {
+    closest() {
+      return { value: 'elegant' };
+    },
+  },
+});
+requireResult(
+  context.data.appSettings.appearance.theme === 'elegant' &&
+    context.document.documentElement.dataset.theme === 'elegant',
+  'motyw elegancki nie został zapisany i zastosowany'
+);
+requireResult(
+  context.document.documentElement.style.colorScheme === 'dark' && themeMeta.content === '#1b1e21',
+  'motyw elegancki nie ustawia ciemnego schematu i koloru systemowego'
+);
+requireResult(
+  context.el['theme-status'].textContent === 'Elegancki',
+  'panel nie pokazuje nazwy motywu eleganckiego'
+);
+
 vm.runInContext(
   `handleTypographyChange({
     target: {
@@ -174,7 +203,7 @@ requireResult(
   context.document.documentElement.dataset.fontStyle === 'classic',
   'klasyczny styl czcionki nie został zastosowany'
 );
-requireResult(persisted === 3, 'ustawienia czcionki nie zostały utrwalone');
+requireResult(persisted === 4, 'ustawienia czcionki nie zostały utrwalone');
 
 context.data.appSettings.appearance.theme = 'system';
 systemDark = true;
@@ -189,5 +218,5 @@ requireResult(
 );
 
 console.log(
-  'Test wyglądu: OK — motyw, wielkość i styl czcionki są sanitizowane, stosowane i zapisywane.'
+  'Test wyglądu: OK — siedem motywów, wielkość i styl czcionki są sanitizowane, stosowane i zapisywane.'
 );
