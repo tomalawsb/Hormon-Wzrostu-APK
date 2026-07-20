@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
@@ -62,6 +63,9 @@ public class MainActivity extends FragmentActivity {
     private static final String APP_START_URL =
             "https://" + APP_ASSET_HOST + APP_ASSET_PREFIX + "index.html";
     private static final int MAX_EXTERNAL_URL_CHARS = 2048;
+    private static final String UPDATE_DOWNLOAD_HOST = "github.com";
+    private static final String UPDATE_DOWNLOAD_PATH_PREFIX =
+            "/tomalawsb/Hormon-Wzrostu-APK/releases/download/";
     private static final int MAX_RELEASE_JSON_CHARS = 2 * 1024 * 1024;
     private static final int MAX_NOTIFICATION_JSON_CHARS = 32 * 1024;
     private static final int MAX_REMINDER_JSON_CHARS = 1024 * 1024;
@@ -228,11 +232,19 @@ public class MainActivity extends FragmentActivity {
         try {
             URI parsed = new URI(value);
             if (!"https".equalsIgnoreCase(parsed.getScheme())) return null;
-            if (parsed.isOpaque() || parsed.getHost() == null || parsed.getHost().isEmpty()) return null;
-            if (parsed.getRawUserInfo() != null) return null;
+            if (parsed.isOpaque() || !UPDATE_DOWNLOAD_HOST.equalsIgnoreCase(parsed.getHost())) return null;
+            if (parsed.getRawUserInfo() != null || parsed.getRawQuery() != null
+                    || parsed.getRawFragment() != null) return null;
             int port = parsed.getPort();
             if (port != -1 && port != 443) return null;
-            if (APP_ASSET_HOST.equalsIgnoreCase(parsed.getHost())) return null;
+            String path = parsed.getRawPath();
+            if (path == null || !path.startsWith(UPDATE_DOWNLOAD_PATH_PREFIX)) return null;
+            String remainder = path.substring(UPDATE_DOWNLOAD_PATH_PREFIX.length());
+            int separator = remainder.indexOf('/');
+            if (separator <= 0 || separator == remainder.length() - 1
+                    || remainder.indexOf('/', separator + 1) != -1) return null;
+            String filename = remainder.substring(separator + 1);
+            if (!filename.toLowerCase(Locale.ROOT).endsWith(".apk")) return null;
             return Uri.parse(parsed.toASCIIString());
         } catch (Exception error) {
             return null;

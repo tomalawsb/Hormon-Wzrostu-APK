@@ -1,5 +1,21 @@
 const GITHUB_RELEASE_API =
   'https://api.github.com/repos/tomalawsb/Hormon-Wzrostu-APK/releases/latest';
+const GITHUB_APK_DOWNLOAD_PATH =
+  '/tomalawsb/Hormon-Wzrostu-APK/releases/download/';
+
+function isAllowedUpdateApkUrl(value) {
+  try {
+    const url = new URL(String(value || '').trim());
+    if (url.protocol !== 'https:' || url.hostname !== 'github.com' || url.port) return false;
+    if (url.username || url.password || url.search || url.hash) return false;
+    if (!url.pathname.startsWith(GITHUB_APK_DOWNLOAD_PATH)) return false;
+    const remainder = url.pathname.slice(GITHUB_APK_DOWNLOAD_PATH.length);
+    const parts = remainder.split('/');
+    return parts.length === 2 && Boolean(parts[0]) && /^[^/]+\.apk$/i.test(parts[1]);
+  } catch {
+    return false;
+  }
+}
 
 function parseVersionParts(value) {
   const normalized = String(value || '').trim().replace(/^v/i, '');
@@ -48,7 +64,7 @@ async function checkForUpdates({ autoDownload = false } = {}) {
       headers: { Accept: 'application/vnd.github+json' },
     });
     if (response.status === 404) {
-      setUpdateStatus('Na GitHubie nie ma jeszcze opublikowanego wydania APK.');
+      setUpdateStatus('Nie opublikowano jeszcze pliku APK do aktualizacji.');
       return;
     }
     if (!response.ok) throw new Error(`GitHub odpowiedział kodem ${response.status}`);
@@ -63,18 +79,15 @@ async function checkForUpdates({ autoDownload = false } = {}) {
       setUpdateStatus(`Masz najnowszą wersję ${currentAppVersion}.`, 'success');
       return;
     }
-    if (!apk?.browser_download_url) {
-      latestUpdateUrl = String(release.html_url || '');
-      latestUpdateVersion = releaseVersion;
-      setUpdateStatus(`Jest wersja ${releaseVersion}, ale wydanie nie zawiera pliku APK.`, 'error');
-      if (latestUpdateUrl) {
-        el['download-update-button'].textContent = 'Otwórz wydanie na GitHubie';
-        el['download-update-button'].classList.remove('is-hidden');
-      }
+    if (!apk?.browser_download_url || !isAllowedUpdateApkUrl(apk.browser_download_url)) {
+      setUpdateStatus(
+        `Jest wersja ${releaseVersion}, ale nie zawiera prawidłowego pliku APK.`,
+        'error'
+      );
       return;
     }
 
-    latestUpdateUrl = apk.browser_download_url;
+    latestUpdateUrl = String(apk.browser_download_url);
     latestUpdateVersion = releaseVersion;
     el['download-update-button'].textContent = `Pobierz wersję ${releaseVersion}`;
     el['download-update-button'].classList.remove('is-hidden');
@@ -98,6 +111,13 @@ async function downloadAvailableUpdate({ skipCheck = false } = {}) {
   if (!latestUpdateUrl) {
     if (skipCheck) return;
     await checkForUpdates({ autoDownload: false });
+    return;
+  }
+  if (!isAllowedUpdateApkUrl(latestUpdateUrl)) {
+    latestUpdateUrl = '';
+    latestUpdateVersion = '';
+    el['download-update-button'].classList.add('is-hidden');
+    showToast('Zablokowano nieprawidłowy adres aktualizacji.', 'error');
     return;
   }
   let opened;

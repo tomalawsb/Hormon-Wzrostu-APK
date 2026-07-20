@@ -1182,9 +1182,22 @@
       }
     });
   }
+  function isAllowedUpdateApkUrl(value) {
+    try {
+      const url = new URL(String(value || "").trim());
+      if (url.protocol !== "https:" || url.hostname !== "github.com" || url.port) return false;
+      if (url.username || url.password || url.search || url.hash) return false;
+      const prefix = "/tomalawsb/Hormon-Wzrostu-APK/releases/download/";
+      if (!url.pathname.startsWith(prefix)) return false;
+      const parts = url.pathname.slice(prefix.length).split("/");
+      return parts.length === 2 && Boolean(parts[0]) && /^[^/]+\.apk$/i.test(parts[1]);
+    } catch {
+      return false;
+    }
+  }
   async function openExternal(url) {
     const value = String(url || "").trim();
-    if (!/^https:\/\//i.test(value)) return false;
+    if (!isAllowedUpdateApkUrl(value)) return false;
     if (hasAndroidWebViewBridge()) {
       return Boolean(window.AndroidNative.openExternalUrl?.(value));
     }

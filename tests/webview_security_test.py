@@ -99,6 +99,11 @@ require(
     "błąd pojedynczego zasobu może wyłączyć cały most Androida",
 )
 require('"https".equalsIgnoreCase(parsed.getScheme())' in main, "linki zewnętrzne nie są ograniczone do HTTPS")
+require("UPDATE_DOWNLOAD_HOST" in main and '"github.com"' in main,
+        "natywne pobieranie nie jest ograniczone do hosta GitHub")
+require("UPDATE_DOWNLOAD_PATH_PREFIX" in main and 'releases/download/' in main,
+        "natywne pobieranie nie jest ograniczone do zasobu wydania")
+require('endsWith(".apk")' in main, "Android może otworzyć plik inny niż APK")
 require("Intent.CATEGORY_BROWSABLE" in main, "linki zewnętrzne nie używają bezpiecznego intentu przeglądarki")
 require('android:usesCleartextTraffic="false"' in manifest, "manifest dopuszcza nieszyfrowany ruch")
 
@@ -168,6 +173,15 @@ require("MAX_EXPORT_JSON_CHARS" in main, "brak limitu natywnego eksportu JSON")
 require("Intent.ACTION_CREATE_DOCUMENT" in main, "eksport JSON nie używa systemowego okna zapisu")
 require("nativeFileSaveResult" in main, "Android nie zwraca wyniku natywnego zapisu JSON")
 require("saveJsonFile" in read("src/native/native-bridge.js"), "most web nie obsługuje natywnego zapisu JSON")
+updates_source = read("src/services/updates/index.js")
+bridge_source = read("src/native/native-bridge.js")
+require("release.html_url" not in updates_source, "aktualizator nadal może otworzyć stronę wydania")
+require("Otwórz wydanie na GitHubie" not in updates_source,
+        "aktualizator nadal pokazuje odsyłacz do GitHuba")
+require(updates_source.count("isAllowedUpdateApkUrl") >= 3,
+        "adres APK nie jest sprawdzany przed pokazaniem i pobraniem")
+require("isAllowedUpdateApkUrl(value)" in bridge_source,
+        "most natywny nie blokuje adresów innych niż bezpośredni APK")
 require("await downloadFile(filename" in read("src/services/export/backup.js"),
         "eksport kopii pokazuje sukces przed zakończeniem zapisu")
 require("MAX_RELEASE_JSON_CHARS" in main and "setInstanceFollowRedirects(false)" in main, "odpowiedź aktualizatora nie jest ograniczona")
