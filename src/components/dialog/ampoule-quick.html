@@ -1,0 +1,46 @@
+
+  <dialog id="ampoule-quick-dialog" class="data-dialog ampoule-quick-dialog" aria-labelledby="ampoule-quick-title">
+    <form id="ampoule-quick-form" class="data-dialog__content ampoule-quick-content">
+      <div class="dialog-header dialog-header--compact data-dialog__header">
+        <div>
+          <p class="eyebrow">Szybka konfiguracja</p>
+          <h2 id="ampoule-quick-title">Ampułka</h2>
+          <p class="muted">Ustaw licznik bez opuszczania ekranu dzisiejszego podania.</p>
+        </div>
+        <button id="ampoule-quick-close-button" class="icon-button" type="button" aria-label="Zamknij ustawienia ampułki"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+
+      <div class="ampoule-quick-hero" aria-hidden="true">
+        <span><svg class="app-icon" focusable="false"><use href="#icon-ampoule"></use></svg></span>
+        <div><strong id="ampoule-quick-summary">Nowa ampułka</strong><small>Każdy zapisany zastrzyk przesunie licznik o jeden.</small></div>
+      </div>
+
+      <div class="form-grid ampoule-quick-grid">
+        <label>
+          <span>Numer ampułki</span>
+          <input id="ampoule-quick-number" type="number" min="1" max="999" step="1" inputmode="numeric" required>
+        </label>
+        <label>
+          <span>Data rozpoczęcia</span>
+          <input id="ampoule-quick-date" type="date" required>
+        </label>
+        <label class="ampoule-quick-count-field">
+          <span>Liczba zastrzyków z ampułki</span>
+          <input id="ampoule-quick-dose-count" type="number" min="1" max="999" step="1" inputmode="numeric" required>
+          <small>Na przykład 11 — licznik pokaże kolejno 1 z 11, 2 z 11 itd.</small>
+        </label>
+        <label>
+          <span>Limit dni od otwarcia</span>
+          <input id="ampoule-quick-max-days" type="number" min="1" max="365" step="1" inputmode="numeric" placeholder="Opcjonalnie">
+        </label>
+      </div>
+
+      <p id="ampoule-quick-warning" class="ampoule-quick-warning" role="status" aria-live="polite"></p>
+      <div class="dialog-actions ampoule-quick-actions">
+        <button id="ampoule-quick-advanced-button" class="button button--ghost" type="button">Wszystkie ustawienia</button>
+        <span class="dialog-spacer"></span>
+        <button id="ampoule-quick-new-button" class="button button--secondary" type="button">Rozpocznij nową</button>
+        <button class="button button--primary" type="submit">Zapisz</button>
+      </div>
+    </form>
+  </dialog>

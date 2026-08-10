@@ -7,7 +7,7 @@
   const BACKUP_REMINDER_INTERVAL_MS = 3 * 24 * 60 * 60 * 1000;
   const AUTO_IMPORT_BACKUP_KEY = 'dzienniczek-hormonu-wzrostu-auto-import-backup-v1';
   const PERMISSIONS_ONBOARDING_STORAGE_KEY = 'dzienniczek-hormonu-zgody-onboarding';
-  const PERMISSIONS_ONBOARDING_REVISION = 'permissions-v2';
+  const PERMISSIONS_ONBOARDING_REVISION = 'permissions-v3';
   const BACKUP_FORMAT_VERSION = 2;
   const MAX_BACKUP_FILE_SIZE = 10 * 1024 * 1024;
   const MAX_NOTE_LENGTH = 1000;
@@ -34,11 +34,11 @@
   const ALLOWED_FONT_STYLES = new Set(['system', 'readable', 'classic']);
   const DEFAULT_FONT_STYLE = 'system';
   const DEFAULT_AMPOULE_VOLUME_ML = '10';
-  const DATA_SCHEMA_VERSION = 13;
+  const DATA_SCHEMA_VERSION = 14;
   const DEFAULT_PROFILE_ID = 'profile-1';
-  const DEFAULT_PROFILE_NAME = 'Dziecko 1';
+  const DEFAULT_PROFILE_NAME = 'Profil 1';
   const DEFAULT_PROFILE_COLOR = 'teal';
-  const DEFAULT_PROFILE_ICON = '🧒';
+  const DEFAULT_PROFILE_ICON = '🙂';
   const MAX_PROFILES = 20;
   const ALLOWED_PROFILE_COLORS = new Set(['teal', 'blue', 'violet', 'rose', 'amber', 'green']);
   const ALLOWED_PROFILE_ICONS = new Set(['🧒', '👧', '👦', '🙂', '⭐', '💚', '💙', '💜']);
@@ -87,9 +87,11 @@
     ampouleStartNumber: 1,
     ampouleVolumeMl: DEFAULT_AMPOULE_VOLUME_ML,
     ampouleDoseMl: '',
+    ampouleDoseCount: 10,
     ampouleMaxOpenDays: ''
   });
 
   const DEFAULT_APP_META = Object.freeze({
-    onboardingCompleted: false
+    onboardingCompleted: false,
+    setupCompleted: false
   });

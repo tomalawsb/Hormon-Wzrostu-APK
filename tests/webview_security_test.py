@@ -98,20 +98,10 @@ require(
     "failingUrl != null && failingUrl.equals(view.getUrl())" in main,
     "błąd pojedynczego zasobu może wyłączyć cały most Androida",
 )
-require('"https".equalsIgnoreCase(parsed.getScheme())' in main, "linki zewnętrzne nie są ograniczone do HTTPS")
-require("UPDATE_DOWNLOAD_HOST" in main and '"github.com"' in main,
-        "natywne pobieranie nie jest ograniczone do hosta GitHub")
-require("UPDATE_DOWNLOAD_PATH_PREFIX" in main and 'releases/download/' in main,
-        "natywne pobieranie nie jest ograniczone do zasobu wydania")
-require('endsWith(".apk")' in main, "Android może otworzyć plik inny niż APK")
-require("startActivity(new Intent(Intent.ACTION_VIEW, uri))" in main,
-        "plik APK nie jest otwierany bezpośrednim intentem ACTION_VIEW")
-require("resolveActivity(" not in main,
-        "aktualizator nadal blokuje pobieranie przez zawodny test resolveActivity")
-require("Looper.getMainLooper()" in main and "runOnUiThread" in main,
-        "otwieranie pliku APK nie jest wykonywane bezpiecznie na głównym wątku")
-require("CountDownLatch" in main and "TimeUnit.SECONDS" in main,
-        "most Androida nie czeka na rzeczywisty wynik uruchomienia pobierania")
+require("UPDATE_DOWNLOAD_HOST" not in main and "releases/download/" not in main,
+        "APK nadal zawiera mechanizm pobierania aktualizacji poza Google Play")
+require("HttpURLConnection" not in main and "new URL(" not in main,
+        "WebView nadal ma natywny mechanizm komunikacji sieciowej")
 require('android:usesCleartextTraffic="false"' in manifest, "manifest dopuszcza nieszyfrowany ruch")
 
 expected_assets = {
@@ -122,6 +112,7 @@ expected_assets = {
     "manifest.json",
     "app-version.json",
     "service-worker.js",
+    "privacy.html",
     "icon-192.png",
     "icon-512.png",
 }
@@ -137,10 +128,11 @@ bridge_chunks = re.findall(
 expected_methods = {
     "isNative",
     "appVersion",
-    "latestReleaseJson",
     "initialize",
     "microphonePermission",
     "requestMicrophonePermission",
+    "startVoiceRecognition",
+    "stopVoiceRecognition",
     "notificationPermission",
     "requestNotificationPermission",
     "exactAlarmPermission",
@@ -150,7 +142,6 @@ expected_methods = {
     "notificationDiagnostics",
     "openNotificationSettings",
     "notificationEventsReady",
-    "openExternalUrl",
     "saveJsonFile",
     "secureStorageRead",
     "secureStorageWrite",
@@ -173,7 +164,16 @@ for chunk in bridge_chunks:
     found_methods.add(method)
     require("bridgeAllowed()" in chunk, f"metoda mostu {method} nie sprawdza zaufanej strony")
 require(found_methods == expected_methods, "lista metod AndroidNativeApi zmieniła się bez przeglądu testu")
-require("isTrustedAppOrigin(request.getOrigin())" in main, "żądanie mikrofonu nie sprawdza pochodzenia")
+require("RESOURCE_AUDIO_CAPTURE" not in main, "WebView nadal udostępnia przechwytywanie dźwięku")
+require("RECORD_AUDIO" in manifest, "manifest nie deklaruje opcjonalnego dostępu do mikrofonu")
+require("RecognizerIntent.ACTION_RECOGNIZE_SPEECH" in main,
+        "Android nie uruchamia systemowego rozpoznawania mowy")
+require("SpeechRecognizer.createSpeechRecognizer(this)" in main,
+        "Android nie używa natywnego rozpoznawania mowy wewnątrz aplikacji")
+require("Manifest.permission.RECORD_AUDIO" in main and "REQ_MICROPHONE" in main,
+        "Android nie pyta o zgodę na mikrofon przy pierwszym użyciu")
+require("nativeVoiceRecognitionResult" in main,
+        "wynik rozpoznawania mowy nie wraca do aplikacji")
 require("MAX_NOTIFICATION_JSON_CHARS" in main, "brak limitu danych powiadomienia")
 require("MAX_REMINDER_JSON_CHARS" in main, "brak limitu danych przypomnień")
 require("MAX_EXPORT_JSON_CHARS" in main, "brak limitu natywnego eksportu JSON")
@@ -185,13 +185,14 @@ bridge_source = read("src/native/native-bridge.js")
 require("release.html_url" not in updates_source, "aktualizator nadal może otworzyć stronę wydania")
 require("Otwórz wydanie na GitHubie" not in updates_source,
         "aktualizator nadal pokazuje odsyłacz do GitHuba")
-require(updates_source.count("isAllowedUpdateApkUrl") >= 3,
-        "adres APK nie jest sprawdzany przed pokazaniem i pobraniem")
-require("isAllowedUpdateApkUrl(value)" in bridge_source,
-        "most natywny nie blokuje adresów innych niż bezpośredni APK")
+require("browser_download_url" not in updates_source and "isAllowedUpdateApkUrl" not in updates_source,
+        "moduł aktualizacji nadal obsługuje samodzielne APK")
+require("openExternal" not in bridge_source,
+        "most natywny nadal pozwala otwierać samodzielne aktualizacje")
 require("await downloadFile(filename" in read("src/services/export/backup.js"),
         "eksport kopii pokazuje sukces przed zakończeniem zapisu")
-require("MAX_RELEASE_JSON_CHARS" in main and "setInstanceFollowRedirects(false)" in main, "odpowiedź aktualizatora nie jest ograniczona")
+require("MAX_RELEASE_JSON_CHARS" not in main and "latestReleaseJson" not in main,
+        "pozostał natywny klient zewnętrznych aktualizacji")
 require("removeJavascriptInterface(\"AndroidNative\")" in main, "most nie jest usuwany przy zamykaniu")
 
 parser = SecurityHtmlParser()
@@ -204,14 +205,14 @@ require(directives.get("script-src-attr") == {"'none'"}, "atrybuty skryptowe inl
 require(directives.get("object-src") == {"'none'"}, "object-src nie jest wyłączone")
 require(directives.get("base-uri") == {"'none'"}, "base-uri nie jest wyłączone")
 require(directives.get("form-action") == {"'self'"}, "formularze mogą wysyłać dane poza aplikację")
-require(directives.get("connect-src") == {"'self'", "https://api.github.com"}, "connect-src jest zbyt szerokie")
+require(directives.get("connect-src") == {"'self'"}, "connect-src jest zbyt szerokie")
 require("*" not in parser.csp and "'unsafe-eval'" not in parser.csp, "CSP zawiera niebezpieczne źródło")
 require(parser.inline_scripts == 0, "index.html zawiera skrypt inline blokowany przez CSP")
 require(not parser.event_attributes, "index.html zawiera obsługę zdarzeń inline")
 require(parser.referrer == "no-referrer", "brak ścisłej polityki referrer")
 require("frame-ancestors 'none'" in main, "nagłówek CSP APK nie blokuje osadzania strony")
 require("X-Content-Type-Options" in main and "nosniff" in main, "brak ochrony MIME dla zasobów APK")
-require("Permissions-Policy" in main and "camera=()" in main, "brak ograniczenia funkcji przeglądarki")
+require("Permissions-Policy" in main and "microphone=(), camera=()" in main, "brak ograniczenia funkcji przeglądarki")
 
 print("Test bezpieczeństwa WebView: OK")
 print(f"Zaufane zasoby: {len(expected_assets)}, sprawdzone metody AndroidNativeApi: {len(found_methods)}")

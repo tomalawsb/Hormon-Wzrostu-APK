@@ -9,7 +9,7 @@ function renderProfileControls() {
   el['active-profile-avatar'].dataset.profileColor = activeProfile.color;
   el['active-profile-button'].setAttribute(
     'aria-label',
-    `Aktywny profil: ${activeProfile.name}. Zmień profil dziecka.`
+    `Aktywny profil: ${activeProfile.name}. Zmień profil.`
   );
 
   const availableCount = getAvailableProfiles().length;
@@ -83,7 +83,7 @@ function renderProfilesList() {
   el['add-profile-button'].title =
     data.profiles.length >= MAX_PROFILES
       ? `Osiągnięto limit ${MAX_PROFILES} profili.`
-      : 'Dodaj nowy profil dziecka';
+      : 'Dodaj nowy profil';
 }
 
 function handleProfilesListAction(event) {
@@ -163,7 +163,7 @@ function saveProfileEditor(event) {
   const profileId = sanitizeProfileId(el['profile-editor-id'].value);
   const name = sanitizeProfileName(el['profile-name-input'].value);
   if (!name) {
-    showToast('Wpisz nazwę dziecka.', 'error');
+    showToast('Wpisz nazwę profilu.', 'error');
     el['profile-name-input'].focus();
     return;
   }

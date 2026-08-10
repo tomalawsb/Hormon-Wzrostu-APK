@@ -185,7 +185,7 @@ function inspectImportedData(imported) {
     entryCount += unique.entries.length;
     entryDates.push(...unique.entries.map((entry) => entry.date));
     if (profile.archivedAt) archivedProfileCount += 1;
-    profileNames.push(sanitizeProfileName(profile.name) || `Dziecko ${index + 1}`);
+    profileNames.push(sanitizeProfileName(profile.name) || `Profil ${index + 1}`);
   });
 
   entryDates.sort();

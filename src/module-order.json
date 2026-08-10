@@ -51,6 +51,7 @@
     { "file": "services/export/backup.js", "layer": "service" },
     { "file": "services/import/validation.js", "layer": "service" },
     { "file": "screens/settings/import.js", "layer": "screen" },
+    { "file": "screens/onboarding/index.js", "layer": "screen" },
     { "file": "services/export/csv.js", "layer": "service" },
     { "file": "screens/settings/data-maintenance.js", "layer": "screen" },
     { "file": "screens/settings/permissions.js", "layer": "screen" },

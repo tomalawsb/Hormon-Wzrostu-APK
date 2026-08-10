@@ -1,0 +1,94 @@
+
+  <dialog id="setup-dialog" class="setup-dialog" aria-labelledby="setup-title">
+    <form id="setup-form" class="setup-shell">
+      <header class="setup-header">
+        <div class="setup-brand" aria-hidden="true"><img src="./icon-192.png" alt="" width="48" height="48"></div>
+        <div>
+          <p class="eyebrow">Pierwsze uruchomienie</p>
+          <h2 id="setup-title">Skonfiguruj swój dzienniczek</h2>
+        </div>
+        <span id="setup-step-label" class="setup-step-label">Krok 1 z 4</span>
+      </header>
+
+      <div class="setup-progress" aria-hidden="true"><span id="setup-progress-fill"></span></div>
+
+      <div class="setup-body">
+        <section class="setup-step is-active" data-setup-step="0">
+          <div class="setup-intro">
+            <span class="setup-intro__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-shield"></use></svg></span>
+            <h3>Twoje dane zostają na urządzeniu</h3>
+            <p>Możesz zacząć od nowa albo bezpiecznie przenieść ustawienia i całą historię z poprzedniej wersji.</p>
+          </div>
+          <div class="setup-choice-grid">
+            <button id="setup-import-button" class="setup-choice" type="button">
+              <span><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-upload"></use></svg></span>
+              <strong>Przenieś moje dane</strong>
+              <small>Wybierz plik kopii z używanej dotąd wersji.</small>
+            </button>
+            <button id="setup-new-button" class="setup-choice setup-choice--primary" type="button">
+              <span><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-plus"></use></svg></span>
+              <strong>Utwórz nowy dzienniczek</strong>
+              <small>Kreator przeprowadzi Cię przez najważniejsze ustawienia.</small>
+            </button>
+          </div>
+          <input id="setup-import-file" class="sr-only" type="file" accept=".json,.ghbackup,application/json">
+          <div id="setup-import-preview" class="setup-import-preview" hidden>
+            <div><strong id="setup-import-name">Kopia danych</strong><span id="setup-import-summary"></span></div>
+            <button id="setup-import-confirm" class="button button--primary" type="button">Importuj i przejdź do aplikacji</button>
+          </div>
+        </section>
+
+        <section class="setup-step" data-setup-step="1" hidden>
+          <div class="setup-section-heading">
+            <p class="eyebrow">Profil</p>
+            <h3>Kto będzie korzystać z dzienniczka?</h3>
+            <p>Dla kolejnych osób dodasz osobne profile później.</p>
+          </div>
+          <fieldset class="setup-profile-type">
+            <legend class="sr-only">Rodzaj profilu</legend>
+            <label><input id="setup-type-adult" type="radio" name="setup-type" value="adult" checked><span aria-hidden="true">🙂</span><strong>Osoba dorosła</strong></label>
+            <label><input id="setup-type-child" type="radio" name="setup-type" value="child"><span aria-hidden="true">🧒</span><strong>Dziecko</strong></label>
+          </fieldset>
+          <label class="setup-large-field"><span>Nazwa profilu</span><input id="setup-profile-name" type="text" maxlength="60" autocomplete="name" placeholder="Np. Tomek" required></label>
+        </section>
+
+        <section class="setup-step" data-setup-step="2" hidden>
+          <div class="setup-section-heading">
+            <p class="eyebrow">Plan leczenia</p>
+            <h3>Ustaw domyślne podanie</h3>
+            <p>Wszystkie wartości będzie można później zmienić.</p>
+          </div>
+          <div class="form-grid setup-treatment-grid">
+            <label><span>Dawka</span><input id="setup-dose" inputmode="decimal" value="1,0" required></label>
+            <label><span>Jednostka</span><select id="setup-unit"><option value="mg">mg</option><option value="ml">ml</option><option value="IU">IU</option><option value="j.m.">j.m.</option></select></label>
+            <label><span>Planowana godzina</span><input id="setup-time" type="time" value="20:00" required></label>
+          </div>
+        </section>
+
+        <section class="setup-step" data-setup-step="3" hidden>
+          <div class="setup-section-heading">
+            <p class="eyebrow">Ampułka i przypomnienie</p>
+            <h3>Ostatnie dwa ustawienia</h3>
+            <p>Licznik będzie widoczny na ekranie Dzisiaj.</p>
+          </div>
+          <label class="setup-large-field setup-dose-count-field">
+            <span>Liczba zastrzyków z jednej ampułki</span>
+            <input id="setup-dose-count" type="number" min="1" max="999" step="1" inputmode="numeric" value="10" required>
+            <small>Możesz wpisać dowolną wartość, np. 11.</small>
+          </label>
+          <label class="toggle-row setup-reminder-toggle">
+            <span><strong>Codzienne przypomnienie</strong><small>System poprosi o zgodę na powiadomienia po zakończeniu kreatora.</small></span>
+            <input id="setup-reminder-enabled" type="checkbox" role="switch" checked>
+          </label>
+          <label class="setup-large-field"><span>Godzina przypomnienia</span><input id="setup-reminder-time" type="time" value="21:00"></label>
+        </section>
+      </div>
+
+      <footer id="setup-actions" class="setup-actions" hidden>
+        <button id="setup-back-button" class="button button--ghost" type="button">Wstecz</button>
+        <span class="dialog-spacer"></span>
+        <button id="setup-next-button" class="button button--primary" type="button">Dalej</button>
+        <button id="setup-finish-button" class="button button--primary" type="submit" hidden>Zakończ konfigurację</button>
+      </footer>
+    </form>
+  </dialog>

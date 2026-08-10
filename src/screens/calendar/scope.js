@@ -4,7 +4,7 @@ function normalizeProfileScope(scope) {
   return available.some((profile) => profile.id === scope) ? scope : data.activeProfileId;
 }
 
-function populateProfileScopeSelect(select, scope, allLabel = 'Wszystkie dzieci') {
+function populateProfileScopeSelect(select, scope, allLabel = 'Wszystkie profile') {
   const normalized = normalizeProfileScope(scope);
   if (!select) return normalized;
   const profiles = getAvailableProfiles();
@@ -56,7 +56,7 @@ function groupScopedEntriesByDate(records) {
 
 function profileScopeDescription(scope, count) {
   const profiles = getProfilesForScope(scope);
-  const label = scope === 'all' ? 'Wszystkie dzieci' : profiles[0]?.name || getActiveProfile().name;
+  const label = scope === 'all' ? 'Wszystkie profile' : profiles[0]?.name || getActiveProfile().name;
   return `${label} · ${count} ${plural(count, 'wpis', 'wpisy', 'wpisów')}`;
 }
 

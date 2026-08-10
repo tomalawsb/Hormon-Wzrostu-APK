@@ -86,7 +86,7 @@ android_root = ET.fromstring(read("android/app/src/main/AndroidManifest.xml"))
 activity = android_root.find("./application/activity")
 require(activity is not None, "brak aktywności Android")
 require(
-    activity.attrib.get(ANDROID_NS + "screenOrientation") == "unspecified",
+    ANDROID_NS + "screenOrientation" not in activity.attrib,
     "Android blokuje zmianę orientacji",
 )
 

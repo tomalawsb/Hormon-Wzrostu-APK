@@ -16,12 +16,14 @@ def require(condition: bool, message: str) -> None:
 
 
 settings_html = read("src/screens/settings/index.html")
+permissions_html = read("src/components/dialog/permissions.html")
 navigation = read("src/screens/settings/navigation.js")
 maintenance = read("src/screens/settings/data-maintenance.js")
 health_service = read("src/services/profiles/health.js")
 health_screen = read("src/screens/profiles/health.js")
 reports = read("src/screens/reports/index.js")
 styles = read("src/styles/screens.css")
+pwa_install = read("src/platform/pwa-install.js")
 generated_html = read("index.html")
 generated_js = read("app.js")
 generated_css = read("style.css")
@@ -31,8 +33,8 @@ expected = [
     "treatment",
     "reminders",
     "ampoules",
-    "appearance",
     "data",
+    "appearance",
     "security",
     "about",
 ]
@@ -40,6 +42,8 @@ targets = re.findall(r'data-settings-target="([^"]+)"', settings_html)
 panels = re.findall(r'data-settings-panel="([^"]+)"', settings_html)
 require(targets == expected, "ustawienia nie mają ośmiu kategorii etapu 9 we właściwej kolejności")
 require(len(panels) == 8 and set(panels) == set(expected), "kategorie nie mają osobnych paneli")
+for group in ("Leczenie", "Raporty i dane", "Wygląd i obsługa", "Bezpieczeństwo i aplikacja"):
+    require(group in settings_html, f"brakuje grupy ustawień: {group}")
 require(len(targets) == len(set(targets)), "kategorie ustawień są zduplikowane")
 require(len(panels) == len(set(panels)), "panele ustawień są zduplikowane")
 
@@ -59,6 +63,18 @@ require("settings-advanced-permissions" in panel_sections["about"],
         "zgody urządzenia nie są opcją zaawansowaną informacji")
 require("settings-version-label" in panel_sections["about"],
         "aktualizacje nie znajdują się w informacjach o aplikacji")
+require('id="settings-install-callout" class="settings-install-callout" hidden' in panel_sections["about"],
+        "komunikat instalacji PWA nie jest domyślnie ukryty")
+require("settingsCallout.hidden = !browserPwa" in pwa_install,
+        "komunikat instalacji nie sprawdza, czy aplikacja działa jako APK")
+require(".native-android .settings-install-callout" in styles,
+        "wersja Android nie ukrywa awaryjnie komunikatu instalacji PWA")
+require('class="permission-card permission-card--microphone">' in permissions_html,
+        "zgoda na mikrofon nadal jest ukryta w konfiguracji")
+require(".native-android .permission-card--microphone" not in styles,
+        "wersja Android nadal ukrywa stan zgody na mikrofon")
+require("#view-more" in styles and "scroll-padding-bottom" in styles,
+        "ustawienia na małym ekranie mogą pozostać zasłonięte przez dolną nawigację")
 
 data_panel = panel_sections["data"]
 backup_start = data_panel.index('id="data-backup-section"')
@@ -106,4 +122,4 @@ for marker, generated, name in (
 ):
     require(marker in generated, f"wygenerowany {name} nie zawiera zmian etapu 9")
 
-print("Test etapu 9: OK — 8 kategorii, opcje zaawansowane, osobna strefa usuwania i poprawione pomiary")
+print("Test etapu 9: OK — pogrupowane kategorie, opcje zaawansowane i osobna strefa usuwania")

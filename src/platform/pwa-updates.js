@@ -29,11 +29,11 @@ function showPwaUpdateReady(worker) {
   if (!worker || isNativeAndroidApp()) return;
   pendingPwaWorker = worker;
   el['apply-pwa-update-button']?.classList.remove('is-hidden');
-  setUpdateStatus('Dostępna jest nowa wersja PWA. Zastosuj ją, aby odświeżyć aplikację.', 'success');
+  setUpdateStatus('Dostępna jest nowa wersja. Zastosuj ją, aby odświeżyć aplikację.', 'success');
   setPwaDiagnostic('pwa-worker-status', 'Aktualizacja gotowa', 'warning');
   if (!pwaUpdateToastShown) {
     pwaUpdateToastShown = true;
-    showToast('Dostępna jest nowa wersja aplikacji PWA.', 'success');
+    showToast('Dostępna jest nowa wersja aplikacji.', 'success');
   }
 }
 
@@ -159,11 +159,11 @@ function waitForPwaWorker(worker, timeoutMs = 12000) {
 async function checkPwaUpdate({ announce = true } = {}) {
   if (isNativeAndroidApp()) return false;
   if (!serviceWorkerRegistration) {
-    setUpdateStatus('Service worker nie jest jeszcze gotowy.', 'error');
+    setUpdateStatus('Mechanizm aktualizacji nie jest jeszcze gotowy.', 'error');
     return false;
   }
   setPwaControlsBusy(true);
-  setUpdateStatus('Sprawdzanie nowej wersji PWA…');
+  setUpdateStatus('Sprawdzanie nowej wersji…');
   try {
     await serviceWorkerRegistration.update();
     if (serviceWorkerRegistration.installing) {
@@ -176,14 +176,14 @@ async function checkPwaUpdate({ announce = true } = {}) {
       return true;
     }
     setUpdateStatus(`Masz aktualną wersję ${currentAppVersion}.`, 'success');
-    if (announce) showToast('PWA korzysta z aktualnej wersji.', 'success');
+    if (announce) showToast('Aplikacja korzysta z aktualnej wersji.', 'success');
     await refreshPwaRuntimeStatus();
     return false;
   } catch (error) {
     console.warn('Nie udało się sprawdzić aktualizacji PWA:', error);
     setUpdateStatus(
       navigator.onLine
-        ? 'Nie udało się sprawdzić aktualizacji PWA.'
+        ? 'Nie udało się sprawdzić aktualizacji.'
         : 'Brak internetu — aplikacja nadal działa z zapisanych zasobów.',
       'error'
     );
@@ -196,11 +196,11 @@ async function checkPwaUpdate({ announce = true } = {}) {
 async function applyPwaUpdate() {
   const worker = serviceWorkerRegistration?.waiting || pendingPwaWorker;
   if (!worker) {
-    showToast('Nie ma oczekującej aktualizacji PWA.', 'error');
+    showToast('Nie ma oczekującej aktualizacji.', 'error');
     return false;
   }
   setPwaControlsBusy(true);
-  setUpdateStatus('Włączanie nowej wersji PWA…');
+  setUpdateStatus('Włączanie nowej wersji…');
   reloadAfterPwaActivation = true;
   worker.postMessage({ type: 'SKIP_WAITING' });
   window.setTimeout(() => {
@@ -219,7 +219,7 @@ async function refreshPwaResources() {
     return false;
   }
   setPwaControlsBusy(true);
-  setUpdateStatus('Pobieranie świeżych zasobów PWA…');
+  setUpdateStatus('Pobieranie aktualnych plików aplikacji…');
   try {
     await serviceWorkerRegistration?.update();
     if (serviceWorkerRegistration?.installing) {
@@ -240,7 +240,7 @@ async function refreshPwaResources() {
   } catch (error) {
     console.warn('Nie udało się odświeżyć zasobów PWA:', error);
     setUpdateStatus('Nie udało się odświeżyć zasobów. Dotychczasowy cache pozostaje aktywny.', 'error');
-    showToast('Odświeżenie zasobów PWA nie powiodło się.', 'error');
+    showToast('Odświeżenie aplikacji nie powiodło się.', 'error');
     return false;
   } finally {
     setPwaControlsBusy(false);

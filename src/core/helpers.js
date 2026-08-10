@@ -53,6 +53,11 @@
     return Number.isFinite(number) && number >= 1 && number <= 999 ? number : 1;
   }
 
+  function normalizeAmpouleDoseCount(value, fallback = 10) {
+    const number = Number.parseInt(String(value ?? '').trim(), 10);
+    return Number.isFinite(number) && number >= 1 && number <= 999 ? number : fallback;
+  }
+
   function normalizeOptionalDayLimit(value) {
     const text = String(value ?? '').trim();
     if (!text) return '';
@@ -102,6 +107,10 @@
     if (iso === localDateISO()) return 'dzisiaj';
     const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
     if (iso === localDateISO(yesterday)) return 'wczoraj';
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    if (iso === localDateISO(tomorrow)) return 'jutro';
+    const dayAfterTomorrow = new Date(); dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+    if (iso === localDateISO(dayAfterTomorrow)) return 'pojutrze';
     const date = parseISODate(iso);
     return `${date.getDate()} ${MONTHS[date.getMonth()]}`;
   }

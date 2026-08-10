@@ -1,5 +1,6 @@
 
   function bindEvents() {
+    bindSetupWizardEvents();
     document.querySelectorAll('[data-view]').forEach((button) => {
       button.addEventListener('click', () => switchView(button.dataset.view));
     });
@@ -25,7 +26,19 @@
     el['recommended-save-button'].addEventListener('click', confirmRecommendedInjection);
     el['recommended-edit-button'].addEventListener('click', openRecommendedEntryEditor);
     el['recommended-skip-button'].addEventListener('click', confirmSkippedToday);
-    el['recommended-manual-button'].addEventListener('click', openAmpouleSettings);
+    el['recommended-manual-button'].addEventListener('click', () =>
+      openSettingsSection('ampoules')
+    );
+    el['ampoule-quick-form'].addEventListener('submit', saveQuickAmpouleSettings);
+    el['ampoule-quick-close-button'].addEventListener('click', closeQuickAmpouleDialog);
+    el['ampoule-quick-new-button'].addEventListener('click', startNewAmpouleFromQuickDialog);
+    el['ampoule-quick-advanced-button'].addEventListener('click', () => {
+      closeQuickAmpouleDialog();
+      openSettingsSection('ampoules', { focus: false });
+    });
+    el['ampoule-quick-dialog'].addEventListener('click', (event) => {
+      if (event.target === el['ampoule-quick-dialog']) closeQuickAmpouleDialog();
+    });
     el['ampoule-start-main-button'].addEventListener('click', setAmpouleStartToday);
     el['today-dose-decrease'].addEventListener('click', () => adjustTodayDose(-1));
     el['today-dose-increase'].addEventListener('click', () => adjustTodayDose(1));
@@ -164,6 +177,7 @@
     });
     el['export-json-button'].addEventListener('click', exportJson);
     el['export-profile-json-button'].addEventListener('click', exportActiveProfileJson);
+    el['backup-encryption-toggle'].addEventListener('change', updateBackupEncryptionFields);
     el['export-csv-button'].addEventListener('click', () => {
       if (exportCsv()) closeDataDialog(el['export-report-dialog']);
     });
@@ -184,6 +198,7 @@
         if (dialog === el['backup-dialog']) {
           pendingImportPreview = null;
           renderImportPreview();
+          resetBackupEncryptionChoice();
         }
         returnToDataSection();
       });
@@ -208,8 +223,7 @@
       }
     });
 
-    el['check-update-button'].addEventListener('click', () => checkForUpdates({ autoDownload: true }));
-    el['download-update-button'].addEventListener('click', downloadAvailableUpdate);
+    el['check-update-button'].addEventListener('click', checkForUpdates);
     el['refresh-pwa-resources-button'].addEventListener('click', refreshPwaResources);
     el['apply-pwa-update-button'].addEventListener('click', applyPwaUpdate);
 

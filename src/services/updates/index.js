@@ -1,43 +1,3 @@
-const GITHUB_RELEASE_API =
-  'https://api.github.com/repos/tomalawsb/Hormon-Wzrostu-APK/releases/latest';
-const GITHUB_APK_DOWNLOAD_PATH =
-  '/tomalawsb/Hormon-Wzrostu-APK/releases/download/';
-
-function isAllowedUpdateApkUrl(value) {
-  try {
-    const url = new URL(String(value || '').trim());
-    if (url.protocol !== 'https:' || url.hostname !== 'github.com' || url.port) return false;
-    if (url.username || url.password || url.search || url.hash) return false;
-    if (!url.pathname.startsWith(GITHUB_APK_DOWNLOAD_PATH)) return false;
-    const remainder = url.pathname.slice(GITHUB_APK_DOWNLOAD_PATH.length);
-    const parts = remainder.split('/');
-    return parts.length === 2 && Boolean(parts[0]) && /^[^/]+\.apk$/i.test(parts[1]);
-  } catch {
-    return false;
-  }
-}
-
-function parseVersionParts(value) {
-  const normalized = String(value || '').trim().replace(/^v/i, '');
-  const [base = '', build = '0'] = normalized.split('-', 2);
-  const baseParts = base
-    .split('.')
-    .slice(0, 3)
-    .map((part) => Number.parseInt(part, 10) || 0);
-  while (baseParts.length < 3) baseParts.push(0);
-  return [...baseParts, Number.parseInt(build, 10) || 0];
-}
-
-function compareVersions(left, right) {
-  const a = parseVersionParts(left);
-  const b = parseVersionParts(right);
-  for (let index = 0; index < 4; index += 1) {
-    if (a[index] > b[index]) return 1;
-    if (a[index] < b[index]) return -1;
-  }
-  return 0;
-}
-
 function setUpdateStatus(message, kind = '') {
   if (!el['update-status']) return;
   el['update-status'].textContent = message;
@@ -45,93 +5,25 @@ function setUpdateStatus(message, kind = '') {
   el['update-status'].classList.toggle('text-danger', kind === 'error');
 }
 
-async function checkForUpdates({ autoDownload = false } = {}) {
+async function checkForUpdates() {
   if (!isNativeAndroidApp()) return checkPwaUpdate({ announce: true });
   const button = el['check-update-button'];
-  latestUpdateUrl = '';
-  latestUpdateVersion = '';
-  el['download-update-button'].classList.add('is-hidden');
   button.disabled = true;
-  setUpdateStatus('Sprawdzanie najnowszego wydania…');
+  setUpdateStatus('Sprawdzanie wersji aplikacji…');
   try {
     const localVersionResponse = await fetch('./app-version.json', { cache: 'no-store' });
     if (localVersionResponse.ok) {
       const localVersion = await localVersionResponse.json();
       currentAppVersion = String(localVersion.version || currentAppVersion).replace(/^v/i, '');
     }
-    const response = await fetch(GITHUB_RELEASE_API, {
-      cache: 'no-store',
-      headers: { Accept: 'application/vnd.github+json' },
-    });
-    if (response.status === 404) {
-      setUpdateStatus('Nie opublikowano jeszcze pliku APK do aktualizacji.');
-      return;
-    }
-    if (!response.ok) throw new Error(`GitHub odpowiedział kodem ${response.status}`);
-    const release = await response.json();
-    const releaseVersion = String(release.tag_name || '').replace(/^v/i, '');
-    const assets = Array.isArray(release.assets) ? release.assets : [];
-    const apk =
-      assets.find((asset) => /Dzienniczek.*\.apk$/i.test(asset.name || '')) ||
-      assets.find((asset) => /\.apk$/i.test(asset.name || ''));
-
-    if (!releaseVersion || compareVersions(releaseVersion, currentAppVersion) <= 0) {
-      setUpdateStatus(`Masz najnowszą wersję ${currentAppVersion}.`, 'success');
-      return;
-    }
-    if (!apk?.browser_download_url || !isAllowedUpdateApkUrl(apk.browser_download_url)) {
-      setUpdateStatus(
-        `Jest wersja ${releaseVersion}, ale nie zawiera prawidłowego pliku APK.`,
-        'error'
-      );
-      return;
-    }
-
-    latestUpdateUrl = String(apk.browser_download_url);
-    latestUpdateVersion = releaseVersion;
-    el['download-update-button'].textContent = `Pobierz wersję ${releaseVersion}`;
-    el['download-update-button'].classList.remove('is-hidden');
     setUpdateStatus(
-      `Dostępna jest nowsza wersja ${releaseVersion}. Rozpoczynam pobieranie APK…`,
+      `Wersja ${currentAppVersion}. Aktualizacje są instalowane bezpiecznie przez Google Play.`,
       'success'
     );
-    if (autoDownload) await downloadAvailableUpdate({ skipCheck: true });
   } catch (error) {
-    console.warn('Nie udało się sprawdzić aktualizacji:', error);
-    setUpdateStatus(
-      'Nie udało się sprawdzić aktualizacji. Sprawdź internet i spróbuj ponownie.',
-      'error'
-    );
+    console.warn('Nie udało się odczytać wersji aplikacji:', error);
+    setUpdateStatus('Aktualizacje są instalowane bezpiecznie przez Google Play.');
   } finally {
     button.disabled = false;
   }
-}
-
-async function downloadAvailableUpdate({ skipCheck = false } = {}) {
-  if (!latestUpdateUrl) {
-    if (skipCheck) return;
-    await checkForUpdates({ autoDownload: false });
-    return;
-  }
-  if (!isAllowedUpdateApkUrl(latestUpdateUrl)) {
-    latestUpdateUrl = '';
-    latestUpdateVersion = '';
-    el['download-update-button'].classList.add('is-hidden');
-    showToast('Zablokowano nieprawidłowy adres aktualizacji.', 'error');
-    return;
-  }
-  let opened;
-  if (typeof window.NativeBridge?.openExternal === 'function') {
-    opened = await window.NativeBridge.openExternal(latestUpdateUrl);
-  } else {
-    opened = Boolean(window.open(latestUpdateUrl, '_blank', 'noopener,noreferrer'));
-  }
-  if (!opened) {
-    showToast('Nie udało się otworzyć pliku aktualizacji.', 'error');
-    return;
-  }
-  showToast(
-    `Pobieranie wersji ${latestUpdateVersion} rozpoczęte. Po pobraniu zatwierdź instalację.`,
-    'success'
-  );
 }

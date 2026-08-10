@@ -1,10 +1,12 @@
 # Dzienniczek Hormonu — Android APK
 
-**Wersja: v2.0-2007260834**
+**Wersja: v2.0-1008262005**
 
-Wersja 2.0-2007260823 dodaje cztery nowe motywy kolorystyczne: Elegancki, Bursztynowy, Srebrny i Lawendowy. Zachowuje także poprawkę pobierania aktualizacji APK.
+Wersja 2.1.0 wprowadza kreator pierwszego uruchomienia z importem dotychczasowych
+plików JSON, neutralne profile dla dzieci i dorosłych, licznik podań z ampułki,
+animowany postęp, szybkie okno zmiany ampułki oraz responsywny podgląd raportu.
 
-Numer po myślniku oznacza moment przygotowania wersji w formacie `DDMMRRHHMM`, czyli `1907262007` = 19 lipca 2026, godz. 20:07.
+Dotychczasowe dane i historia są automatycznie migrowane do schematu wersji 14.
 
 ## Kontrola projektu od zera
 
@@ -20,7 +22,7 @@ Android SDK część androidowa jest pomijana; w workflow CI jest obowiązkowa.
 ## Bezpieczeństwo danych
 
 Dane medyczne są szyfrowane lokalnie. APK używa Android Keystore, a PWA
-Web Crypto i IndexedDB. Nowe kopie danych są zapisywane jako pliki `.json` bez hasła; import starszych, zaszyfrowanych kopii `.ghbackup` nadal jest obsługiwany.
+Web Crypto i IndexedDB. Kopię można zapisać jako zwykły plik `.json` albo opcjonalnie zabezpieczyć hasłem jako `.ghbackup`. Oba formaty można później przywrócić.
 Opis wdrożenia i lista kontroli: [ETAP_2_BEZPIECZENSTWO.md](ETAP_2_BEZPIECZENSTWO.md).
 
 ## Bezpieczeństwo WebView

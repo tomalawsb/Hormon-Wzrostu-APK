@@ -37,6 +37,10 @@ function saveQuickDraft() {
   const entry = sanitizeEntry({
     ...quickDraft,
     id: entryId,
+    time:
+      !existingById && quickDraft.date === localDateISO() && !quickDraftTimeExplicit
+        ? localTime()
+        : quickDraft.time,
     dose: quickDraft.status === 'given' ? quickDraft.dose : '',
     unit: quickDraft.status === 'given' ? quickDraft.unit : '',
     side: quickDraft.status === 'given' ? quickDraft.side : '',

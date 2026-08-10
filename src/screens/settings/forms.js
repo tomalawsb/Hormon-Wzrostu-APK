@@ -64,6 +64,7 @@ function saveAmpouleSettings() {
   const ampouleVolume =
     normalizePositiveDecimal(el['ampoule-volume'].value) || DEFAULT_AMPOULE_VOLUME_ML;
   const ampouleDoseMl = normalizeOptionalPositiveDecimal(el['ampoule-dose-ml'].value);
+  const ampouleDoseCount = normalizeAmpouleDoseCount(el['ampoule-dose-count'].value);
   const ampouleStartDate = el['ampoule-start-date'].value;
   const ampouleMaxOpenDays = normalizeOptionalDayLimit(el['ampoule-max-open-days'].value);
   if (ampouleStartDate && !isValidIsoDate(ampouleStartDate)) {
@@ -83,6 +84,7 @@ function saveAmpouleSettings() {
   data.settings.ampouleStartNumber = ampouleStartNumber;
   data.settings.ampouleVolumeMl = ampouleVolume;
   data.settings.ampouleDoseMl = ampouleDoseMl;
+  data.settings.ampouleDoseCount = ampouleDoseCount;
   data.settings.ampouleMaxOpenDays = ampouleMaxOpenDays;
 
   const configuredDoseMl = getConfiguredAmpouleDoseMl();
@@ -92,6 +94,7 @@ function saveAmpouleSettings() {
     active.startDate = ampouleStartDate || active.startDate;
     active.volumeMl = ampouleVolume;
     active.doseMl = normalizePositiveDecimal(configuredDoseMl);
+    active.targetDoseCount = ampouleDoseCount;
     active.updatedAt = new Date().toISOString();
   } else if (!data.ampoules.length && ampouleStartDate && configuredDoseMl) {
     const ampoule = createAmpouleRecord({
@@ -99,6 +102,7 @@ function saveAmpouleSettings() {
       startDate: ampouleStartDate,
       volumeMl: ampouleVolume,
       doseMl: configuredDoseMl,
+      targetDoseCount: ampouleDoseCount,
       status: 'active',
     });
     data.ampoules.push(ampoule);
@@ -145,7 +149,7 @@ async function saveReminderSettings() {
   const diagnostics = await refreshReminderDiagnostics();
   if (enabled && (!syncResult?.scheduled || !diagnostics?.scheduledProfiles)) {
     showToast(
-      'Ustawienia zapisano, ale system nie potwierdził zaplanowania alarmu. Sprawdź diagnostykę.',
+      'Ustawienia zapisano, ale system nie potwierdził przypomnienia. Sprawdź jego stan poniżej.',
       'error'
     );
     return;

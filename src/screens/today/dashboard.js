@@ -105,12 +105,10 @@ function renderAllProfilesCard(summary) {
   const ampouleText = summary.ampoule.configured
     ? summary.status === 'skipped'
       ? `Ampułka ${summary.ampoule.number} · bez podania dzisiaj`
-      : `Ampułka ${summary.ampoule.number} · dawka ${summary.ampoule.doseNumber || '—'}`
+      : `Ampułka ${summary.ampoule.number} · ${summary.ampoule.completedDoseCount} z ${summary.ampoule.targetDoseCount}`
     : summary.ampoule.label;
   const remainingText = summary.ampoule.configured
-    ? summary.status === 'pending'
-      ? `Teraz ${formatMl(summary.ampoule.currentRemaining)} ml · po dawce ${summary.ampoule.dosesLeft} ${plural(summary.ampoule.dosesLeft, 'pełna dawka', 'pełne dawki', 'pełnych dawek')}`
-      : `Pozostało ${formatMl(summary.ampoule.currentRemaining)} ml · ${summary.ampoule.dosesLeft} ${plural(summary.ampoule.dosesLeft, 'pełna dawka', 'pełne dawki', 'pełnych dawek')}${summary.ampoule.todayIsLast ? ' · ostatnia dawka' : ''}`
+    ? `Pozostało ${summary.ampoule.dosesLeft} ${plural(summary.ampoule.dosesLeft, 'podanie', 'podania', 'podań')}`
     : 'Uzupełnij ustawienia ampułki';
 
   return `
@@ -178,7 +176,7 @@ function getProfileAmpouleDashboard(profile, todayEntry, today = localDateISO())
   const paused = ampoules.filter(
     (ampoule) =>
       ampoule.id !== profile.activeAmpouleId &&
-      getProfileAmpouleRemainingMl(profile, ampoule) > 0.000001
+      getProfileAmpouleRemainingDoseCount(profile, ampoule) > 0
   );
   if (!displayAmpoule) {
     return {
@@ -186,18 +184,21 @@ function getProfileAmpouleDashboard(profile, todayEntry, today = localDateISO())
       label: paused.length ? 'Wybierz odłożoną ampułkę' : 'Ampułka nie jest rozpoczęta',
       number: 0,
       doseNumber: 0,
+      completedDoseCount: 0,
       dosesLeft: 0,
       currentRemaining: 0,
       remainingAfterToday: 0,
       todayIsLast: false,
       openDays: 0,
       maxOpenDays: Number(profile?.settings?.ampouleMaxOpenDays) || 0,
+      targetDoseCount: normalizeAmpouleDoseCount(profile?.settings?.ampouleDoseCount),
       tooLong: false,
     };
   }
 
   const active = displayAmpoule;
   const doseMl = decimalToNumber(active.doseMl);
+  const targetDoseCount = normalizeAmpouleDoseCount(active.targetDoseCount);
   const given = (Array.isArray(profile.entries) ? profile.entries : [])
     .filter((entry) => entry.ampouleId === active.id && entry.status === 'given')
     .sort((a, b) =>
@@ -207,12 +208,11 @@ function getProfileAmpouleDashboard(profile, todayEntry, today = localDateISO())
     todayEntry?.status === 'given' && todayEntry.ampouleId === active.id
       ? given.findIndex((entry) => entry.id === todayEntry.id)
       : -1;
-  const givenBeforeToday = given.filter((entry) => entry.date < today).length;
-  const doseNumber = todayGivenIndex >= 0 ? todayGivenIndex + 1 : givenBeforeToday + 1;
+  const doseNumber = todayGivenIndex >= 0 ? todayGivenIndex + 1 : 0;
+  const completedDoseCount = given.length;
   const remainingNow = getProfileAmpouleRemainingMl(profile, active);
-  const projectedDose = !todayEntry ? doseMl : 0;
-  const remainingAfterToday = Math.max(0, remainingNow - projectedDose);
-  const dosesLeft = doseMl > 0 ? Math.floor((remainingAfterToday + 0.000001) / doseMl) : 0;
+  const remainingAfterToday = remainingNow;
+  const dosesLeft = Math.max(0, targetDoseCount - completedDoseCount);
   const openDays =
     active.startDate && isValidIsoDate(active.startDate)
       ? Math.max(
@@ -226,12 +226,14 @@ function getProfileAmpouleDashboard(profile, todayEntry, today = localDateISO())
   const todayIsLast =
     statusForAmpouleDashboard(todayEntry) === 'given' &&
     todayEntry.ampouleId === active.id &&
-    remainingAfterToday <= 0.000001;
+    given.length >= targetDoseCount;
   return {
     configured: doseMl > 0,
     label: doseMl > 0 ? `Ampułka ${active.number}` : 'Brak dawki ampułki w ml',
     number: active.number,
     doseNumber,
+    completedDoseCount,
+    targetDoseCount,
     dosesLeft,
     currentRemaining: remainingNow,
     remainingAfterToday,
@@ -240,6 +242,14 @@ function getProfileAmpouleDashboard(profile, todayEntry, today = localDateISO())
     maxOpenDays,
     tooLong: Boolean(maxOpenDays && openDays > maxOpenDays),
   };
+}
+
+function getProfileAmpouleRemainingDoseCount(profile, ampoule) {
+  if (!ampoule) return 0;
+  const given = (Array.isArray(profile?.entries) ? profile.entries : []).filter(
+    (entry) => entry.ampouleId === ampoule.id && entry.status === 'given'
+  ).length;
+  return Math.max(0, normalizeAmpouleDoseCount(ampoule.targetDoseCount) - given);
 }
 
 function statusForAmpouleDashboard(entry) {
@@ -291,29 +301,18 @@ function renderMainTodayMetrics({ todayEntry, suggestion, ampouleInfo }) {
         : 'Brak aktywnego miejsca';
     el['main-dose-value'].textContent =
       `${formatDose(quickDraft.dose || data.settings.defaultDose)} ${quickDraft.unit || data.settings.unit}`;
-    el['main-time-value'].textContent = `godz. ${quickDraft.time || data.settings.defaultTime}`;
+    el['main-time-value'].textContent = 'Godzina zostanie zapisana automatycznie';
   }
 
   if (ampouleInfo.configured) {
     el['main-ampoule-value'].textContent = `Nr ${ampouleInfo.ampouleNumber}`;
-    el['main-dose-number-value'].textContent = ampouleInfo.todayDoseNumber
-      ? status === 'pending'
-        ? `Planowana dawka ${ampouleInfo.todayDoseNumber}`
-        : `Dawka ${ampouleInfo.todayDoseNumber}`
-      : status === 'skipped'
-        ? 'Bez podania dzisiaj'
-        : 'Numer dawki niedostępny';
-    el['main-remaining-ml-value'].textContent =
-      status === 'pending'
-        ? `Teraz ${formatMl(ampouleInfo.currentRemaining)} ml`
-        : `Pozostało ${formatMl(ampouleInfo.currentRemaining)} ml`;
-    const dosesLabel = `${ampouleInfo.approximateDosesLeftAfterToday} ${plural(ampouleInfo.approximateDosesLeftAfterToday, 'pełna dawka', 'pełne dawki', 'pełnych dawek')}`;
-    el['main-doses-left-value'].textContent = ampouleInfo.todayIsLast
-      ? `${dosesLabel} · ostatnia dawka`
-      : dosesLabel;
-    const limitText = ampouleInfo.maxOpenDays ? ` / limit ${ampouleInfo.maxOpenDays}` : '';
-    el['main-ampoule-open-value'].textContent =
-      `Start ${formatDateShort(ampouleInfo.ampouleStartDate)} · otwarta ${ampouleInfo.openDays} ${plural(ampouleInfo.openDays, 'dzień', 'dni', 'dni')}${limitText}`;
+    el['main-dose-number-value'].textContent =
+      `${ampouleInfo.completedDoseCount} z ${ampouleInfo.targetDoseCount}`;
+    el['main-remaining-ml-value'].textContent = '';
+    el['main-doses-left-value'].textContent =
+      `Pozostało ${ampouleInfo.dosesLeft} ${plural(ampouleInfo.dosesLeft, 'podanie', 'podania', 'podań')}`;
+    renderAmpouleProgress(ampouleInfo);
+    el['main-ampoule-open-value'].textContent = '';
     el['main-ampoule-open-value'].classList.toggle(
       'text-danger',
       Boolean(ampouleInfo.maxOpenDays && ampouleInfo.openDays > ampouleInfo.maxOpenDays)
@@ -326,5 +325,42 @@ function renderMainTodayMetrics({ todayEntry, suggestion, ampouleInfo }) {
     el['main-doses-left-value'].textContent = 'Brak wyliczenia';
     el['main-ampoule-open-value'].textContent = 'Uzupełnij ustawienia ampułki';
     el['main-ampoule-open-value'].classList.remove('text-danger');
+    renderAmpouleProgress(null);
   }
+}
+
+function renderAmpouleProgress(info) {
+  if (!el['ampoule-progress']) return;
+  if (!info?.configured) {
+    el['ampoule-progress'].classList.add('is-unconfigured');
+    el['ampoule-progress'].setAttribute('aria-valuemax', '10');
+    el['ampoule-progress'].setAttribute('aria-valuenow', '0');
+    el['ampoule-progress-label'].textContent = 'Skonfiguruj licznik podań';
+    el['ampoule-progress-percent'].textContent = '—';
+    el['ampoule-progress-caption'].textContent = 'Ustaw liczbę zastrzyków przypadających na jedną ampułkę.';
+    el['ampoule-progress-fill'].style.setProperty('--ampoule-progress', '0%');
+    el['ampoule-progress-marker'].style.setProperty('--ampoule-progress', '0%');
+    return;
+  }
+  const target = normalizeAmpouleDoseCount(info.targetDoseCount);
+  const count = Math.min(target, info.completedDoseCount);
+  const percent = Math.max(0, Math.min(100, Math.round((count / target) * 100)));
+  const initialized = el['ampoule-progress'].dataset.completedCount !== undefined;
+  if (!initialized) el['ampoule-progress'].classList.add('is-initializing');
+  el['ampoule-progress'].dataset.completedCount = String(count);
+  el['ampoule-progress'].classList.remove('is-unconfigured');
+  el['ampoule-progress'].classList.toggle('is-complete', count >= target);
+  el['ampoule-progress'].setAttribute('aria-valuemax', String(target));
+  el['ampoule-progress'].setAttribute('aria-valuenow', String(count));
+  el['ampoule-progress-label'].textContent = `${count} z ${target}`;
+  el['ampoule-progress-percent'].textContent = `${percent}%`;
+  el['ampoule-progress-caption'].textContent =
+    count >= target
+      ? 'Ampułka została wykorzystana.'
+      : `Pozostało ${target - count} ${plural(target - count, 'podanie', 'podania', 'podań')}.`;
+  el['ampoule-progress-fill'].style.setProperty('--ampoule-progress', `${percent}%`);
+  el['ampoule-progress-marker'].style.setProperty('--ampoule-progress', `${percent}%`);
+  window.requestAnimationFrame(() => {
+    el['ampoule-progress']?.classList.remove('is-initializing');
+  });
 }

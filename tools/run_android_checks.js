@@ -45,11 +45,16 @@ if (process.platform !== 'win32') {
   }
 }
 
-const result = spawnSync(wrapper, ['--no-daemon', 'lintDebug', 'assembleDebug', '--stacktrace'], {
+const gradleArgs = ['--no-daemon', 'lintDebug', 'assembleDebug', '--stacktrace'];
+const windows = process.platform === 'win32';
+const executable = windows ? `"${wrapper}"` : wrapper;
+const result = spawnSync(executable, gradleArgs, {
   cwd: androidRoot,
   env: process.env,
   stdio: 'inherit',
-  shell: false,
+  // Pliki .bat wymagają cmd.exe na Windows; bez tego Node zwraca EINVAL dla ścieżek ze spacjami.
+  shell: windows,
+  windowsHide: true,
 });
 
 if (result.error) {

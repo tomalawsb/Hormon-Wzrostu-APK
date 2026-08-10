@@ -54,7 +54,7 @@ async function initialize() {
     await LocalNotifications.createChannel({
       id: CHANNEL_ID,
       name: 'Przypomnienia o zastrzykach',
-      description: 'Codzienne przypomnienia dla profili dzieci',
+      description: 'Codzienne przypomnienia dla profili użytkowników',
       importance: 5,
       visibility: 1,
       vibration: true
@@ -216,7 +216,7 @@ function requestWebViewPermission(kind) {
         ? window.AndroidNative.microphonePermission?.()
         : window.AndroidNative.notificationPermission?.();
       resolve(String(fallback || 'denied'));
-    }, 12000);
+    }, 60000);
     const listener = (event) => {
       if (String(event.detail?.kind || '') !== kind) return;
       window.clearTimeout(timeout);
@@ -240,6 +240,48 @@ async function requestMicrophonePermission() {
   } catch {
     return 'denied';
   }
+}
+
+async function startVoiceRecognition() {
+  if (!hasAndroidWebViewBridge() || !window.AndroidNative.startVoiceRecognition) {
+    return { success: false, transcript: '', state: 'unsupported' };
+  }
+
+  let permission = await microphonePermission();
+  if (permission !== 'granted') permission = await requestMicrophonePermission();
+  if (permission !== 'granted') {
+    return { success: false, transcript: '', state: 'permission_denied' };
+  }
+
+  return new Promise((resolve) => {
+    const eventName = 'nativeVoiceRecognitionResult';
+    const timeout = window.setTimeout(() => {
+      window.removeEventListener(eventName, listener);
+      resolve({ success: false, transcript: '', state: 'timeout' });
+    }, 120000);
+    const listener = (event) => {
+      window.clearTimeout(timeout);
+      window.removeEventListener(eventName, listener);
+      resolve({
+        success: Boolean(event.detail?.success),
+        transcript: String(event.detail?.transcript || '').trim(),
+        state: String(event.detail?.state || 'unknown'),
+      });
+    };
+    window.addEventListener(eventName, listener);
+    const started = Boolean(window.AndroidNative.startVoiceRecognition());
+    if (!started) {
+      window.clearTimeout(timeout);
+      window.removeEventListener(eventName, listener);
+      resolve({ success: false, transcript: '', state: 'unavailable' });
+    }
+  });
+}
+
+function stopVoiceRecognition() {
+  if (!hasAndroidWebViewBridge()) return false;
+  window.AndroidNative.stopVoiceRecognition?.();
+  return true;
 }
 
 async function cancelDiaryNotifications() {
@@ -449,30 +491,6 @@ function saveJsonFile(filename, content) {
   });
 }
 
-function isAllowedUpdateApkUrl(value) {
-  try {
-    const url = new URL(String(value || '').trim());
-    if (url.protocol !== 'https:' || url.hostname !== 'github.com' || url.port) return false;
-    if (url.username || url.password || url.search || url.hash) return false;
-    const prefix = '/tomalawsb/Hormon-Wzrostu-APK/releases/download/';
-    if (!url.pathname.startsWith(prefix)) return false;
-    const parts = url.pathname.slice(prefix.length).split('/');
-    return parts.length === 2 && Boolean(parts[0]) && /^[^/]+\.apk$/i.test(parts[1]);
-  } catch {
-    return false;
-  }
-}
-
-async function openExternal(url) {
-  const value = String(url || '').trim();
-  if (!isAllowedUpdateApkUrl(value)) return false;
-  if (hasAndroidWebViewBridge()) {
-    return Boolean(window.AndroidNative.openExternalUrl?.(value));
-  }
-  const opened = window.open(value, '_blank', 'noopener,noreferrer');
-  return Boolean(opened);
-}
-
 async function exitApp() {
   if (hasAndroidWebViewBridge()) {
     window.AndroidNative.exitApp?.();
@@ -487,6 +505,8 @@ const bridge = {
   initialize,
   microphonePermission,
   requestMicrophonePermission,
+  startVoiceRecognition,
+  stopVoiceRecognition,
   notificationPermission,
   requestNotificationPermission,
   exactAlarmPermission,
@@ -507,7 +527,6 @@ const bridge = {
   biometricStatus,
   requestBiometricUnlock,
   saveJsonFile,
-  openExternal,
   exitApp
 };
 

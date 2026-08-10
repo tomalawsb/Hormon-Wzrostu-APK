@@ -67,7 +67,7 @@ function renderToday() {
       ? capitalize(formatPlace(suggestion.side, suggestion.site))
       : 'Brak aktywnego miejsca';
 
-  const ampouleInfo = getAmpouleInfo(todayEntry ? null : quickDraft);
+  const ampouleInfo = getAmpouleInfo();
   renderMainRecommendation({ todayEntry, ready, suggestion, ampouleInfo, editingExisting });
   renderTodayReminder(todayEntry);
   renderTodayUndoAction();
@@ -83,7 +83,8 @@ let renderMainRecommendation = function renderMainRecommendation({
 
   el['recommended-save-button'].classList.remove('is-hidden');
   el['recommended-save-button'].disabled = false;
-  el['recommended-edit-button'].classList.toggle('is-hidden', Boolean(todayEntry));
+  el['recommended-edit-button'].hidden = true;
+  el['recommended-edit-button'].classList.add('is-hidden');
   el['recommended-skip-button'].classList.toggle('is-hidden', Boolean(todayEntry));
   el['recommended-manual-button'].classList.add('is-hidden');
   el['recommended-manual-button'].textContent = 'Ustaw ampułkę';
@@ -93,13 +94,13 @@ let renderMainRecommendation = function renderMainRecommendation({
     el['main-action-heading'].textContent = 'Dzisiejsze podanie zapisane';
     el['main-action-text'].textContent =
       `Zapisano o ${todayEntry.time}: ${formatDose(todayEntry.dose)} ${todayEntry.unit}, ${formatPlace(todayEntry.side, todayEntry.site)}.`;
-    el['recommended-save-button'].innerHTML = `${iconSvg('edit')} Edytuj dzisiejszy wpis`;
+    el['recommended-save-button'].classList.add('is-hidden');
     el['today-confirmation'].className = 'today-confirmation today-confirmation--given';
   } else if (todayEntry?.status === 'skipped') {
     el['main-action-heading'].textContent = 'Dzisiejsza dawka pominięta';
     el['main-action-text'].textContent =
       `Pominięcie zapisano o ${todayEntry.time}. Możesz poprawić wpis albo cofnąć ostatnią operację.`;
-    el['recommended-save-button'].innerHTML = `${iconSvg('edit')} Edytuj dzisiejszy wpis`;
+    el['recommended-save-button'].classList.add('is-hidden');
     el['today-confirmation'].className = 'today-confirmation today-confirmation--skipped';
   } else if (!hasSuggestion) {
     el['main-action-heading'].textContent = 'Brak aktywnych miejsc wkłucia';
@@ -108,8 +109,7 @@ let renderMainRecommendation = function renderMainRecommendation({
     el['today-confirmation'].className = 'today-confirmation today-confirmation--warning';
   } else {
     el['main-action-heading'].textContent = 'Dzisiejsze podanie';
-    el['main-action-text'].textContent =
-      'Dawka i miejsce są gotowe. Dotknij „Zapisz podanie”, aby zakończyć.';
+    el['main-action-text'].textContent = 'Gotowe do zapisania.';
     el['recommended-save-button'].innerHTML = `${iconSvg('check')} Zapisz podanie`;
     el['today-confirmation'].className = 'today-confirmation today-confirmation--pending';
   }
@@ -137,6 +137,8 @@ let renderMainRecommendation = function renderMainRecommendation({
   el['ampoule-alert-title'].textContent = ampouleMessage.title;
   el['ampoule-alert-text'].textContent = ampouleMessage.text;
   el['ampoule-alert'].className = `ampoule-alert ampoule-alert--${ampouleMessage.level}`;
+  el['ampoule-alert'].hidden = Boolean(ampouleInfo.configured && ampouleMessage.level === 'ok');
+  el['today-confirmation'].hidden = true;
 };
 
 function adjustTodayDose(direction) {

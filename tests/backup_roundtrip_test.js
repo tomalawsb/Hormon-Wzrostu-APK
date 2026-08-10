@@ -16,18 +16,36 @@ const exportSource = fs.readFileSync(path.join(root, 'src/services/export/backup
 const dialogSource = fs.readFileSync(path.join(root, 'src/components/dialog/backup.html'), 'utf8');
 const importSource = fs.readFileSync(path.join(root, 'src/screens/settings/import.js'), 'utf8');
 assert.ok(
-  !exportSource.includes('encryptBackupPayload(payload'),
-  'Eksport nadal wymaga szyfrowania hasłem.'
+  exportSource.includes("let extension = 'json'") &&
+    exportSource.includes("extension = 'ghbackup'") &&
+    exportSource.includes('if (usePassword)'),
+  'Eksport nie oferuje wyboru kopii zwykłej i szyfrowanej.'
 );
-assert.ok(!dialogSource.includes('id="backup-password"'), 'Okno kopii nadal pokazuje pole hasła.');
-assert.ok(dialogSource.includes('plik JSON bez hasła'), 'Brak informacji o kopii JSON bez hasła.');
 assert.ok(
-  importSource.includes('decryptBackupEnvelope'),
-  'Usunięto obsługę starszych kopii .ghbackup.'
+  dialogSource.includes('id="backup-encryption-toggle"') &&
+    !/id="backup-encryption-toggle"[^>]*\schecked(?:\s|>)/.test(dialogSource),
+  'Szyfrowanie powinno być opcjonalne i domyślnie wyłączone.'
 );
+assert.ok(
+  dialogSource.includes('id="backup-password-fields"') &&
+    dialogSource.includes('id="backup-password-fields" class="backup-password-grid"') &&
+    dialogSource.includes('aria-label="Hasło kopii zapasowej" hidden'),
+  'Pola hasła powinny być ukryte do czasu włączenia szyfrowania.'
+);
+assert.ok(dialogSource.includes('id="backup-password"'), 'Okno kopii nie pokazuje pola hasła.');
+assert.ok(
+  dialogSource.includes('id="backup-password-confirm"'),
+  'Okno kopii nie wymaga potwierdzenia hasła.'
+);
+assert.ok(
+  dialogSource.includes('Zwykłą kopię zapiszesz bez hasła') &&
+    dialogSource.includes('Zabezpiecz kopię hasłem'),
+  'Brak czytelnej informacji, że hasło jest opcjonalne.'
+);
+assert.ok(importSource.includes('decryptBackupEnvelope'), 'Usunięto obsługę zaszyfrowanych kopii.');
 assert.ok(
   importSource.includes('window.prompt'),
-  'Starsza kopia .ghbackup nie pyta o hasło przy imporcie.'
+  'Zaszyfrowana kopia nie pyta o hasło przy imporcie.'
 );
 
 assert.ok(source.endsWith(marker), 'Nie rozpoznano końca app.js.');

@@ -1,6 +1,6 @@
 {
   "name": "dzienniczek-hormonu",
-  "version": "2.0.0-2007260834",
+  "version": "2.0.0-1008262005",
   "private": true,
   "description": "Dzienniczek Hormonu - PWA i natywna aplikacja Android WebView",
   "scripts": {
@@ -10,7 +10,7 @@
     "build:html": "node tools/run_python.js tools/build_web_sources.py --target html",
     "build:styles": "node tools/run_python.js tools/build_web_sources.py --target styles",
     "build:check": "node tools/run_python.js tools/build_web_sources.py --check",
-    "build:bridge": "esbuild src/native/native-bridge.js --bundle --format=iife --platform=browser --target=es2022 --outfile=native-bridge.js",
+    "build:bridge": "esbuild ./src/native/native-bridge.js --bundle --format=iife --platform=browser --target=es2022 --outfile=native-bridge.js",
     "prepare:web": "npm run build:sources && npm run build:bridge && node tools/run_python.js tools/prepare_android_web.py",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -24,7 +24,7 @@
     "test:webview": "node tools/run_python.js tests/webview_security_test.py",
     "test:architecture": "node tools/run_python.js tests/architecture_test.py",
     "test:visual": "node tools/run_python.js tests/visual_system_test.py && node tests/theme_runtime_test.js",
-    "test:today": "node tools/run_python.js tests/today_screen_test.py && node tests/today_runtime_test.js",
+    "test:today": "node tools/run_python.js tests/today_screen_test.py && node tests/today_runtime_test.js && node tests/voice_control_runtime_test.js",
     "test:calendar-history": "node tools/run_python.js tests/calendar_history_test.py && node tests/calendar_history_runtime_test.js",
     "test:profile-stats": "node tools/run_python.js tests/profile_stats_test.py && node tests/profile_stats_runtime_test.js",
     "test:settings": "node tools/run_python.js tests/settings_stage9_test.py && node tests/settings_navigation_runtime_test.js && node tests/permissions_onboarding_runtime_test.js",

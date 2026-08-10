@@ -144,6 +144,7 @@ function createInitialQuickDraft() {
 function resetQuickDraftForToday() {
   quickDraft = createInitialQuickDraft();
   quickDraftTouched = false;
+  quickDraftTimeExplicit = false;
   lastRecognizedText = '';
 }
 

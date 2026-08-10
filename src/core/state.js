@@ -16,6 +16,7 @@
   let lastRecognizedText = '';
   let quickDraft = createInitialQuickDraft();
   let quickDraftTouched = false;
+  let quickDraftTimeExplicit = false;
   let lastEntryUndoOperation = null;
   let midnightTimer = null;
   const reminderTimers = new Map();
@@ -24,8 +25,6 @@
   let dataDialogReturnTarget = null;
   let pendingImportPreview = null;
   let currentAppVersion = '1.0.0';
-  let latestUpdateUrl = '';
-  let latestUpdateVersion = '';
 
   const el = {};
 

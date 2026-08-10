@@ -5,22 +5,37 @@
         <div>
           <p class="eyebrow">Kopia zapasowa</p>
           <h2 id="backup-dialog-title">Dane aplikacji</h2>
-          <p class="muted">Kopia jest zapisywana jako zwykły plik JSON bez hasła. Przed każdym importem aplikacja tworzy lokalną kopię bezpieczeństwa.</p>
+          <p class="muted">Zwykłą kopię zapiszesz bez hasła. Jeśli chcesz, możesz dodatkowo włączyć szyfrowanie.</p>
         </div>
         <button id="backup-close-button" class="icon-button" type="button" aria-label="Zamknij kopię zapasową"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+      <label class="toggle-row backup-encryption-choice">
+        <span><strong>Zabezpiecz kopię hasłem</strong><small>Opcjonalnie — hasło będzie potrzebne podczas przywracania</small></span>
+        <input id="backup-encryption-toggle" type="checkbox" role="switch" aria-controls="backup-password-fields" aria-expanded="false">
+      </label>
+      <div id="backup-password-fields" class="backup-password-grid" aria-label="Hasło kopii zapasowej" hidden>
+        <label>
+          <span>Hasło do kopii</span>
+          <input id="backup-password" type="password" minlength="8" maxlength="256" autocomplete="new-password" placeholder="Co najmniej 8 znaków">
+        </label>
+        <label>
+          <span>Powtórz hasło</span>
+          <input id="backup-password-confirm" type="password" minlength="8" maxlength="256" autocomplete="new-password" placeholder="Wpisz ponownie">
+        </label>
+        <p class="muted">Zapamiętaj hasło — bez niego nie będzie można przywrócić tej kopii.</p>
       </div>
       <div class="backup-option-grid">
         <button id="export-json-button" class="backup-option" type="button">
           <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-upload"></use></svg></span>
-          <span><strong>Zapisz wszystkie profile</strong><small>Plik JSON z historią, ustawieniami, ampułkami i przypomnieniami</small></span>
+          <span><strong>Zapisz wszystkie profile</strong><small>Kopia historii, ustawień, ampułek i przypomnień</small></span>
         </button>
         <button id="export-profile-json-button" class="backup-option" type="button">
           <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-upload"></use></svg></span>
-          <span><strong>Zapisz aktywny profil</strong><small>Kopia tylko aktualnie wybranego dziecka</small></span>
+          <span><strong>Zapisz aktywny profil</strong><small>Kopia tylko aktualnie wybranej osoby</small></span>
         </button>
         <button id="import-button" class="backup-option" type="button">
           <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-download"></use></svg></span>
-          <span><strong>Wczytaj kopię</strong><small>Obsługuje bieżący JSON oraz starsze zaszyfrowane pliki .ghbackup</small></span>
+          <span><strong>Wczytaj kopię</strong><small>Możesz też przenieść dane ze starszej wersji aplikacji</small></span>
         </button>
         <button id="restore-auto-backup-button" class="backup-option backup-option--recovery" type="button" hidden>
           <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-backup"></use></svg></span>

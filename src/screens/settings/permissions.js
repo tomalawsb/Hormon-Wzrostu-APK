@@ -15,6 +15,7 @@ function markPermissionsOnboardingCompleted() {
 }
 
 function maybeShowFirstRunPermissions() {
+  if (!isSetupCompleted()) return;
   if (isPermissionsOnboardingCompleted()) return;
   window.setTimeout(() => {
     openPermissionsDialog().catch((error) => {

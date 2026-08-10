@@ -11,8 +11,10 @@ import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Looper;
 import android.provider.Settings;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.util.Log;
 import android.view.Window;
 import android.webkit.CookieManager;
@@ -28,25 +30,17 @@ import android.webkit.WebView;
 
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Locale;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
@@ -68,19 +62,15 @@ public class MainActivity extends FragmentActivity {
     private static final String APP_ASSET_PREFIX = "/assets/web/";
     private static final String APP_START_URL =
             "https://" + APP_ASSET_HOST + APP_ASSET_PREFIX + "index.html";
-    private static final int MAX_EXTERNAL_URL_CHARS = 2048;
-    private static final String UPDATE_DOWNLOAD_HOST = "github.com";
-    private static final String UPDATE_DOWNLOAD_PATH_PREFIX =
-            "/tomalawsb/Hormon-Wzrostu-APK/releases/download/";
-    private static final int MAX_RELEASE_JSON_CHARS = 2 * 1024 * 1024;
     private static final int MAX_NOTIFICATION_JSON_CHARS = 32 * 1024;
     private static final int MAX_REMINDER_JSON_CHARS = 1024 * 1024;
     private static final int MAX_EXPORT_JSON_CHARS = 20 * 1024 * 1024;
+    private static final int MAX_VOICE_TRANSCRIPT_CHARS = 2000;
     private static final String APP_CONTENT_SECURITY_POLICY =
             "default-src 'self'; base-uri 'none'; object-src 'none'; "
                     + "script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; "
                     + "img-src 'self' data: blob:; font-src 'self' data:; "
-                    + "connect-src 'self' https://api.github.com; "
+                    + "connect-src 'self'; "
                     + "manifest-src 'self'; worker-src 'self'; child-src 'self' blob:; "
                     + "frame-src 'self' blob:; media-src 'self' blob:; "
                     + "form-action 'self'; frame-ancestors 'none'";
@@ -93,19 +83,21 @@ public class MainActivity extends FragmentActivity {
                     APP_ASSET_PREFIX + "manifest.json",
                     APP_ASSET_PREFIX + "app-version.json",
                     APP_ASSET_PREFIX + "service-worker.js",
+                    APP_ASSET_PREFIX + "privacy.html",
                     APP_ASSET_PREFIX + "icon-192.png",
                     APP_ASSET_PREFIX + "icon-512.png"
             ))
     );
 
     private WebView webView;
-    private PermissionRequest pendingWebPermission;
     private ValueCallback<Uri[]> fileCallback;
     private String pendingJsonFilename;
     private String pendingJsonContent;
     private SharedPreferences prefs;
     private SecureDataStore secureDataStore;
     private BiometricPrompt biometricPrompt;
+    private SpeechRecognizer speechRecognizer;
+    private boolean voiceRecognitionInProgress = false;
     private boolean firstResume = true;
     private volatile boolean bridgeEnabled = false;
     private volatile boolean notificationEventsReady = false;
@@ -113,6 +105,7 @@ public class MainActivity extends FragmentActivity {
     private String pendingNotificationDate = "";
 
     @Override
+    @SuppressLint("SetJavaScriptEnabled")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -146,9 +139,7 @@ public class MainActivity extends FragmentActivity {
         settings.setTextZoom(100);
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(false);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        }
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             settings.setSafeBrowsingEnabled(true);
         }
@@ -167,7 +158,9 @@ public class MainActivity extends FragmentActivity {
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onPermissionRequest(final PermissionRequest request) {
-                runOnUiThread(new Runnable() { public void run() { handleWebPermissionRequest(request); } });
+                runOnUiThread(new Runnable() { public void run() {
+                    if (request != null) request.deny();
+                } });
             }
 
             @Override
@@ -232,31 +225,6 @@ public class MainActivity extends FragmentActivity {
         return "blank".equalsIgnoreCase(value) || "srcdoc".equalsIgnoreCase(value);
     }
 
-    private static Uri validatedExternalHttpsUri(String rawUrl) {
-        String value = rawUrl == null ? "" : rawUrl.trim();
-        if (value.isEmpty() || value.length() > MAX_EXTERNAL_URL_CHARS) return null;
-        try {
-            URI parsed = new URI(value);
-            if (!"https".equalsIgnoreCase(parsed.getScheme())) return null;
-            if (parsed.isOpaque() || !UPDATE_DOWNLOAD_HOST.equalsIgnoreCase(parsed.getHost())) return null;
-            if (parsed.getRawUserInfo() != null || parsed.getRawQuery() != null
-                    || parsed.getRawFragment() != null) return null;
-            int port = parsed.getPort();
-            if (port != -1 && port != 443) return null;
-            String path = parsed.getRawPath();
-            if (path == null || !path.startsWith(UPDATE_DOWNLOAD_PATH_PREFIX)) return null;
-            String remainder = path.substring(UPDATE_DOWNLOAD_PATH_PREFIX.length());
-            int separator = remainder.indexOf('/');
-            if (separator <= 0 || separator == remainder.length() - 1
-                    || remainder.indexOf('/', separator + 1) != -1) return null;
-            String filename = remainder.substring(separator + 1);
-            if (!filename.toLowerCase(Locale.ROOT).endsWith(".apk")) return null;
-            return Uri.parse(parsed.toASCIIString());
-        } catch (Exception error) {
-            return null;
-        }
-    }
-
     private static WebResourceResponse blockedWebResponse() {
         Map<String, String> headers = new HashMap<>();
         headers.put("Cache-Control", "no-store");
@@ -282,7 +250,7 @@ public class MainActivity extends FragmentActivity {
         headers.put("X-Content-Type-Options", "nosniff");
         if (isTrustedDocument(uri)) {
             headers.put("Content-Security-Policy", APP_CONTENT_SECURITY_POLICY);
-            headers.put("Permissions-Policy", "microphone=(self), camera=(), geolocation=()");
+            headers.put("Permissions-Policy", "microphone=(), camera=(), geolocation=()");
         }
         response.setResponseHeaders(headers);
         return response;
@@ -325,7 +293,6 @@ public class MainActivity extends FragmentActivity {
         private boolean handleNavigation(Uri uri, boolean isForMainFrame) {
             if (isTrustedDocument(uri)) return false;
             if (!isForMainFrame && isTrustedInternalFrame(uri)) return false;
-            if (isForMainFrame && uri != null) openExternalUrlNative(uri.toString());
             return true;
         }
 
@@ -334,7 +301,6 @@ public class MainActivity extends FragmentActivity {
             notificationEventsReady = false;
             bridgeEnabled = isTrustedDocument(url == null ? null : Uri.parse(url));
             if (!bridgeEnabled) {
-                denyPendingWebPermission();
                 view.stopLoading();
             }
             super.onPageStarted(view, url, favicon);
@@ -360,7 +326,6 @@ public class MainActivity extends FragmentActivity {
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
             if (failingUrl != null && failingUrl.equals(view.getUrl())) {
                 bridgeEnabled = false;
-                denyPendingWebPermission();
             }
             super.onReceivedError(view, errorCode, description, failingUrl);
         }
@@ -368,7 +333,6 @@ public class MainActivity extends FragmentActivity {
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
             bridgeEnabled = false;
-            denyPendingWebPermission();
             handler.cancel();
         }
     }
@@ -431,42 +395,8 @@ public class MainActivity extends FragmentActivity {
         } });
     }
 
-    private void denyPendingWebPermission() {
-        if (pendingWebPermission == null) return;
-        pendingWebPermission.deny();
-        pendingWebPermission = null;
-    }
-
-    private void handleWebPermissionRequest(PermissionRequest request) {
-        String[] resources = request == null ? new String[0] : request.getResources();
-        if (!bridgeAllowed()
-                || request == null
-                || !isTrustedAppOrigin(request.getOrigin())
-                || resources.length != 1
-                || !PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resources[0])) {
-            if (request != null) request.deny();
-            return;
-        }
-        if (microphoneGranted() && bridgeAllowed()) {
-            request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
-        } else {
-            pendingWebPermission = request;
-            requestMicrophonePermissionNative();
-        }
-    }
-
-    private boolean microphoneGranted() {
-        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M
-                || checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
-    }
-
     private boolean notificationsGranted() {
         return ReminderScheduler.notificationsEnabled(this);
-    }
-
-    private String microphoneState() {
-        if (microphoneGranted()) return "granted";
-        return prefs.getBoolean("microphone_requested", false) ? "denied" : "prompt";
     }
 
     private String notificationState() {
@@ -478,17 +408,6 @@ public class MainActivity extends FragmentActivity {
             return "prompt";
         }
         return "denied";
-    }
-
-    private void requestMicrophonePermissionNative() {
-        if (microphoneGranted()) {
-            dispatchPermission("microphone", "granted");
-            return;
-        }
-        prefs.edit().putBoolean("microphone_requested", true).apply();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_MICROPHONE);
-        }
     }
 
     private void requestNotificationPermissionNative() {
@@ -521,18 +440,148 @@ public class MainActivity extends FragmentActivity {
         } });
     }
 
+    private boolean microphoneGranted() {
+        return checkSelfPermission(Manifest.permission.RECORD_AUDIO)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private String microphoneState() {
+        if (microphoneGranted()) return "granted";
+        return prefs.getBoolean("microphone_requested", false) ? "denied" : "prompt";
+    }
+
+    private void requestMicrophonePermissionNative() {
+        if (microphoneGranted()) {
+            dispatchPermission("microphone", "granted");
+            return;
+        }
+        prefs.edit().putBoolean("microphone_requested", true).apply();
+        requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_MICROPHONE);
+    }
+
+    private String voiceRecognitionErrorState(int error) {
+        if (error == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) return "permission_denied";
+        if (error == SpeechRecognizer.ERROR_NO_MATCH
+                || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) return "no_speech";
+        if (error == SpeechRecognizer.ERROR_NETWORK
+                || error == SpeechRecognizer.ERROR_NETWORK_TIMEOUT) return "network";
+        if (error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY) return "busy";
+        if (error == SpeechRecognizer.ERROR_AUDIO) return "audio_error";
+        if (error == SpeechRecognizer.ERROR_CLIENT) return "cancelled";
+        return "unavailable";
+    }
+
+    private void ensureSpeechRecognizer() {
+        if (speechRecognizer != null) return;
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+        speechRecognizer.setRecognitionListener(new RecognitionListener() {
+            @Override
+            public void onReadyForSpeech(Bundle params) {}
+
+            @Override
+            public void onBeginningOfSpeech() {}
+
+            @Override
+            public void onRmsChanged(float rmsdB) {}
+
+            @Override
+            public void onBufferReceived(byte[] buffer) {}
+
+            @Override
+            public void onEndOfSpeech() {}
+
+            @Override
+            public void onError(int error) {
+                if (!voiceRecognitionInProgress) return;
+                voiceRecognitionInProgress = false;
+                dispatchVoiceRecognitionResult(false, "", voiceRecognitionErrorState(error));
+            }
+
+            @Override
+            public void onResults(Bundle results) {
+                if (!voiceRecognitionInProgress) return;
+                voiceRecognitionInProgress = false;
+                ArrayList<String> matches =
+                        results == null
+                                ? null
+                                : results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                String transcript = matches != null && !matches.isEmpty() ? matches.get(0) : "";
+                if (transcript != null && !transcript.trim().isEmpty()) {
+                    dispatchVoiceRecognitionResult(true, transcript, "recognized");
+                } else {
+                    dispatchVoiceRecognitionResult(false, "", "no_speech");
+                }
+            }
+
+            @Override
+            public void onPartialResults(Bundle partialResults) {}
+
+            @Override
+            public void onEvent(int eventType, Bundle params) {}
+        });
+    }
+
+    private void startVoiceRecognitionNative() {
+        if (!bridgeAllowed()) return;
+        if (!microphoneGranted()) {
+            dispatchVoiceRecognitionResult(false, "", "permission_required");
+            return;
+        }
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            dispatchVoiceRecognitionResult(false, "", "unavailable");
+            return;
+        }
+        ensureSpeechRecognizer();
+        if (voiceRecognitionInProgress) speechRecognizer.cancel();
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+        );
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "pl-PL");
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "pl-PL");
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
+        try {
+            voiceRecognitionInProgress = true;
+            speechRecognizer.startListening(intent);
+        } catch (Exception error) {
+            voiceRecognitionInProgress = false;
+            dispatchVoiceRecognitionResult(false, "", "unavailable");
+        }
+    }
+
+    private void stopVoiceRecognitionNative() {
+        if (!voiceRecognitionInProgress) return;
+        voiceRecognitionInProgress = false;
+        if (speechRecognizer != null) speechRecognizer.cancel();
+        dispatchVoiceRecognitionResult(false, "", "cancelled");
+    }
+
+    private void dispatchVoiceRecognitionResult(boolean success, String transcript, String state) {
+        if (!bridgeAllowed()) return;
+        String safeTranscript = transcript == null ? "" : transcript.trim();
+        if (safeTranscript.length() > MAX_VOICE_TRANSCRIPT_CHARS) {
+            safeTranscript = safeTranscript.substring(0, MAX_VOICE_TRANSCRIPT_CHARS);
+        }
+        final String quotedTranscript = JSONObject.quote(safeTranscript);
+        final String quotedState = JSONObject.quote(state == null ? "unknown" : state);
+        runOnUiThread(new Runnable() { public void run() {
+            if (!bridgeAllowed()) return;
+            webView.evaluateJavascript(
+                    "window.dispatchEvent(new CustomEvent('nativeVoiceRecognitionResult',{detail:{success:"
+                            + (success ? "true" : "false")
+                            + ",transcript:" + quotedTranscript
+                            + ",state:" + quotedState + "}}));",
+                    null
+            );
+        } });
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
         if (requestCode == REQ_MICROPHONE) {
-            if (pendingWebPermission != null) {
-                if (granted && bridgeAllowed()
-                        && isTrustedAppOrigin(pendingWebPermission.getOrigin())) {
-                    pendingWebPermission.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
-                } else pendingWebPermission.deny();
-                pendingWebPermission = null;
-            }
             dispatchPermission("microphone", granted ? "granted" : "denied");
         } else if (requestCode == REQ_NOTIFICATIONS) {
             dispatchPermission("notification", granted ? "granted" : "denied");
@@ -579,7 +628,8 @@ public class MainActivity extends FragmentActivity {
         String safeFilename = filename == null ? "dzienniczek-kopia.json" : filename.trim();
         safeFilename = safeFilename.replace('/', '-').replace('\\', '-');
         if (safeFilename.isEmpty()) safeFilename = "dzienniczek-kopia.json";
-        if (!safeFilename.toLowerCase(java.util.Locale.ROOT).endsWith(".json")) {
+        String lowerFilename = safeFilename.toLowerCase(java.util.Locale.ROOT);
+        if (!lowerFilename.endsWith(".json") && !lowerFilename.endsWith(".ghbackup")) {
             safeFilename += ".json";
         }
         synchronized (this) {
@@ -754,90 +804,12 @@ public class MainActivity extends FragmentActivity {
     }
 
 
-    private boolean openExternalUrlNative(String rawUrl) {
-        Uri uri = validatedExternalHttpsUri(rawUrl);
-        if (uri == null) return false;
-
-        AtomicBoolean opened = new AtomicBoolean(false);
-        Runnable launchDownload = () -> {
-            try {
-                startActivity(new Intent(Intent.ACTION_VIEW, uri));
-                opened.set(true);
-            } catch (Exception error) {
-                Log.e(LOG_TAG, "Nie udało się otworzyć pliku APK aktualizacji.", error);
-            }
-        };
-
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            launchDownload.run();
-            return opened.get();
-        }
-
-        CountDownLatch completed = new CountDownLatch(1);
-        runOnUiThread(() -> {
-            try {
-                launchDownload.run();
-            } finally {
-                completed.countDown();
-            }
-        });
-
-        try {
-            if (!completed.await(5, TimeUnit.SECONDS)) {
-                Log.e(LOG_TAG, "Przekroczono czas otwierania pliku APK aktualizacji.");
-                return false;
-            }
-            return opened.get();
-        } catch (InterruptedException error) {
-            Thread.currentThread().interrupt();
-            Log.e(LOG_TAG, "Przerwano otwieranie pliku APK aktualizacji.", error);
-            return false;
-        }
-    }
-
-
     private String appVersionNative() {
         try {
             String value = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
             return value == null || value.trim().isEmpty() ? "1.0.9" : value.trim();
         } catch (Exception error) {
             return "1.0.9";
-        }
-    }
-
-    private String latestReleaseJsonNative() {
-        HttpURLConnection connection = null;
-        try {
-            URL url = new URL("https://api.github.com/repos/tomalawsb/Hormon-Wzrostu-APK/releases/latest");
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setInstanceFollowRedirects(false);
-            connection.setRequestMethod("GET");
-            connection.setConnectTimeout(12000);
-            connection.setReadTimeout(12000);
-            connection.setRequestProperty("Accept", "application/vnd.github+json");
-            connection.setRequestProperty("User-Agent", "Dzienniczek-Hormonu-Android");
-            int status = connection.getResponseCode();
-            if (status != HttpURLConnection.HTTP_OK) return "";
-            String contentType = connection.getContentType();
-            if (contentType == null
-                    || !contentType.regionMatches(true, 0, "application/json", 0, 16)) {
-                return "";
-            }
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(connection.getInputStream(), "UTF-8"))) {
-                StringBuilder result = new StringBuilder();
-                char[] buffer = new char[8192];
-                int count;
-                while ((count = reader.read(buffer)) != -1) {
-                    if (result.length() + count > MAX_RELEASE_JSON_CHARS) return "";
-                    result.append(buffer, 0, count);
-                }
-                return result.toString();
-            }
-        } catch (Exception error) {
-            return "";
-        } finally {
-            if (connection != null) connection.disconnect();
         }
     }
 
@@ -881,7 +853,12 @@ public class MainActivity extends FragmentActivity {
     protected void onDestroy() {
         bridgeEnabled = false;
         notificationEventsReady = false;
-        denyPendingWebPermission();
+        voiceRecognitionInProgress = false;
+        if (speechRecognizer != null) {
+            speechRecognizer.cancel();
+            speechRecognizer.destroy();
+            speechRecognizer = null;
+        }
         clearPendingJsonSave();
         if (webView != null) {
             webView.removeJavascriptInterface("AndroidNative");
@@ -903,11 +880,6 @@ public class MainActivity extends FragmentActivity {
         }
 
         @JavascriptInterface
-        public String latestReleaseJson() {
-            return bridgeAllowed() ? latestReleaseJsonNative() : "";
-        }
-
-        @JavascriptInterface
         public void initialize() {
             if (!bridgeAllowed()) return;
             createNotificationChannel();
@@ -915,7 +887,8 @@ public class MainActivity extends FragmentActivity {
 
         @JavascriptInterface
         public String microphonePermission() {
-            return bridgeAllowed() ? microphoneState() : "denied";
+            if (!bridgeAllowed()) return "denied";
+            return microphoneState();
         }
 
         @JavascriptInterface
@@ -923,6 +896,23 @@ public class MainActivity extends FragmentActivity {
             if (!bridgeAllowed()) return;
             runOnUiThread(new Runnable() { public void run() {
                 if (bridgeAllowed()) requestMicrophonePermissionNative();
+            } });
+        }
+
+        @JavascriptInterface
+        public boolean startVoiceRecognition() {
+            if (!bridgeAllowed() || !microphoneGranted()) return false;
+            runOnUiThread(new Runnable() { public void run() {
+                if (bridgeAllowed()) startVoiceRecognitionNative();
+            } });
+            return true;
+        }
+
+        @JavascriptInterface
+        public void stopVoiceRecognition() {
+            if (!bridgeAllowed()) return;
+            runOnUiThread(new Runnable() { public void run() {
+                if (bridgeAllowed()) stopVoiceRecognitionNative();
             } });
         }
 
@@ -987,11 +977,6 @@ public class MainActivity extends FragmentActivity {
             if (!bridgeAllowed()) return;
             notificationEventsReady = true;
             dispatchPendingNotificationAction();
-        }
-
-        @JavascriptInterface
-        public boolean openExternalUrl(String url) {
-            return bridgeAllowed() && openExternalUrlNative(url);
         }
 
         @JavascriptInterface

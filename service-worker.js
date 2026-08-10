@@ -1,18 +1,16 @@
-const CACHE_VERSION = 'v2.0-2007260834';
-const CACHE_NAMESPACE = 'dzienniczek-hormonu-v2.0-2007260834';
+const CACHE_VERSION = 'v2.0-1008262005';
+const CACHE_NAMESPACE = 'dzienniczek-hormonu-v2.0-1008262005';
 const APP_CACHE_PREFIX = 'dzienniczek-hormonu-v';
 const DOCUMENT_CACHE = `${CACHE_NAMESPACE}-documents`;
 const SCRIPT_CACHE = `${CACHE_NAMESPACE}-scripts`;
 const STYLE_CACHE = `${CACHE_NAMESPACE}-styles`;
 const DATA_CACHE = `${CACHE_NAMESPACE}-data`;
 const STATIC_CACHE = `${CACHE_NAMESPACE}-static`;
-const API_CACHE = `${CACHE_NAMESPACE}-api`;
 const RUNTIME_CACHE = `${CACHE_NAMESPACE}-runtime`;
 const STATE_CACHE = 'gh-dzienniczek-reminder-state-v2';
 const STATE_URL = new URL('./__reminder_state_v2__', self.registration.scope).href;
 const OFFLINE_DOCUMENT_URL = new URL('./index.html', self.registration.scope).href;
 const NETWORK_TIMEOUT_MS = 5000;
-const API_TIMEOUT_MS = 8000;
 const SECURE_DB_NAME = 'dzienniczek-secure-storage-v1';
 const SECURE_DB_VERSION = 1;
 const SECURE_RECORD_STORE = 'records';
@@ -22,14 +20,13 @@ const REMINDER_STATE_AAD = 'DzienniczekHormonu|reminder-state|v1';
 const REMINDER_IN_FLIGHT = new Set();
 
 const PRECACHE_GROUPS = [
-  { cacheName: DOCUMENT_CACHE, assets: ['./', './index.html'] },
+  { cacheName: DOCUMENT_CACHE, assets: ['./', './index.html', './privacy.html'] },
   { cacheName: SCRIPT_CACHE, assets: ['./app.js', './native-bridge.js'] },
   { cacheName: STYLE_CACHE, assets: ['./style.css'] },
   { cacheName: DATA_CACHE, assets: ['./manifest.json', './app-version.json'] },
   { cacheName: STATIC_CACHE, assets: ['./icon-192.png', './icon-512.png'] },
 ];
 const CURRENT_APP_CACHES = new Set(PRECACHE_GROUPS.map(({ cacheName }) => cacheName));
-CURRENT_APP_CACHES.add(API_CACHE);
 CURRENT_APP_CACHES.add(RUNTIME_CACHE);
 
 self.addEventListener('install', (event) => {
@@ -62,22 +59,14 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(navigationNetworkFirst(event.request));
     return;
   }
-  if (isReleaseApiRequest(url)) {
-    event.respondWith(apiNetworkFirst(event.request));
-    return;
-  }
   if (url.origin !== self.location.origin) return;
 
   if (event.request.destination === 'script') {
-    event.respondWith(
-      staleWhileRevalidate(event, event.request, SCRIPT_CACHE, 'text/javascript; charset=utf-8')
-    );
+    event.respondWith(networkFirst(event.request, SCRIPT_CACHE));
     return;
   }
   if (event.request.destination === 'style') {
-    event.respondWith(
-      staleWhileRevalidate(event, event.request, STYLE_CACHE, 'text/css; charset=utf-8')
-    );
+    event.respondWith(networkFirst(event.request, STYLE_CACHE));
     return;
   }
   if (isJsonRequest(event.request, url)) {
@@ -169,17 +158,6 @@ async function jsonNetworkFirst(request) {
   }
 }
 
-async function apiNetworkFirst(request) {
-  try {
-    return await networkFirst(request, API_CACHE, {
-      timeoutMs: API_TIMEOUT_MS,
-      throwOnMiss: true,
-    });
-  } catch {
-    return offlineJsonResponse();
-  }
-}
-
 async function networkFirst(
   request,
   cacheName,
@@ -195,28 +173,6 @@ async function networkFirst(
     if (cached) return cached;
     if (throwOnMiss) throw error;
     return new Response('', { status: 503, statusText: 'Offline' });
-  }
-}
-
-async function staleWhileRevalidate(event, request, cacheName, fallbackContentType) {
-  const cache = await caches.open(cacheName);
-  const cached = await cache.match(request, { ignoreSearch: false });
-  const update = fetch(request).then(async (response) => {
-    if (isCacheable(response)) await cache.put(request, response.clone());
-    return response;
-  });
-  if (cached) {
-    event.waitUntil(update.catch(() => undefined));
-    return cached;
-  }
-  try {
-    return await update;
-  } catch {
-    return new Response('', {
-      status: 503,
-      statusText: 'Offline',
-      headers: { 'Content-Type': fallbackContentType },
-    });
   }
 }
 
@@ -253,13 +209,6 @@ function isJsonRequest(request, url) {
     request.destination === 'manifest' ||
     url.pathname.endsWith('.json') ||
     accept.includes('application/json')
-  );
-}
-
-function isReleaseApiRequest(url) {
-  return (
-    url.origin === 'https://api.github.com' &&
-    url.pathname === '/repos/tomalawsb/Hormon-Wzrostu-APK/releases/latest'
   );
 }
 

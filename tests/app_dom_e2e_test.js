@@ -127,7 +127,7 @@ async function main() {
 
   click(window, '[data-today-profile-id="profile-1"]');
   await waitFor(
-    () => window.document.querySelector('#active-profile-name').textContent === 'Dziecko 1'
+    () => window.document.querySelector('#active-profile-name').textContent === 'Profil 1'
   );
   assert.match(window.document.querySelector('#main-status-badge').textContent, /Pominięto/);
 

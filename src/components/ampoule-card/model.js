@@ -1,10 +1,24 @@
-function createAmpouleRecord({ number, startDate, volumeMl, doseMl, status = 'paused' }) {
+function createAmpouleRecord({
+  number,
+  startDate,
+  volumeMl,
+  doseMl,
+  targetDoseCount,
+  status = 'paused',
+}) {
+  const normalizedVolumeMl = normalizePositiveDecimal(volumeMl) || DEFAULT_AMPOULE_VOLUME_ML;
+  const normalizedDoseMl = normalizePositiveDecimal(doseMl) || '1';
+  const inferredDoseCount = Math.max(
+    1,
+    Math.floor(decimalToNumber(normalizedVolumeMl) / decimalToNumber(normalizedDoseMl) + 0.000001)
+  );
   return {
     id: `ampoule-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
     number: normalizeAmpouleNumber(number),
     startDate: isValidIsoDate(startDate) ? startDate : localDateISO(),
-    volumeMl: normalizePositiveDecimal(volumeMl) || DEFAULT_AMPOULE_VOLUME_ML,
-    doseMl: normalizePositiveDecimal(doseMl) || '1',
+    volumeMl: normalizedVolumeMl,
+    doseMl: normalizedDoseMl,
+    targetDoseCount: normalizeAmpouleDoseCount(targetDoseCount, inferredDoseCount),
     status: ALLOWED_AMPOULE_STATUSES.has(status) ? status : 'paused',
     createdAt: new Date().toISOString(),
     updatedAt: '',
@@ -34,6 +48,16 @@ function getAmpouleRemainingMl(ampouleId) {
   return Math.max(0, decimalToNumber(ampoule.volumeMl) - used);
 }
 
+function getAmpouleUsedDoseCount(ampouleId) {
+  return getEntriesForAmpoule(ampouleId).filter((entry) => entry.status === 'given').length;
+}
+
+function getAmpouleRemainingDoseCount(ampouleId) {
+  const ampoule = getAmpouleById(ampouleId);
+  if (!ampoule) return 0;
+  return Math.max(0, normalizeAmpouleDoseCount(ampoule.targetDoseCount) - getAmpouleUsedDoseCount(ampouleId));
+}
+
 function getAmpouleOpenDays(ampoule) {
   if (!ampoule?.startDate || !isValidIsoDate(ampoule.startDate)) return 0;
   const start = parseISODate(ampoule.startDate);
@@ -48,7 +72,8 @@ function isAmpouleOpenTooLong(ampoule) {
 
 function getOpenPausedAmpoules() {
   return data.ampoules.filter(
-    (ampoule) => ampoule.id !== data.activeAmpouleId && getAmpouleRemainingMl(ampoule.id) > 0.000001
+    (ampoule) =>
+      ampoule.id !== data.activeAmpouleId && getAmpouleRemainingDoseCount(ampoule.id) > 0
   );
 }
 
@@ -62,7 +87,7 @@ function nextAmpouleNumber(incrementExisting = true) {
 
 function reconcileAmpouleStatuses() {
   data.ampoules.forEach((ampoule) => {
-    if (getAmpouleRemainingMl(ampoule.id) <= 0.000001) {
+    if (getAmpouleRemainingDoseCount(ampoule.id) <= 0) {
       ampoule.status = 'finished';
       if (data.activeAmpouleId === ampoule.id) data.activeAmpouleId = '';
     } else if (data.activeAmpouleId === ampoule.id) {
@@ -85,6 +110,7 @@ function ensureActiveAmpouleForDate(date) {
     startDate: data.ampoules.length ? date : data.settings.ampouleStartDate || date,
     volumeMl,
     doseMl,
+    targetDoseCount: data.settings.ampouleDoseCount,
     status: 'active',
   });
   data.ampoules.push(ampoule);
@@ -92,13 +118,10 @@ function ensureActiveAmpouleForDate(date) {
   return ampoule.id;
 }
 
-function getAmpouleInfo(plannedToday = null) {
+function getAmpouleInfo() {
   const today = localDateISO();
   const todayEntry = getEntryForDate(today);
-  const timeline = buildAmpouleTimeline({
-    includePlannedToday: !todayEntry,
-    plannedToday,
-  });
+  const timeline = buildAmpouleTimeline();
 
   const todayAmpoule = todayEntry?.ampouleId ? getAmpouleById(todayEntry.ampouleId) : null;
   const displayAmpoule =
@@ -124,8 +147,10 @@ function getAmpouleInfo(plannedToday = null) {
   const remainingBeforeToday = todayRow ? todayRow.remainingBefore : currentRemaining;
   const remainingAfterToday = todayRow ? todayRow.remainingAfter : currentRemaining;
   const todayDoseMl = todayRow ? todayRow.doseMl : 0;
-  const approximateDosesLeftAfterToday = Math.floor(
-    (remainingAfterToday + 0.000001) / decimalToNumber(active.doseMl)
+  const completedDoseCount = getAmpouleUsedDoseCount(active.id);
+  const dosesLeft = Math.max(
+    0,
+    normalizeAmpouleDoseCount(active.targetDoseCount) - completedDoseCount
   );
 
   return {
@@ -146,7 +171,10 @@ function getAmpouleInfo(plannedToday = null) {
     todayEntryStatus: todayEntry?.status || '',
     todayDoseMl,
     todayDoseNumber: todayRow?.doseNumber || 0,
-    approximateDosesLeftAfterToday,
+    targetDoseCount: normalizeAmpouleDoseCount(active.targetDoseCount),
+    completedDoseCount,
+    dosesLeft,
+    approximateDosesLeftAfterToday: dosesLeft,
     pausedCount: getOpenPausedAmpoules().length,
     openDays: getAmpouleOpenDays(active),
     maxOpenDays: Number(data.settings.ampouleMaxOpenDays) || 0,
@@ -196,35 +224,39 @@ function ampouleSummary(info) {
     };
   }
   if (info.todayIsLast) {
-    const prefix = info.todayEntryStatus === 'given' ? 'Dzisiejszy wpis był' : 'Dzisiaj jest';
-    const pausedText = info.pausedCount ? ' Po jej zużyciu możesz wznowić odłożoną ampułkę.' : '';
+    const pausedText = info.pausedCount ? ' Możesz teraz wznowić odłożoną ampułkę.' : '';
     return {
       level: 'danger',
-      short: `Ampułka ${info.ampouleNumber}: ostatni zastrzyk`,
-      title: `Ampułka ${info.ampouleNumber}: ostatni zastrzyk`,
-      text: `${prefix} ostatnim zastrzykiem z ampułki ${info.ampouleNumber}.${pausedText}`,
+      short: `Ampułka ${info.ampouleNumber}: wykorzystana`,
+      title: `Ampułka ${info.ampouleNumber} została wykorzystana`,
+      text: `Zapisano ${info.completedDoseCount} z ${info.targetDoseCount} podań.${pausedText}`,
     };
   }
   if (info.todayStartsNewAmpoule) {
     return {
       level: 'ok',
-      short: `Ampułka ${info.ampouleNumber}: rozpoczęta dzisiaj`,
+      short: `Ampułka ${info.ampouleNumber}: ${info.completedDoseCount} z ${info.targetDoseCount}`,
       title: `Ampułka ${info.ampouleNumber}: nowa ampułka`,
-      text: `Ta ampułka zaczyna się dzisiaj. Po dzisiejszej dawce zostanie około ${formatMl(info.remainingAfterToday)} ml.`,
+      text: `Pozostało ${info.dosesLeft} ${plural(info.dosesLeft, 'podanie', 'podania', 'podań')}.`,
     };
   }
-  const pausedText = info.pausedCount ? ` Odłożonych ampułek: ${info.pausedCount}.` : '';
   return {
     level: 'ok',
-    short: `Ampułka ${info.ampouleNumber}: zostanie ${formatMl(info.remainingAfterToday)} ml`,
+    short: `Ampułka ${info.ampouleNumber}: ${info.completedDoseCount} z ${info.targetDoseCount}`,
     title: `Ampułka ${info.ampouleNumber}`,
-    text: `Start tej ampułki: ${formatDateShort(info.ampouleStartDate)}. Po dzisiejszej dawce zostanie około ${formatMl(info.remainingAfterToday)} ml, czyli około ${info.approximateDosesLeftAfterToday} kolejnych pełnych podań.${pausedText}`,
+    text: `Pozostało ${info.dosesLeft} ${plural(info.dosesLeft, 'podanie', 'podania', 'podań')}.`,
   };
 }
 
 function getConfiguredAmpouleDoseMl() {
-  if (data.settings.unit === 'ml') return decimalToNumber(data.settings.defaultDose);
-  return decimalToNumber(data.settings.ampouleDoseMl);
+  const configured =
+    data.settings.unit === 'ml'
+      ? decimalToNumber(data.settings.defaultDose)
+      : decimalToNumber(data.settings.ampouleDoseMl);
+  if (configured) return configured;
+  const volume = decimalToNumber(data.settings.ampouleVolumeMl);
+  const count = normalizeAmpouleDoseCount(data.settings.ampouleDoseCount);
+  return volume && count ? volume / count : 0;
 }
 
 function getEntryAmpouleDoseMl(entry, fallbackDoseMl) {
@@ -255,6 +287,7 @@ function buildAmpouleTimeline({ includePlannedToday = false, plannedToday = null
     .forEach((ampoule) => {
       const volumeMl = decimalToNumber(ampoule.volumeMl);
       const doseMl = decimalToNumber(ampoule.doseMl);
+      const targetDoseCount = normalizeAmpouleDoseCount(ampoule.targetDoseCount);
       let remainingMl = volumeMl;
       let givenCount = 0;
       const ampouleEntries = getEntriesForAmpoule(ampoule.id);
@@ -282,8 +315,7 @@ function buildAmpouleTimeline({ includePlannedToday = false, plannedToday = null
             : remainingBefore;
           const startsNewAmpoule = isGiven && givenCount === 0;
           const doseNumber = isGiven ? givenCount + 1 : 0;
-          const isLastDose =
-            isGiven && entryDoseMl > 0 && entryDoseMl >= remainingBefore - 0.000001;
+          const isLastDose = isGiven && doseNumber >= targetDoseCount;
           if (isGiven) givenCount += 1;
           rows.push({
             entry,

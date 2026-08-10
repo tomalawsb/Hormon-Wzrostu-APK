@@ -32,15 +32,24 @@ for cache_name in (
     "STYLE_CACHE",
     "DATA_CACHE",
     "STATIC_CACHE",
-    "API_CACHE",
 ):
     require(cache_name in worker, f"brak osobnej strategii/cache: {cache_name}")
 
 require("event.request.mode === 'navigate'" in worker, "brak osobnej obsługi nawigacji HTML")
 require("navigationNetworkFirst" in worker, "HTML nie korzysta z network-first")
-require("staleWhileRevalidate" in worker, "JS i CSS nie używają stale-while-revalidate")
+require(
+    "networkFirst(event.request, SCRIPT_CACHE)" in worker
+    and "networkFirst(event.request, STYLE_CACHE)" in worker,
+    "JS i CSS nie chronią aplikacji przed mieszaniem wersji podczas aktualizacji",
+)
 require("jsonNetworkFirst" in worker, "brak osobnej obsługi lokalnych plików JSON")
-require("apiNetworkFirst" in worker, "brak osobnej obsługi API")
+require("API_CACHE" not in worker and "apiNetworkFirst" not in worker, "pozostała nieużywana obsługa zewnętrznego API")
+require("./privacy.html" in worker, "polityka prywatności nie działa offline")
+require(
+    'id="download-update-button"' in read("index.html")
+    and 'id="download-update-button" type="button" hidden' in read("index.html"),
+    "brak ukrytego elementu zgodności potrzebnego podczas aktualizacji starszej PWA",
+)
 require("offlineJsonResponse" in worker, "brak poprawnej odpowiedzi JSON w trybie offline")
 require(
     "'Content-Type': 'application/json; charset=utf-8'" in worker,
@@ -106,5 +115,5 @@ require("test:pwa-stage11" in scripts, "brak testu etapu 11 w package.json")
 require("test:pwa-stage11" in scripts.get("test:web", ""), "pełne testy pomijają etap 11")
 
 print(
-    "Test etapu 11: OK — osobne cache, bezpieczny fallback offline, aktualizacje i instalowalność PWA"
+    "Test etapu 11: OK — osobne pamięci offline, bezpieczny fallback, aktualizacje i instalowalność"
 )

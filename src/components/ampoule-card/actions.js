@@ -1,15 +1,106 @@
 
 function openAmpouleSettings() {
-  openSettingsSection('ampoules', { focus: false });
-  window.setTimeout(() => {
-    const field = el['ampoule-start-date'];
-    if (!field) return;
-    field.focus({ preventScroll: false });
-    try {
-      field.showPicker?.();
-    } catch {}
-    field.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  }, 60);
+  const active = getActiveAmpoule();
+  const used = active ? getAmpouleUsedDoseCount(active.id) : 0;
+  el['ampoule-quick-number'].value = active?.number || nextAmpouleNumber(Boolean(data.ampoules.length));
+  el['ampoule-quick-date'].value = active?.startDate || localDateISO();
+  el['ampoule-quick-dose-count'].value = active?.targetDoseCount || data.settings.ampouleDoseCount || 10;
+  el['ampoule-quick-max-days'].value = data.settings.ampouleMaxOpenDays || '';
+  el['ampoule-quick-summary'].textContent = active
+    ? `Ampułka ${active.number} · wykorzystano ${used} z ${normalizeAmpouleDoseCount(active.targetDoseCount)}`
+    : 'Rozpocznij pierwszą ampułkę';
+  el['ampoule-quick-warning'].textContent = active && used
+    ? `Liczba docelowa nie może być mniejsza niż ${used}, ponieważ tyle podań jest już zapisanych.`
+    : '';
+  el['ampoule-quick-new-button'].hidden = !active;
+  if (!el['ampoule-quick-dialog'].open) el['ampoule-quick-dialog'].showModal();
+  window.setTimeout(() => el['ampoule-quick-dose-count'].focus({ preventScroll: true }), 30);
+}
+
+function closeQuickAmpouleDialog() {
+  if (!el['ampoule-quick-dialog']?.open) return;
+  el['ampoule-quick-dialog'].close();
+}
+
+function readQuickAmpouleValues() {
+  const date = el['ampoule-quick-date'].value;
+  const count = normalizeAmpouleDoseCount(el['ampoule-quick-dose-count'].value, 0);
+  const maxDays = normalizeOptionalDayLimit(el['ampoule-quick-max-days'].value);
+  if (!isValidIsoDate(date)) {
+    showToast('Podaj prawidłową datę rozpoczęcia ampułki.', 'error');
+    return null;
+  }
+  if (!count) {
+    showToast('Podaj liczbę zastrzyków od 1 do 999.', 'error');
+    return null;
+  }
+  if (el['ampoule-quick-max-days'].value.trim() && !maxDays) {
+    showToast('Limit otwarcia musi wynosić od 1 do 365 dni.', 'error');
+    return null;
+  }
+  return {
+    number: normalizeAmpouleNumber(el['ampoule-quick-number'].value),
+    date,
+    count,
+    maxDays,
+  };
+}
+
+function applyQuickAmpouleValues(values, { forceNew = false } = {}) {
+  if (!values) return false;
+  let active = getActiveAmpoule();
+  if (active && !forceNew && values.count < getAmpouleUsedDoseCount(active.id)) {
+    showToast('Licznik nie może być mniejszy niż liczba zapisanych podań.', 'error');
+    return false;
+  }
+  data.settings.ampouleStartDate = values.date;
+  data.settings.ampouleStartNumber = values.number;
+  data.settings.ampouleDoseCount = values.count;
+  data.settings.ampouleMaxOpenDays = values.maxDays;
+  const volumeMl = decimalToNumber(data.settings.ampouleVolumeMl) || 10;
+  const doseMl = decimalToNumber(data.settings.ampouleDoseMl) || volumeMl / values.count;
+
+  if (forceNew && active) {
+    active.status = getAmpouleRemainingDoseCount(active.id) > 0 ? 'paused' : 'finished';
+    active = null;
+  }
+  if (!active) {
+    active = createAmpouleRecord({
+      number: values.number,
+      startDate: values.date,
+      volumeMl,
+      doseMl,
+      targetDoseCount: values.count,
+      status: 'active',
+    });
+    data.ampoules.push(active);
+    data.activeAmpouleId = active.id;
+  } else {
+    active.number = values.number;
+    active.startDate = values.date;
+    active.targetDoseCount = values.count;
+    active.updatedAt = new Date().toISOString();
+  }
+  reconcileAmpouleStatuses();
+  if (!persistData()) return false;
+  closeQuickAmpouleDialog();
+  renderAll();
+  if (forceNew) openSettingsSection('ampoules', { focus: false });
+  showToast(`Ampułka ${active.number}: ustawiono ${values.count} ${plural(values.count, 'podanie', 'podania', 'podań')}.`, 'success');
+  return true;
+}
+
+function saveQuickAmpouleSettings(event) {
+  event.preventDefault();
+  return applyQuickAmpouleValues(readQuickAmpouleValues());
+}
+
+function startNewAmpouleFromQuickDialog() {
+  const values = readQuickAmpouleValues();
+  if (!values) return;
+  values.number = nextAmpouleNumber(true);
+  values.date = localDateISO();
+  applyQuickAmpouleValues(values, { forceNew: true });
 }
 
 function setAmpouleStartToday() {
@@ -36,6 +127,7 @@ function setAmpouleStartToday() {
         startDate: today,
         volumeMl,
         doseMl,
+        targetDoseCount: data.settings.ampouleDoseCount,
         status: 'active',
       });
       data.ampoules.push(ampoule);
@@ -54,18 +146,21 @@ function setAmpouleStartToday() {
 function readAmpouleFormValues() {
   const volumeMl =
     normalizePositiveDecimal(el['ampoule-volume'].value) || DEFAULT_AMPOULE_VOLUME_ML;
+  const targetDoseCount = normalizeAmpouleDoseCount(el['ampoule-dose-count'].value);
   const formUnit = ALLOWED_UNITS.has(el['settings-unit'].value)
     ? el['settings-unit'].value
     : data.settings.unit;
-  const doseMl =
+  const explicitDoseMl =
     formUnit === 'ml'
       ? normalizePositiveDecimal(el['settings-dose'].value)
       : normalizeOptionalPositiveDecimal(el['ampoule-dose-ml'].value);
+  const doseMl = explicitDoseMl || decimalToNumber(volumeMl) / targetDoseCount;
   return {
     volumeMl,
     doseMl,
     startDate: el['ampoule-start-date'].value || localDateISO(),
     number: normalizeAmpouleNumber(el['ampoule-start-number'].value),
+    targetDoseCount,
   };
 }
 
@@ -78,7 +173,7 @@ function startNewAmpoule() {
 
   const active = getActiveAmpoule();
   const hadActiveAmpoule = Boolean(active);
-  if (active && getAmpouleRemainingMl(active.id) > 0.000001) active.status = 'paused';
+  if (active && getAmpouleRemainingDoseCount(active.id) > 0) active.status = 'paused';
   else if (active) active.status = 'finished';
 
   const ampoule = createAmpouleRecord({
@@ -86,6 +181,7 @@ function startNewAmpoule() {
     startDate: localDateISO(),
     volumeMl: values.volumeMl,
     doseMl: values.doseMl,
+    targetDoseCount: values.targetDoseCount,
     status: 'active',
   });
   data.ampoules.push(ampoule);
@@ -94,14 +190,29 @@ function startNewAmpoule() {
   data.settings.ampouleStartNumber = ampoule.number;
   data.settings.ampouleVolumeMl = ampoule.volumeMl;
   data.settings.ampouleDoseMl = data.settings.unit === 'ml' ? '' : ampoule.doseMl;
+  data.settings.ampouleDoseCount = ampoule.targetDoseCount;
   if (!persistData()) return;
   renderAll();
+  openSettingsSection('ampoules', { focus: false });
   showToast(
     hadActiveAmpoule
       ? `Rozpoczęto ampułkę ${ampoule.number}. Poprzednia ampułka została odłożona i możesz ją później wznowić z listy odłożonych.`
       : `Rozpoczęto ampułkę ${ampoule.number}.`,
     'success'
   );
+}
+
+function pauseAmpoule(ampouleId) {
+  const active = getActiveAmpoule();
+  if (!active || active.id !== ampouleId) return false;
+  if (getAmpouleRemainingDoseCount(active.id) <= 0) return false;
+  active.status = 'paused';
+  active.updatedAt = new Date().toISOString();
+  data.activeAmpouleId = '';
+  if (!persistData()) return false;
+  renderAll();
+  showToast(`Odłożono ampułkę ${active.number}.`, 'success');
+  return true;
 }
 
 function handleAmpouleListAction(event) {
@@ -112,13 +223,13 @@ function handleAmpouleListAction(event) {
 
 function resumeAmpoule(ampouleId) {
   const target = getAmpouleById(ampouleId);
-  if (!target || getAmpouleRemainingMl(target.id) <= 0.000001) {
+  if (!target || getAmpouleRemainingDoseCount(target.id) <= 0) {
     showToast('Tej ampułki nie można wznowić, ponieważ jest już zużyta.', 'error');
     return;
   }
   const active = getActiveAmpoule();
   if (active && active.id !== target.id)
-    active.status = getAmpouleRemainingMl(active.id) > 0.000001 ? 'paused' : 'finished';
+    active.status = getAmpouleRemainingDoseCount(active.id) > 0 ? 'paused' : 'finished';
   target.status = 'active';
   target.updatedAt = new Date().toISOString();
   data.activeAmpouleId = target.id;
@@ -126,6 +237,7 @@ function resumeAmpoule(ampouleId) {
   data.settings.ampouleStartNumber = target.number;
   data.settings.ampouleVolumeMl = target.volumeMl;
   data.settings.ampouleDoseMl = data.settings.unit === 'ml' ? '' : target.doseMl;
+  data.settings.ampouleDoseCount = target.targetDoseCount;
   if (!persistData()) return;
   renderAll();
   showToast(
@@ -140,7 +252,7 @@ function resumeAmpoule(ampouleId) {
 function formatPausedAmpouleShortList(ampoules) {
   if (!ampoules.length) return 'brak';
   return ampoules
-    .map((ampoule) => `nr ${ampoule.number} (${formatMl(getAmpouleRemainingMl(ampoule.id))} ml)`)
+    .map((ampoule) => `nr ${ampoule.number} (${getAmpouleRemainingDoseCount(ampoule.id)} podań)`)
     .join(', ');
 }
 
@@ -164,7 +276,7 @@ function renderAmpouleManagement() {
     const openWarning = isAmpouleOpenTooLong(active)
       ? ' Przekroczono ustawiony limit czasu od otwarcia.'
       : '';
-    const baseSummary = `Aktywna: ampułka ${active.number}, pozostało około ${formatMl(getAmpouleRemainingMl(active.id))} ml.${openWarning}`;
+    const baseSummary = `Aktywna: ampułka ${active.number}, pozostało ${getAmpouleRemainingDoseCount(active.id)} z ${normalizeAmpouleDoseCount(active.targetDoseCount)} podań.${openWarning}`;
     el['ampoule-management-summary'].textContent = paused.length
       ? `${baseSummary} Odłożone: ${pausedListShort}.`
       : `${baseSummary} Brak odłożonych ampułek.`;
@@ -196,14 +308,15 @@ function renderAmpouleManagement() {
     ? visible
         .map((ampoule) => {
           const remaining = getAmpouleRemainingMl(ampoule.id);
+          const remainingDoses = getAmpouleRemainingDoseCount(ampoule.id);
           const status = ampoule.id === data.activeAmpouleId ? 'Aktywna' : 'Odłożona';
           const openDays = getAmpouleOpenDays(ampoule);
           const tooLong = isAmpouleOpenTooLong(ampoule);
           const action =
-            ampoule.id !== data.activeAmpouleId && remaining > 0.000001
+            ampoule.id !== data.activeAmpouleId && remainingDoses > 0
               ? `<button class="mini-button" type="button" data-resume-ampoule-id="${ampoule.id}">Wznów</button>`
               : '';
-          return `<div class="ampoule-list-item${tooLong ? ' ampoule-list-item--warning' : ''}"><div><strong>Ampułka ${ampoule.number}</strong><span>${status} · start ${formatDateShort(ampoule.startDate)} · otwarta ${openDays} ${plural(openDays, 'dzień', 'dni', 'dni')} · pozostało ${formatMl(remaining)} ml${tooLong ? ' · przekroczony limit' : ''}</span></div>${action}</div>`;
+          return `<div class="ampoule-list-item${tooLong ? ' ampoule-list-item--warning' : ''}"><div><strong>Ampułka ${ampoule.number}</strong><span>${status} · start ${formatDateShort(ampoule.startDate)} · otwarta ${openDays} ${plural(openDays, 'dzień', 'dni', 'dni')} · pozostało ${remainingDoses} ${plural(remainingDoses, 'podanie', 'podania', 'podań')} (${formatMl(remaining)} ml)${tooLong ? ' · przekroczony limit' : ''}</span></div>${action}</div>`;
         })
         .join('')
     : '<p class="muted">Lista rozpoczętych ampułek jest pusta.</p>';

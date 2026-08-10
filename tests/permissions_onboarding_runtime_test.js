@@ -29,7 +29,7 @@ function createContext() {
     data: { meta: { onboardingCompleted: false } },
     el: { 'permissions-dialog': dialog },
     PERMISSIONS_ONBOARDING_STORAGE_KEY: 'permissions-test',
-    PERMISSIONS_ONBOARDING_REVISION: 'permissions-v2',
+    PERMISSIONS_ONBOARDING_REVISION: 'permissions-v3',
     localStorage: {
       getItem(key) {
         return storage.get(key) ?? null;
@@ -63,7 +63,7 @@ function createContext() {
   assert.equal(dialog.open, false, 'Okno zgód musi się zamknąć mimo błędu zapisu.');
   assert.equal(dialog.closeCalls, 1);
   assert.equal(context.data.meta.onboardingCompleted, true);
-  assert.equal(storage.get('permissions-test'), 'permissions-v2');
+  assert.equal(storage.get('permissions-test'), 'permissions-v3');
 }
 
 {

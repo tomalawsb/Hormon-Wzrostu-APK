@@ -6,6 +6,8 @@ Thumbs.db
 .vscode/
 .idea/
 node_modules/
+.android-sdk/
+.gradle-user-home/
 __pycache__/
 *.py[cod]
 www/

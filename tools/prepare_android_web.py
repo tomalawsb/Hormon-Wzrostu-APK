@@ -15,6 +15,7 @@ ASSETS = (
     "manifest.json",
     "app-version.json",
     "service-worker.js",
+    "privacy.html",
     "icon-192.png",
     "icon-512.png",
 )

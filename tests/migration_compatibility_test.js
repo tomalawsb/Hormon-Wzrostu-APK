@@ -65,6 +65,12 @@ const injectedCheck = String.raw`
     fail(migratedProfile.ampoules.length === 2, 'Nie odtworzono kolejnych ampułek.');
     fail(migratedProfile.entries.every((entry) => entry.ampouleId), 'Wpisy nie zostały połączone z ampułkami.');
     fail(migrated.data.appMeta.onboardingCompleted, 'Nie zachowano stanu wdrożenia użytkownika.');
+    fail(migrated.data.appMeta.setupCompleted, 'Stara kopia nie omija ponownego kreatora.');
+    fail(migratedProfile.settings.ampouleDoseCount === 2, 'Nie odtworzono liczby podań z danych ml.');
+    fail(
+      migratedProfile.ampoules.every((ampoule) => ampoule.targetDoseCount === 2),
+      'Stare ampułki nie otrzymały zgodnego licznika podań.'
+    );
 
     const olderProfiles = normalizeStoredData({
       version: 8,
@@ -206,5 +212,5 @@ assert.equal(result.futureSchemaRejected, true);
 assert.equal(result.futureFormatRejected, true);
 
 console.log(
-  'Test migracji: OK — płaski format, starsze profile, duplikaty, ampułki i odrzucenie przyszłych wersji.'
+  'Test migracji: OK — stare JSON-y, profile, historia i liczniki ampułek zachowują zgodność.'
 );

@@ -16,10 +16,10 @@ async function importJson(event) {
     let parsed = envelopeOrBackup;
     if (encrypted) {
       const password = window.prompt(
-        'To starsza, zaszyfrowana kopia .ghbackup. Podaj hasło użyte przy jej tworzeniu:'
+        'Ta kopia jest zabezpieczona. Podaj hasło użyte przy jej tworzeniu:'
       );
       if (password === null) throw new Error('Anulowano odczyt zaszyfrowanej kopii.');
-      if (!password) throw new Error('Nie podano hasła do starszej zaszyfrowanej kopii.');
+      if (!password) throw new Error('Nie podano hasła do zabezpieczonej kopii.');
       parsed = await decryptBackupEnvelope(envelopeOrBackup, password);
     }
     assertSafeJsonValue(parsed);
@@ -60,13 +60,13 @@ function renderImportPreview() {
       <strong>${escapeHtml(preview.filename)}</strong>
       <span>${summary.profileCount} ${plural(summary.profileCount, 'profil', 'profile', 'profili')} · ${summary.entryCount} ${plural(summary.entryCount, 'wpis', 'wpisy', 'wpisów')} · ${summary.ampouleCount} ${plural(summary.ampouleCount, 'ampułka', 'ampułki', 'ampułek')}</span>
       <span>Zakres historii: ${escapeHtml(dates)}</span>
-      <span>${preview.legacy ? 'Starszy format — zostanie bezpiecznie zmigrowany.' : `Format kopii ${preview.backupFormatVersion}, schemat danych ${preview.sourceDataVersion || 'nieznany'}.`}</span>`;
+      <span>${preview.legacy ? 'Kopia ze starszej wersji zostanie automatycznie dostosowana.' : 'Kopia jest zgodna z tą wersją aplikacji.'}</span>`;
   el['import-preview-profiles'].innerHTML = summary.profileNames
     .map((name) => `<li>${escapeHtml(name)}</li>`)
     .join('');
   el['import-preview-warning'].textContent = preview.encrypted
-    ? `${modeLabel} To starsza kopia .ghbackup, odszyfrowana podanym hasłem.`
-    : `${modeLabel} To kopia JSON bez hasła.`;
+    ? `${modeLabel} Kopia została poprawnie odblokowana.`
+    : `${modeLabel} Kopia nie jest zabezpieczona hasłem.`;
   el['import-confirm-button'].textContent =
     preview.mode === 'add-profile' ? 'Dodaj profil' : 'Zastąp wszystkie dane';
   container.hidden = false;
@@ -144,7 +144,7 @@ function createUniqueImportedProfile(profile) {
   clone.updatedAt = new Date().toISOString();
 
   const usedNames = new Set(data.profiles.map((item) => normalizeText(item.name)));
-  const baseName = sanitizeProfileName(clone.name) || 'Zaimportowane dziecko';
+  const baseName = sanitizeProfileName(clone.name) || 'Zaimportowany profil';
   let name = baseName;
   let nameSuffix = 2;
   while (usedNames.has(normalizeText(name))) name = `${baseName} (import ${nameSuffix++})`;
@@ -196,7 +196,7 @@ function applyInspectedImport(preview, { createSafetyBackup = true } = {}) {
       preview.mode === 'add-profile'
         ? `Dodano profil „${getActiveProfile().name}”.`
         : preview.normalized.migratedFromLegacy
-          ? 'Stara kopia została zaimportowana i przypisana do profilu „Dziecko 1”.'
+          ? 'Stara kopia została zaimportowana i przypisana do profilu „Profil 1”.'
           : 'Pełna kopia wszystkich profili została przywrócona.',
       'success',
       6500
@@ -248,5 +248,6 @@ function restoreAutomaticImportBackup() {
 
 function closeBackupPanel() {
   clearPendingImportPreview();
+  resetBackupEncryptionChoice();
   closeDataDialog(el['backup-dialog']);
 }

@@ -2,7 +2,7 @@ function renderHistory() {
   historyProfileScope = populateProfileScopeSelect(
     el['history-profile-filter'],
     historyProfileScope,
-    'Wszystkie dzieci'
+    'Wszystkie profile'
   );
   const filters = getHistoryFilters();
   const records = filterHistoryRecords(

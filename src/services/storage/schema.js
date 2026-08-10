@@ -72,7 +72,7 @@ function loadData() {
         if (safeStorageSet(STORAGE_KEY, JSON.stringify(result.data))) {
           startupWarnings.push(
             result.migratedFromLegacy
-              ? 'Dane zostały automatycznie dostosowane do obsługi profili. Dotychczasową historię przypisano do profilu „Dziecko 1”.'
+              ? 'Dane zostały automatycznie dostosowane do obsługi profili. Dotychczasową historię przypisano do profilu „Profil 1”.'
               : 'Dane profili zostały automatycznie zaktualizowane do nowej wersji.'
           );
         }
@@ -118,6 +118,16 @@ function normalizeProfileBasedData(parsed) {
     ? requestedActiveId
     : availableProfiles[0].id;
 
+  const appMeta = sanitizeAppMeta(parsed.appMeta || parsed.meta);
+  if (typeof (parsed.appMeta || parsed.meta)?.setupCompleted !== 'boolean') {
+    appMeta.setupCompleted = profiles.some(
+      (profile) =>
+        profile.entries.length ||
+        profile.ampoules.length ||
+        profile.name !== DEFAULT_PROFILE_NAME
+    );
+  }
+
   return {
     removedDuplicates,
     migratedFromLegacy: false,
@@ -125,7 +135,7 @@ function normalizeProfileBasedData(parsed) {
     data: {
       version: DATA_SCHEMA_VERSION,
       appSettings: sanitizeAppSettings(parsed.appSettings),
-      appMeta: sanitizeAppMeta(parsed.appMeta || parsed.meta),
+      appMeta,
       activeProfileId,
       profiles,
     },
@@ -164,7 +174,7 @@ function migrateLegacyStoredData(parsed = {}) {
         security: defaultSecuritySettings(),
         appearance: defaultAppearanceSettings(),
       },
-      appMeta: { onboardingCompleted: legacyMeta.onboardingCompleted },
+      appMeta: { onboardingCompleted: legacyMeta.onboardingCompleted, setupCompleted: true },
       activeProfileId: profile.id,
       profiles: [profile],
     },
@@ -197,7 +207,7 @@ function normalizeProfile(profileInput, index, usedIds) {
     removedDuplicates,
     profile: {
       id,
-      name: sanitizeProfileName(source.name) || `Dziecko ${index + 1}`,
+      name: sanitizeProfileName(source.name) || `Profil ${index + 1}`,
       icon: sanitizeProfileIcon(source.icon),
       color: sanitizeProfileColor(source.color),
       archivedAt: isValidDateTime(source.archivedAt) ? source.archivedAt : '',
@@ -239,6 +249,14 @@ function attachActiveProfileAliases(container) {
         container.appMeta.onboardingCompleted = Boolean(value);
       },
     },
+    setupCompleted: {
+      enumerable: true,
+      get: () => Boolean(container.appMeta?.setupCompleted),
+      set: (value) => {
+        if (!container.appMeta || typeof container.appMeta !== 'object') container.appMeta = {};
+        container.appMeta.setupCompleted = Boolean(value);
+      },
+    },
     lastReminderDate: {
       enumerable: true,
       get: () => getActiveProfile(container).meta.lastReminderDate,
@@ -261,7 +279,10 @@ function attachActiveProfileAliases(container) {
       get: () => metaFacade,
       set: (value) => {
         const sanitized = sanitizeMeta(value);
-        container.appMeta = { onboardingCompleted: sanitized.onboardingCompleted };
+        container.appMeta = {
+          onboardingCompleted: sanitized.onboardingCompleted,
+          setupCompleted: sanitized.setupCompleted,
+        };
         getActiveProfile(container).meta = { lastReminderDate: sanitized.lastReminderDate };
       },
     },

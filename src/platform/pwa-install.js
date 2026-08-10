@@ -72,6 +72,10 @@ function updateOnlineInstallState() {
   const standalone = isStandalonePwa();
   const native = isNativeAndroidApp();
   const browserPwa = !native && !standalone;
+  const settingsCallout =
+    document.getElementById('settings-install-callout') ||
+    el['settings-install-button']?.closest('.settings-install-callout');
+  if (settingsCallout) settingsCallout.hidden = !browserPwa;
   [el['header-install-button'], el['desktop-install-button']].forEach((button) => {
     button?.classList.toggle('is-hidden', !browserPwa || !deferredInstallPrompt);
   });

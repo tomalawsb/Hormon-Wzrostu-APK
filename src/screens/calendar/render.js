@@ -2,7 +2,7 @@ function renderCalendar() {
   calendarProfileScope = populateProfileScopeSelect(
     el['calendar-profile-filter'],
     calendarProfileScope,
-    'Wszystkie dzieci'
+    'Wszystkie profile'
   );
   const year = calendarCursor.getFullYear();
   const month = calendarCursor.getMonth();

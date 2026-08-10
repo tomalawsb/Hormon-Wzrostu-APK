@@ -41,11 +41,19 @@
       "layer": "component"
     },
     {
+      "file": "components/dialog/setup.html",
+      "layer": "component"
+    },
+    {
       "file": "components/dialog/pwa-install.html",
       "layer": "component"
     },
     {
       "file": "components/dialog/entry.html",
+      "layer": "component"
+    },
+    {
+      "file": "components/dialog/ampoule-quick.html",
       "layer": "component"
     },
     {

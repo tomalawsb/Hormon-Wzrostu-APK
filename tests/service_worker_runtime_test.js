@@ -184,11 +184,6 @@ async function run() {
   const script = await dispatchFetch(request(scriptUrl, { destination: 'script' }));
   assert.match(await script.text(), /offlineApp/);
 
-  const apiUrl = 'https://api.github.com/repos/tomalawsb/Hormon-Wzrostu-APK/releases/latest';
-  const api = await dispatchFetch(request(apiUrl, { accept: 'application/json' }));
-  assert.equal(api.status, 503);
-  assert.match(api.headers.get('content-type'), /application\/json/);
-
   fetchImplementation = async (incoming) => {
     const url = keyOf(incoming);
     const contentType = url.endsWith('.js')
@@ -208,13 +203,22 @@ async function run() {
       }
     );
   };
+  await scriptCache.put(
+    scriptUrl,
+    new Response('window.staleApp = true;', {
+      headers: { 'Content-Type': 'text/javascript' },
+    })
+  );
+  const freshScript = await dispatchFetch(request(scriptUrl, { destination: 'script' }));
+  assert.equal(await freshScript.text(), 'fresh');
+
   const refresh = await dispatchMessage('REFRESH_APP_RESOURCES');
   assert.equal(refresh.ok, true);
   const status = await dispatchMessage('GET_PWA_STATUS');
   assert.equal(status.ok, true);
 
   console.log(
-    'Test działania service workera: OK — HTML tylko dla nawigacji, JSON bez fallbacku HTML i bezpieczne odświeżenie cache.'
+    'Test działania offline: OK — właściwe odpowiedzi dla dokumentów i danych oraz bezpieczne odświeżenie plików.'
   );
 }
 

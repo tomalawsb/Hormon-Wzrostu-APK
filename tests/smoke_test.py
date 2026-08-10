@@ -38,11 +38,16 @@ version_name = android_version.get("VERSION_NAME", "")
 version_code = android_version.get("VERSION_CODE", "")
 scripts = package.get("scripts", {})
 
-require(re.fullmatch(r"\d+\.\d+(?:\.\d+)?-\d{10}", version_name) is not None, "VERSION_NAME musi mieć format X.Y-DDMMRRHHMM")
+is_semver = re.fullmatch(r"\d+\.\d+\.\d+", version_name) is not None
+is_legacy_release = re.fullmatch(r"\d+\.\d+-\d{10}", version_name) is not None
+require(is_semver or is_legacy_release, "VERSION_NAME musi mieć format X.Y.Z albo X.Y-DDMMRRHHMM")
 require(version_code.isdigit() and int(version_code) > 0, "VERSION_CODE musi być dodatnią liczbą")
 require(package.get("name") == "dzienniczek-hormonu", "nieprawidłowa nazwa pakietu npm")
-base_version, timestamp = version_name.split("-", 1)
-expected_npm_version = base_version + ".0-" + timestamp
+if is_semver:
+    expected_npm_version = version_name
+else:
+    base_version, timestamp = version_name.split("-", 1)
+    expected_npm_version = base_version + ".0-" + timestamp
 require(package.get("version") == expected_npm_version, "package.json nie zgadza się z wersją wydania")
 require(lock.get("version") == expected_npm_version, "package-lock.json nie zgadza się z wersją wydania")
 require(lock.get("packages", {}).get("", {}).get("version") == expected_npm_version, "główny pakiet w package-lock ma inną wersję")
@@ -63,11 +68,15 @@ require("npm run test:webview" in scripts.get("test:web", ""), "testy web nie ur
 require("npm run test:architecture" in scripts.get("test:web", ""), "testy web nie uruchamiają kontroli architektury")
 
 strings = read("android/app/src/main/res/values/strings.xml")
-require(strings.count("Dzienniczek Hormonu") >= 2, "nieprawidłowa nazwa Android")
+require(strings.count("Dzienniczek Hormonu") == 1, "nieprawidłowa nazwa Android")
 android_manifest = read("android/app/src/main/AndroidManifest.xml")
-for permission in ("INTERNET", "RECORD_AUDIO", "POST_NOTIFICATIONS", "RECEIVE_BOOT_COMPLETED", "SCHEDULE_EXACT_ALARM"):
+require('android:label="@string/app_name"' in android_manifest, "manifest nie używa nazwy Android z zasobów")
+for permission in ("RECORD_AUDIO", "POST_NOTIFICATIONS", "RECEIVE_BOOT_COMPLETED", "SCHEDULE_EXACT_ALARM"):
     require(permission in android_manifest, f"brak uprawnienia {permission}")
+for forbidden_permission in ("INTERNET",):
+    require(forbidden_permission not in android_manifest, f"zbędne uprawnienie {forbidden_permission}")
 require('android:allowBackup="false"' in android_manifest, "prywatne dane nie powinny trafiać do automatycznej kopii systemowej")
+require('android:dataExtractionRules="@xml/data_extraction_rules"' in android_manifest, "brak reguł wyłączenia danych z kopii systemowej")
 
 build_gradle = read("android/app/build.gradle")
 require("applicationId 'pl.tomaszwolak.dzienniczekhormonuwzrostu'" in build_gradle, "zmieniono identyfikator aplikacji, co usunęłoby ciągłość aktualizacji")
@@ -82,7 +91,7 @@ require("signingConfig" not in debug_block.group("body"), "debug nie może używ
 
 native_bridge = read("src/native/native-bridge.js")
 require(re.search(r"const SCHEDULE_DAYS\s*=\s*(?:9\d|[1-9]\d{2,})\s*;", native_bridge) is not None, "harmonogram przypomnień jest krótszy niż 90 dni")
-require("PERMISSIONS_ONBOARDING_REVISION = 'permissions-v2'" in read("src/core/config.js"), "brak wersjonowania ekranu zgód")
+require("PERMISSIONS_ONBOARDING_REVISION = 'permissions-v3'" in read("src/core/config.js"), "brak wersjonowania ekranu zgód z mikrofonem")
 require("isPermissionsOnboardingCompleted()" in read("src/screens/settings/permissions.js"), "brak wymuszenia ekranu zgód po aktualizacji")
 require("migrateLegacyStoredData" in read("src/services/storage/schema.js"), "brak migracji starszych danych")
 require("BACKUP_STORAGE_KEY" in read("src/services/storage/schema.js"), "brak kopii danych przed zapisem")
@@ -125,7 +134,7 @@ require("security-unlock-pin" in index, "interfejs nie ma blokady PIN")
 worker = read("service-worker.js")
 require("encryptedStateVersion" in worker and "REMINDER_STATE_AAD" in worker, "stan przypomnień service workera nie jest szyfrowany")
 
-assets = ("index.html", "app.js", "native-bridge.js", "style.css", "manifest.json", "app-version.json", "service-worker.js", "icon-192.png", "icon-512.png")
+assets = ("index.html", "app.js", "native-bridge.js", "style.css", "manifest.json", "app-version.json", "service-worker.js", "privacy.html", "icon-192.png", "icon-512.png")
 for name in assets:
     require((ROOT / name).read_bytes() == (ROOT / "www" / name).read_bytes(), f"www/{name} nie jest zsynchronizowany")
     require((ROOT / name).read_bytes() == (ROOT / "android/app/src/main/assets/web" / name).read_bytes(), f"asset Android web/{name} nie jest zsynchronizowany")
@@ -192,17 +201,17 @@ require("keytool" in signing_script, "skrypt nie potrafi utworzyć nowego klucza
 require(signing_script.isascii(), "KONFIGURUJ_PODPIS.ps1 zawiera znaki spoza ASCII i może nie działać w Windows PowerShell 5.1")
 
 updater = read("src/services/updates/index.js")
-require("tomalawsb/Hormon-Wzrostu-APK/releases/latest" in updater, "aktualizator wskazuje złe repozytorium")
-require("browser_download_url" in updater, "aktualizator nie pobiera adresu APK")
-require("openExternalUrl" in native_main, "Android nie potrafi otworzyć pobierania aktualizacji")
+require("Google Play" in updater, "wersja Android nie kieruje aktualizacji do Google Play")
+require("browser_download_url" not in updater, "aktualizator nadal pobiera APK poza Google Play")
+require("openExternalUrl" not in native_main, "Android nadal potrafi uruchomić samodzielną aktualizację APK")
 require("appVersion()" in native_main, "APK nie udostępnia rzeczywistego numeru wersji")
-require("latestReleaseJson()" in native_main, "APK nie sprawdza GitHub Release przez natywny most")
-require((ROOT / "src/platform/android-webview-adapter.js").is_file(), "brak poprawki wersji i propozycji dla APK")
+require("latestReleaseJson()" not in native_main, "APK nadal sprawdza GitHub Release przez natywny most")
+require((ROOT / "src/platform/android-webview-adapter.js").is_file(), "brak adaptera wersji Android")
 require("check-update-button" in read("index.html"), "brak przycisku sprawdzania aktualizacji")
 
 require("settings-version-label" in read("index.html"), "brak numeru wersji w ustawieniach")
 require("Sprawdź aktualizacje" in read("index.html"), "brak przycisku Sprawdź aktualizacje")
-require("autoDownload: true" in read("src/core/events.js"), "przycisk aktualizacji nie rozpoczyna pobierania")
+require("autoDownload: true" not in read("src/core/events.js"), "przycisk aktualizacji nadal rozpoczyna pobieranie APK")
 require("today-profile-switcher'].hidden = !multiple" in read("src/screens/today/dashboard.js"), "pojedynczy profil jest nadal dublowany")
 require("currentRemaining" in read("src/components/ampoule-card/model.js"), "brak rzeczywistego stanu ampułki")
 require("AKTUALIZUJ_I_WYSLIJ.cmd" in [path.name for path in ROOT.iterdir()], "brak skryptu jednej operacji")

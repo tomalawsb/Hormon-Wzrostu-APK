@@ -1,6 +1,5 @@
 
-// Zachowane wyłącznie do testów zgodności starszych kopii .ghbackup.
-// eslint-disable-next-line no-unused-vars
+// Kopie przenośne są szyfrowane przed opuszczeniem urządzenia.
 async function encryptBackupPayload(payload, password) {
   validateBackupPassword(password);
   const plaintext = JSON.stringify(payload);

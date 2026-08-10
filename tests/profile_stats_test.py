@@ -66,7 +66,7 @@ for function_name in (
 require("medical: sanitizeProfileMedical" in schema, "profil nie przechowuje danych medycznych")
 require("measurements: sanitizeProfileMeasurements" in schema, "profil nie przechowuje pomiarów")
 require("doseHistory: sanitizeProfileDoseHistory" in schema, "profil nie przechowuje historii dawki")
-require("const DATA_SCHEMA_VERSION = 13" in config, "schemat danych nie został podniesiony do wersji 13")
+require("const DATA_SCHEMA_VERSION = 14" in config, "schemat danych nie został podniesiony do wersji 14")
 require("upsertProfileDoseChange(profile" in forms, "zmiana aktualnej dawki nie trafia do historii")
 require("settings-dose-effective-date" in forms, "zmiana dawki nie ma daty obowiązywania")
 

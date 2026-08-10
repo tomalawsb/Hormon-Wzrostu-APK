@@ -32,7 +32,10 @@ function sanitizeAppSettings(settings = {}) {
 }
 
 function sanitizeAppMeta(meta = {}) {
-  return { onboardingCompleted: Boolean(meta.onboardingCompleted) };
+  return {
+    onboardingCompleted: Boolean(meta.onboardingCompleted),
+    setupCompleted: Boolean(meta.setupCompleted),
+  };
 }
 
 function sanitizeProfileMeta(meta = {}) {
@@ -41,6 +44,14 @@ function sanitizeProfileMeta(meta = {}) {
 
 function sanitizeSettings(settings = {}) {
   const dose = normalizeDose(settings.defaultDose) || DEFAULT_PROFILE_SETTINGS.defaultDose;
+  const ampouleVolumeMl =
+    normalizePositiveDecimal(settings.ampouleVolumeMl) ||
+    DEFAULT_PROFILE_SETTINGS.ampouleVolumeMl;
+  const ampouleDoseMl = normalizeOptionalPositiveDecimal(settings.ampouleDoseMl);
+  const inferredDoseCount =
+    decimalToNumber(ampouleVolumeMl) && decimalToNumber(ampouleDoseMl)
+      ? Math.max(1, Math.floor(decimalToNumber(ampouleVolumeMl) / decimalToNumber(ampouleDoseMl) + 0.000001))
+      : DEFAULT_PROFILE_SETTINGS.ampouleDoseCount;
   return {
     defaultDose: dose,
     unit: ALLOWED_UNITS.has(settings.unit) ? settings.unit : DEFAULT_PROFILE_SETTINGS.unit,
@@ -66,10 +77,9 @@ function sanitizeSettings(settings = {}) {
       ? settings.ampouleStartDate
       : DEFAULT_PROFILE_SETTINGS.ampouleStartDate,
     ampouleStartNumber: normalizeAmpouleNumber(settings.ampouleStartNumber),
-    ampouleVolumeMl:
-      normalizePositiveDecimal(settings.ampouleVolumeMl) ||
-      DEFAULT_PROFILE_SETTINGS.ampouleVolumeMl,
-    ampouleDoseMl: normalizeOptionalPositiveDecimal(settings.ampouleDoseMl),
+    ampouleVolumeMl,
+    ampouleDoseMl,
+    ampouleDoseCount: normalizeAmpouleDoseCount(settings.ampouleDoseCount, inferredDoseCount),
     ampouleMaxOpenDays: normalizeOptionalDayLimit(settings.ampouleMaxOpenDays),
   };
 }
@@ -77,6 +87,7 @@ function sanitizeSettings(settings = {}) {
 function sanitizeMeta(meta = {}) {
   return {
     onboardingCompleted: Boolean(meta.onboardingCompleted),
+    setupCompleted: Boolean(meta.setupCompleted),
     lastReminderDate: isValidIsoDate(meta.lastReminderDate) ? meta.lastReminderDate : '',
   };
 }
@@ -95,6 +106,10 @@ function sanitizeAmpoule(ampoule) {
     startDate,
     volumeMl,
     doseMl,
+    targetDoseCount: normalizeAmpouleDoseCount(
+      ampoule.targetDoseCount,
+      Math.max(1, Math.floor(decimalToNumber(volumeMl) / decimalToNumber(doseMl) + 0.000001))
+    ),
     status: ALLOWED_AMPOULE_STATUSES.has(ampoule.status) ? ampoule.status : 'paused',
     createdAt: isValidDateTime(ampoule.createdAt)
       ? ampoule.createdAt

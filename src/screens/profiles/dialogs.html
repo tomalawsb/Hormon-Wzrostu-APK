@@ -5,13 +5,13 @@
         <div>
           <p class="eyebrow">Użytkownicy dzienniczka</p>
           <h2 id="profiles-dialog-title">Dzieci i profile</h2>
-          <p class="muted">Wybierz dziecko albo zarządzaj jego profilem. Dane profili są przechowywane oddzielnie.</p>
+          <p class="muted">Wybierz osobę albo zarządzaj jej profilem. Dane profili są przechowywane oddzielnie.</p>
         </div>
         <button id="profiles-dialog-close-button" class="icon-button" type="button" aria-label="Zamknij profile"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
       </div>
       <div id="profiles-list" class="profiles-list"></div>
       <div class="dialog-actions">
-        <button id="add-profile-button" class="button button--primary" type="button">+ Dodaj profil dziecka</button>
+        <button id="add-profile-button" class="button button--primary" type="button">+ Dodaj profil</button>
       </div>
     </div>
   </dialog>
@@ -20,7 +20,7 @@
     <form id="profile-editor-form" class="profile-dialog__content">
       <div class="dialog-header dialog-header--compact">
         <div>
-          <p class="eyebrow">Profil dziecka</p>
+          <p class="eyebrow">Profil osoby</p>
           <h2 id="profile-editor-title">Dodaj profil</h2>
           <p class="muted">Nazwa jest obowiązkowa. Ikona i kolor pomagają szybko rozpoznać profil.</p>
         </div>
@@ -28,7 +28,7 @@
       </div>
       <input id="profile-editor-id" type="hidden">
       <label class="profile-name-field">
-        <span>Nazwa dziecka</span>
+        <span>Nazwa profilu</span>
         <input id="profile-name-input" maxlength="60" autocomplete="off" required placeholder="Np. Kasia">
       </label>
       <fieldset class="profile-choice-fieldset">

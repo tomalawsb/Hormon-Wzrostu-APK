@@ -16,18 +16,15 @@
 
           <div id="single-profile-dashboard" class="today-dashboard-v2">
             <article class="card today-primary-card" aria-labelledby="main-action-heading">
-              <header class="today-profile-heading">
-                <span id="today-profile-avatar" class="profile-avatar profile-avatar--large" data-profile-color="teal" aria-hidden="true">🧒</span>
-                <div class="today-profile-main">
-                  <p id="main-action-eyebrow" class="eyebrow">Aktualny profil</p>
-                  <strong id="main-profile-name" class="today-profile-name">Dziecko 1</strong>
-                </div>
-                <span id="main-status-badge" class="status-badge status-badge--neutral">Do podania</span>
-              </header>
+              <div class="today-profile-compat" hidden aria-hidden="true">
+                <span id="today-profile-avatar" data-profile-color="teal">🙂</span>
+                <span id="main-action-eyebrow">Profil</span>
+                <span id="main-profile-name">Profil 1</span>
+              </div>
 
-              <div class="today-primary-card__title">
+              <div class="today-primary-card__title today-primary-card__title--status">
                 <h2 id="main-action-heading" tabindex="-1">Dzisiejsze podanie</h2>
-                <p>Sprawdź dawkę i sugerowane miejsce. Zapis zajmuje jedno dotknięcie.</p>
+                <span id="main-status-badge" class="status-badge status-badge--neutral">Do podania</span>
               </div>
 
               <div class="today-plan-grid">
@@ -49,7 +46,7 @@
                     </button>
                   </div>
                   <span id="today-dose" class="sr-only">1,0 mg</span>
-                  <small id="main-time-value">godz. 20:00</small>
+                  <small id="main-time-value">Godzina zostanie zapisana automatycznie</small>
                 </section>
 
                 <button id="place-field" class="today-place-control" type="button" aria-label="Zmień sugerowane miejsce wkłucia">
@@ -70,14 +67,14 @@
                   Zapisz podanie
                 </button>
                 <button id="recommended-skip-button" class="button button--ghost" type="button">Oznacz jako pominięte</button>
-                <button id="recommended-edit-button" class="button button--secondary" type="button">Dodaj uwagę lub zmień szczegóły</button>
+                <button id="recommended-edit-button" class="button button--secondary is-hidden" type="button" hidden aria-hidden="true">Edytuj szczegóły</button>
                 <button id="today-undo-button" class="button button--ghost today-undo-button is-hidden" type="button">
                   <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-rotate"></use></svg>
                   Cofnij ostatnią operację
                 </button>
               </div>
 
-              <div id="today-confirmation" class="today-confirmation today-confirmation--pending" role="status" aria-live="polite">
+              <div id="today-confirmation" class="today-confirmation today-confirmation--pending" role="status" aria-live="polite" hidden>
                 <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-info"></use></svg>
                 <p id="main-action-text">Sprawdź propozycję przed zapisaniem.</p>
               </div>
@@ -94,19 +91,56 @@
                     <strong id="main-ampoule-value">—</strong>
                   </div>
                 </div>
-                <div class="today-ampoule-metrics">
+                <div id="ampoule-progress" class="ampoule-progress" role="progressbar" aria-label="Postęp wykorzystania ampułki" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
+                  <div class="ampoule-progress__summary">
+                    <strong id="ampoule-progress-label">0 z 10 podań</strong>
+                    <span id="ampoule-progress-percent" hidden>0%</span>
+                  </div>
+                  <div class="ampoule-progress__track" aria-hidden="true">
+                    <span id="ampoule-progress-fill" class="ampoule-progress__fill"></span>
+                    <span id="ampoule-progress-marker" class="ampoule-progress__marker">
+                      <svg class="app-icon" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </span>
+                  </div>
+                  <small id="ampoule-progress-caption">Pozostało 10 podań.</small>
+                </div>
+                <div class="today-ampoule-metrics" hidden aria-hidden="true">
                   <span id="main-dose-number-value">—</span>
                   <strong id="main-remaining-ml-value">—</strong>
                   <span id="main-doses-left-value">—</span>
                   <small id="main-ampoule-open-value">—</small>
                 </div>
-                <div id="ampoule-alert" class="ampoule-alert" role="status" aria-live="polite">
+                <div id="ampoule-alert" class="ampoule-alert" role="status" aria-live="polite" hidden>
                   <strong id="ampoule-alert-title">Ampułka</strong>
                   <span id="ampoule-alert-text">Ustaw datę rozpoczęcia ampułki, aby aplikacja mogła liczyć jej zużycie.</span>
                 </div>
                 <div class="today-support-actions">
                   <button id="ampoule-start-main-button" class="button button--secondary button--small is-hidden" type="button">Rozpocznij ampułkę dzisiaj</button>
                   <button id="recommended-manual-button" class="button button--secondary button--small is-hidden" type="button">Ustaw ampułkę</button>
+                </div>
+              </article>
+
+              <article class="card today-support-card today-voice-card" aria-labelledby="today-voice-title">
+                <div class="today-support-card__heading">
+                  <span class="today-support-card__icon" aria-hidden="true">
+                    <svg class="app-icon" focusable="false"><use href="#icon-microphone"></use></svg>
+                  </span>
+                  <div>
+                    <span>Polecenia głosowe</span>
+                    <strong id="today-voice-title">Powiedz, co zrobić</strong>
+                  </div>
+                </div>
+                <div class="voice-zone voice-zone--today">
+                  <button id="voice-button" class="voice-button today-voice-button" type="button" aria-pressed="false" aria-describedby="voice-help" title="Uruchom polecenia głosowe">
+                    <span class="voice-rings" aria-hidden="true"></span>
+                    <svg class="app-icon voice-mic" aria-hidden="true" focusable="false"><use href="#icon-microphone"></use></svg>
+                    <span class="voice-button-label">Naciśnij i mów</span>
+                  </button>
+                  <p id="voice-help" class="muted">Podanie, pominięcie lub zmiana ampułki.</p>
+                </div>
+                <div id="voice-result" class="recognition-result is-hidden" role="status" aria-live="polite">
+                  <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-check"></use></svg>
+                  <span>Rozpoznano: <strong id="voice-result-text"></strong></span>
                 </div>
               </article>
 
@@ -125,7 +159,7 @@
               </article>
             </div>
 
-            <details id="today-details" class="card today-details-card">
+            <details id="today-details" class="card today-details-card" hidden aria-hidden="true">
               <summary>
                 <span>
                   <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-more"></use></svg>
@@ -153,20 +187,6 @@
                       <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-clock"></use></svg>
                       <span>Godzina: <strong id="today-time">20:00</strong></span>
                     </button>
-                  </div>
-
-                  <div class="voice-zone voice-zone--compact">
-                    <button id="voice-button" class="voice-button" type="button" aria-pressed="false" aria-describedby="voice-help" title="Uruchom obsługę głosową (Alt+M)">
-                      <span class="voice-rings" aria-hidden="true"></span>
-                      <svg class="app-icon voice-mic" aria-hidden="true" focusable="false"><use href="#icon-microphone"></use></svg>
-                      <span class="voice-button-label">Powiedz miejsce</span>
-                    </button>
-                    <p id="voice-help" class="muted">Np. „Kasia lewe udo”, „pomiń dawkę Tomkowi” albo „zapisz Kasi”.</p>
-                  </div>
-
-                  <div id="voice-result" class="recognition-result is-hidden" role="status" aria-live="polite">
-                    <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-check"></use></svg>
-                    <span>Rozpoznano: <strong id="voice-result-text"></strong></span>
                   </div>
 
                   <div class="primary-actions">

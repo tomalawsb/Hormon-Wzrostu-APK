@@ -7,7 +7,7 @@
   const BACKUP_REMINDER_INTERVAL_MS = 3 * 24 * 60 * 60 * 1000;
   const AUTO_IMPORT_BACKUP_KEY = 'dzienniczek-hormonu-wzrostu-auto-import-backup-v1';
   const PERMISSIONS_ONBOARDING_STORAGE_KEY = 'dzienniczek-hormonu-zgody-onboarding';
-  const PERMISSIONS_ONBOARDING_REVISION = 'permissions-v2';
+  const PERMISSIONS_ONBOARDING_REVISION = 'permissions-v3';
   const BACKUP_FORMAT_VERSION = 2;
   const MAX_BACKUP_FILE_SIZE = 10 * 1024 * 1024;
   const MAX_NOTE_LENGTH = 1000;
@@ -34,11 +34,11 @@
   const ALLOWED_FONT_STYLES = new Set(['system', 'readable', 'classic']);
   const DEFAULT_FONT_STYLE = 'system';
   const DEFAULT_AMPOULE_VOLUME_ML = '10';
-  const DATA_SCHEMA_VERSION = 13;
+  const DATA_SCHEMA_VERSION = 14;
   const DEFAULT_PROFILE_ID = 'profile-1';
-  const DEFAULT_PROFILE_NAME = 'Dziecko 1';
+  const DEFAULT_PROFILE_NAME = 'Profil 1';
   const DEFAULT_PROFILE_COLOR = 'teal';
-  const DEFAULT_PROFILE_ICON = '🧒';
+  const DEFAULT_PROFILE_ICON = '🙂';
   const MAX_PROFILES = 20;
   const ALLOWED_PROFILE_COLORS = new Set(['teal', 'blue', 'violet', 'rose', 'amber', 'green']);
   const ALLOWED_PROFILE_ICONS = new Set(['🧒', '👧', '👦', '🙂', '⭐', '💚', '💙', '💜']);
@@ -87,11 +87,13 @@
     ampouleStartNumber: 1,
     ampouleVolumeMl: DEFAULT_AMPOULE_VOLUME_ML,
     ampouleDoseMl: '',
+    ampouleDoseCount: 10,
     ampouleMaxOpenDays: ''
   });
 
   const DEFAULT_APP_META = Object.freeze({
-    onboardingCompleted: false
+    onboardingCompleted: false,
+    setupCompleted: false
   });
 
   const defaultData = createDefaultData();
@@ -111,6 +113,7 @@
   let lastRecognizedText = '';
   let quickDraft = createInitialQuickDraft();
   let quickDraftTouched = false;
+  let quickDraftTimeExplicit = false;
   let lastEntryUndoOperation = null;
   let midnightTimer = null;
   const reminderTimers = new Map();
@@ -119,8 +122,6 @@
   let dataDialogReturnTarget = null;
   let pendingImportPreview = null;
   let currentAppVersion = '1.0.0';
-  let latestUpdateUrl = '';
-  let latestUpdateVersion = '';
 
   const el = {};
 
@@ -128,6 +129,10 @@
 
   async function init() {
     cacheElements();
+    document.documentElement.classList.toggle('native-android', isNativeAndroidApp());
+    if (window.matchMedia('(max-width: 700px)').matches) {
+      document.getElementById('history-filter-disclosure')?.removeAttribute('open');
+    }
     try {
       await initializeSecureStorage();
       data = attachActiveProfileAliases(loadData());
@@ -163,7 +168,7 @@
     scheduleDailyReminder();
     scheduleMidnightRefresh();
     checkReminderDue();
-    maybeShowFirstRunPermissions();
+    if (!maybeShowFirstRunSetup()) maybeShowFirstRunPermissions();
     flushStartupWarnings();
     maybeScheduleBackupReminder();
   }
@@ -174,8 +179,12 @@
       'today-profile-switcher', 'all-profiles-dashboard', 'all-profiles-progress', 'all-profiles-list', 'single-profile-dashboard',
       'today-profile-avatar', 'main-action-eyebrow', 'main-profile-name', 'main-status-badge',
       'main-place-value', 'main-dose-value', 'main-time-value', 'main-ampoule-value', 'main-dose-number-value', 'main-remaining-ml-value', 'main-doses-left-value', 'main-ampoule-open-value',
+      'ampoule-progress', 'ampoule-progress-label', 'ampoule-progress-percent', 'ampoule-progress-fill', 'ampoule-progress-marker', 'ampoule-progress-caption',
       'main-action-heading', 'main-action-text', 'recommended-save-button', 'recommended-edit-button', 'recommended-skip-button', 'recommended-manual-button',
       'ampoule-start-main-button', 'ampoule-alert', 'ampoule-alert-title', 'ampoule-alert-text',
+      'ampoule-quick-dialog', 'ampoule-quick-form', 'ampoule-quick-close-button', 'ampoule-quick-summary',
+      'ampoule-quick-number', 'ampoule-quick-date', 'ampoule-quick-dose-count', 'ampoule-quick-max-days',
+      'ampoule-quick-warning', 'ampoule-quick-new-button', 'ampoule-quick-advanced-button',
       'today-dose-decrease', 'today-dose-increase', 'today-undo-button', 'today-confirmation',
       'today-reminder-title', 'today-reminder-text', 'today-reminder-button', 'today-details',
       'voice-button', 'voice-help', 'voice-result', 'voice-result-text', 'selected-place', 'save-button', 'save-help',
@@ -187,7 +196,7 @@
       'calendar-month-label', 'calendar-month-summary', 'calendar-grid', 'calendar-profile-filter', 'calendar-scope-label', 'calendar-profile-legend', 'selected-day-label', 'selected-day-entries',
       'add-for-selected-day', 'history-profile-filter', 'history-scope-label', 'history-search', 'status-filter', 'site-filter', 'history-correction-filter', 'history-clear-filters', 'history-list',
       'history-empty', 'settings-dose', 'settings-unit', 'settings-time', 'settings-dose-effective-date', 'settings-dose-change-note', 'ampoule-start-date',
-      'ampoule-start-number', 'ampoule-volume', 'ampoule-dose-ml', 'ampoule-max-open-days', 'ampoule-start-today-button', 'ampoule-new-button',
+      'ampoule-start-number', 'ampoule-volume', 'ampoule-dose-ml', 'ampoule-dose-count', 'ampoule-max-open-days', 'ampoule-start-today-button', 'ampoule-new-button',
       'ampoule-management-summary', 'ampoule-list', 'voice-feedback-toggle',
       'voice-confirm-toggle', 'save-voice-settings-button', 'save-settings-button', 'reminder-enabled-toggle', 'reminder-time',
       'save-reminder-button', 'notification-permission-status', 'request-notification-button',
@@ -201,13 +210,17 @@
       'export-pdf-button', 'export-word-button', 'export-json-button', 'export-profile-json-button', 'export-csv-button', 'import-button',
       'restore-auto-backup-button', 'auto-backup-summary', 'import-preview', 'import-preview-summary', 'import-preview-profiles',
       'import-preview-warning', 'import-confirm-button', 'import-cancel-button',
-      'backup-password', 'backup-password-confirm', 'import-file', 'clear-data-button', 'data-backup-section', 'header-install-button',
+      'backup-encryption-toggle', 'backup-password-fields', 'backup-password', 'backup-password-confirm', 'import-file', 'clear-data-button', 'data-backup-section', 'header-install-button',
       'desktop-install-button', 'settings-install-button', 'version-label', 'permissions-dialog',
       'pwa-install-dialog', 'pwa-install-dialog-note', 'pwa-install-confirm-button', 'pwa-install-later-button',
       'permission-microphone-button', 'permission-notification-button', 'permission-storage-button',
       'permission-microphone-status', 'permission-notification-status', 'permission-storage-status',
       'permissions-finish-button', 'permissions-skip-button', 'microphone-permission-settings', 'notification-permission-settings',
       'storage-permission-settings', 'open-permissions-button', 'place-picker-dialog', 'place-picker-options', 'place-picker-edit-button', 'place-picker-close-button',
+      'setup-dialog', 'setup-form', 'setup-step-label', 'setup-progress-fill', 'setup-actions',
+      'setup-import-button', 'setup-new-button', 'setup-import-file', 'setup-import-preview', 'setup-import-name', 'setup-import-summary', 'setup-import-confirm',
+      'setup-back-button', 'setup-next-button', 'setup-finish-button', 'setup-type-adult', 'setup-type-child', 'setup-profile-name',
+      'setup-dose', 'setup-unit', 'setup-time', 'setup-dose-count', 'setup-reminder-enabled', 'setup-reminder-time',
       'active-profile-button', 'active-profile-avatar', 'active-profile-name', 'profiles-summary', 'manage-profiles-button',
       'profiles-dialog', 'profiles-dialog-close-button', 'profiles-list', 'add-profile-button',
       'profile-editor-dialog', 'profile-editor-form', 'profile-editor-title', 'profile-editor-id', 'profile-name-input',
@@ -230,7 +243,7 @@
       'security-remove-pin-button', 'security-biometric-status', 'security-biometric-button', 'security-auto-lock',
       'security-lock-now-button', 'security-startup-cover', 'security-startup-message', 'security-privacy-cover',
       'security-lock-screen', 'security-unlock-form', 'security-unlock-pin', 'security-unlock-message',
-      'security-unlock-error', 'security-unlock-biometric', 'check-update-button', 'download-update-button',
+      'security-unlock-error', 'security-unlock-biometric', 'check-update-button',
       'update-status', 'settings-version-label', 'pwa-maintenance-controls', 'pwa-worker-status',
       'pwa-cache-status', 'pwa-online-status', 'pwa-install-status', 'refresh-pwa-resources-button',
       'apply-pwa-update-button', 'theme-mode-control', 'theme-system',
@@ -241,6 +254,7 @@
   }
 
   function bindEvents() {
+    bindSetupWizardEvents();
     document.querySelectorAll('[data-view]').forEach((button) => {
       button.addEventListener('click', () => switchView(button.dataset.view));
     });
@@ -266,7 +280,19 @@
     el['recommended-save-button'].addEventListener('click', confirmRecommendedInjection);
     el['recommended-edit-button'].addEventListener('click', openRecommendedEntryEditor);
     el['recommended-skip-button'].addEventListener('click', confirmSkippedToday);
-    el['recommended-manual-button'].addEventListener('click', openAmpouleSettings);
+    el['recommended-manual-button'].addEventListener('click', () =>
+      openSettingsSection('ampoules')
+    );
+    el['ampoule-quick-form'].addEventListener('submit', saveQuickAmpouleSettings);
+    el['ampoule-quick-close-button'].addEventListener('click', closeQuickAmpouleDialog);
+    el['ampoule-quick-new-button'].addEventListener('click', startNewAmpouleFromQuickDialog);
+    el['ampoule-quick-advanced-button'].addEventListener('click', () => {
+      closeQuickAmpouleDialog();
+      openSettingsSection('ampoules', { focus: false });
+    });
+    el['ampoule-quick-dialog'].addEventListener('click', (event) => {
+      if (event.target === el['ampoule-quick-dialog']) closeQuickAmpouleDialog();
+    });
     el['ampoule-start-main-button'].addEventListener('click', setAmpouleStartToday);
     el['today-dose-decrease'].addEventListener('click', () => adjustTodayDose(-1));
     el['today-dose-increase'].addEventListener('click', () => adjustTodayDose(1));
@@ -405,6 +431,7 @@
     });
     el['export-json-button'].addEventListener('click', exportJson);
     el['export-profile-json-button'].addEventListener('click', exportActiveProfileJson);
+    el['backup-encryption-toggle'].addEventListener('change', updateBackupEncryptionFields);
     el['export-csv-button'].addEventListener('click', () => {
       if (exportCsv()) closeDataDialog(el['export-report-dialog']);
     });
@@ -425,6 +452,7 @@
         if (dialog === el['backup-dialog']) {
           pendingImportPreview = null;
           renderImportPreview();
+          resetBackupEncryptionChoice();
         }
         returnToDataSection();
       });
@@ -449,8 +477,7 @@
       }
     });
 
-    el['check-update-button'].addEventListener('click', () => checkForUpdates({ autoDownload: true }));
-    el['download-update-button'].addEventListener('click', downloadAvailableUpdate);
+    el['check-update-button'].addEventListener('click', checkForUpdates);
     el['refresh-pwa-resources-button'].addEventListener('click', refreshPwaResources);
     el['apply-pwa-update-button'].addEventListener('click', applyPwaUpdate);
 
@@ -553,7 +580,7 @@ function loadData() {
         if (safeStorageSet(STORAGE_KEY, JSON.stringify(result.data))) {
           startupWarnings.push(
             result.migratedFromLegacy
-              ? 'Dane zostały automatycznie dostosowane do obsługi profili. Dotychczasową historię przypisano do profilu „Dziecko 1”.'
+              ? 'Dane zostały automatycznie dostosowane do obsługi profili. Dotychczasową historię przypisano do profilu „Profil 1”.'
               : 'Dane profili zostały automatycznie zaktualizowane do nowej wersji.'
           );
         }
@@ -599,6 +626,16 @@ function normalizeProfileBasedData(parsed) {
     ? requestedActiveId
     : availableProfiles[0].id;
 
+  const appMeta = sanitizeAppMeta(parsed.appMeta || parsed.meta);
+  if (typeof (parsed.appMeta || parsed.meta)?.setupCompleted !== 'boolean') {
+    appMeta.setupCompleted = profiles.some(
+      (profile) =>
+        profile.entries.length ||
+        profile.ampoules.length ||
+        profile.name !== DEFAULT_PROFILE_NAME
+    );
+  }
+
   return {
     removedDuplicates,
     migratedFromLegacy: false,
@@ -606,7 +643,7 @@ function normalizeProfileBasedData(parsed) {
     data: {
       version: DATA_SCHEMA_VERSION,
       appSettings: sanitizeAppSettings(parsed.appSettings),
-      appMeta: sanitizeAppMeta(parsed.appMeta || parsed.meta),
+      appMeta,
       activeProfileId,
       profiles,
     },
@@ -645,7 +682,7 @@ function migrateLegacyStoredData(parsed = {}) {
         security: defaultSecuritySettings(),
         appearance: defaultAppearanceSettings(),
       },
-      appMeta: { onboardingCompleted: legacyMeta.onboardingCompleted },
+      appMeta: { onboardingCompleted: legacyMeta.onboardingCompleted, setupCompleted: true },
       activeProfileId: profile.id,
       profiles: [profile],
     },
@@ -678,7 +715,7 @@ function normalizeProfile(profileInput, index, usedIds) {
     removedDuplicates,
     profile: {
       id,
-      name: sanitizeProfileName(source.name) || `Dziecko ${index + 1}`,
+      name: sanitizeProfileName(source.name) || `Profil ${index + 1}`,
       icon: sanitizeProfileIcon(source.icon),
       color: sanitizeProfileColor(source.color),
       archivedAt: isValidDateTime(source.archivedAt) ? source.archivedAt : '',
@@ -720,6 +757,14 @@ function attachActiveProfileAliases(container) {
         container.appMeta.onboardingCompleted = Boolean(value);
       },
     },
+    setupCompleted: {
+      enumerable: true,
+      get: () => Boolean(container.appMeta?.setupCompleted),
+      set: (value) => {
+        if (!container.appMeta || typeof container.appMeta !== 'object') container.appMeta = {};
+        container.appMeta.setupCompleted = Boolean(value);
+      },
+    },
     lastReminderDate: {
       enumerable: true,
       get: () => getActiveProfile(container).meta.lastReminderDate,
@@ -742,7 +787,10 @@ function attachActiveProfileAliases(container) {
       get: () => metaFacade,
       set: (value) => {
         const sanitized = sanitizeMeta(value);
-        container.appMeta = { onboardingCompleted: sanitized.onboardingCompleted };
+        container.appMeta = {
+          onboardingCompleted: sanitized.onboardingCompleted,
+          setupCompleted: sanitized.setupCompleted,
+        };
         getActiveProfile(container).meta = { lastReminderDate: sanitized.lastReminderDate };
       },
     },
@@ -1480,7 +1528,10 @@ function sanitizeAppSettings(settings = {}) {
 }
 
 function sanitizeAppMeta(meta = {}) {
-  return { onboardingCompleted: Boolean(meta.onboardingCompleted) };
+  return {
+    onboardingCompleted: Boolean(meta.onboardingCompleted),
+    setupCompleted: Boolean(meta.setupCompleted),
+  };
 }
 
 function sanitizeProfileMeta(meta = {}) {
@@ -1489,6 +1540,14 @@ function sanitizeProfileMeta(meta = {}) {
 
 function sanitizeSettings(settings = {}) {
   const dose = normalizeDose(settings.defaultDose) || DEFAULT_PROFILE_SETTINGS.defaultDose;
+  const ampouleVolumeMl =
+    normalizePositiveDecimal(settings.ampouleVolumeMl) ||
+    DEFAULT_PROFILE_SETTINGS.ampouleVolumeMl;
+  const ampouleDoseMl = normalizeOptionalPositiveDecimal(settings.ampouleDoseMl);
+  const inferredDoseCount =
+    decimalToNumber(ampouleVolumeMl) && decimalToNumber(ampouleDoseMl)
+      ? Math.max(1, Math.floor(decimalToNumber(ampouleVolumeMl) / decimalToNumber(ampouleDoseMl) + 0.000001))
+      : DEFAULT_PROFILE_SETTINGS.ampouleDoseCount;
   return {
     defaultDose: dose,
     unit: ALLOWED_UNITS.has(settings.unit) ? settings.unit : DEFAULT_PROFILE_SETTINGS.unit,
@@ -1514,10 +1573,9 @@ function sanitizeSettings(settings = {}) {
       ? settings.ampouleStartDate
       : DEFAULT_PROFILE_SETTINGS.ampouleStartDate,
     ampouleStartNumber: normalizeAmpouleNumber(settings.ampouleStartNumber),
-    ampouleVolumeMl:
-      normalizePositiveDecimal(settings.ampouleVolumeMl) ||
-      DEFAULT_PROFILE_SETTINGS.ampouleVolumeMl,
-    ampouleDoseMl: normalizeOptionalPositiveDecimal(settings.ampouleDoseMl),
+    ampouleVolumeMl,
+    ampouleDoseMl,
+    ampouleDoseCount: normalizeAmpouleDoseCount(settings.ampouleDoseCount, inferredDoseCount),
     ampouleMaxOpenDays: normalizeOptionalDayLimit(settings.ampouleMaxOpenDays),
   };
 }
@@ -1525,6 +1583,7 @@ function sanitizeSettings(settings = {}) {
 function sanitizeMeta(meta = {}) {
   return {
     onboardingCompleted: Boolean(meta.onboardingCompleted),
+    setupCompleted: Boolean(meta.setupCompleted),
     lastReminderDate: isValidIsoDate(meta.lastReminderDate) ? meta.lastReminderDate : '',
   };
 }
@@ -1543,6 +1602,10 @@ function sanitizeAmpoule(ampoule) {
     startDate,
     volumeMl,
     doseMl,
+    targetDoseCount: normalizeAmpouleDoseCount(
+      ampoule.targetDoseCount,
+      Math.max(1, Math.floor(decimalToNumber(volumeMl) / decimalToNumber(doseMl) + 0.000001))
+    ),
     status: ALLOWED_AMPOULE_STATUSES.has(ampoule.status) ? ampoule.status : 'paused',
     createdAt: isValidDateTime(ampoule.createdAt)
       ? ampoule.createdAt
@@ -1791,6 +1854,7 @@ function createInitialQuickDraft() {
 function resetQuickDraftForToday() {
   quickDraft = createInitialQuickDraft();
   quickDraftTouched = false;
+  quickDraftTimeExplicit = false;
   lastRecognizedText = '';
 }
 
@@ -2494,7 +2558,7 @@ function renderSecuritySettings() {
         ? settings.biometricEnabled
           ? 'Biometria jest włączona'
           : 'Biometria jest dostępna'
-        : 'Biometria jest dostępna tylko w zgodnym APK na Androidzie';
+        : 'Biometria jest dostępna w zgodnej aplikacji na Androidzie';
   }
   if (el['security-biometric-button']) {
     el['security-biometric-button'].hidden = biometricState !== 'available';
@@ -2750,8 +2814,7 @@ function constantTimeEqual(left, right) {
   return difference === 0;
 }
 
-// Zachowane wyłącznie do testów zgodności starszych kopii .ghbackup.
-// eslint-disable-next-line no-unused-vars
+// Kopie przenośne są szyfrowane przed opuszczeniem urządzenia.
 async function encryptBackupPayload(payload, password) {
   validateBackupPassword(password);
   const plaintext = JSON.stringify(payload);
@@ -2942,7 +3005,7 @@ function renderProfileControls() {
   el['active-profile-avatar'].dataset.profileColor = activeProfile.color;
   el['active-profile-button'].setAttribute(
     'aria-label',
-    `Aktywny profil: ${activeProfile.name}. Zmień profil dziecka.`
+    `Aktywny profil: ${activeProfile.name}. Zmień profil.`
   );
 
   const availableCount = getAvailableProfiles().length;
@@ -3016,7 +3079,7 @@ function renderProfilesList() {
   el['add-profile-button'].title =
     data.profiles.length >= MAX_PROFILES
       ? `Osiągnięto limit ${MAX_PROFILES} profili.`
-      : 'Dodaj nowy profil dziecka';
+      : 'Dodaj nowy profil';
 }
 
 function handleProfilesListAction(event) {
@@ -3096,7 +3159,7 @@ function saveProfileEditor(event) {
   const profileId = sanitizeProfileId(el['profile-editor-id'].value);
   const name = sanitizeProfileName(el['profile-name-input'].value);
   if (!name) {
-    showToast('Wpisz nazwę dziecka.', 'error');
+    showToast('Wpisz nazwę profilu.', 'error');
     el['profile-name-input'].focus();
     return;
   }
@@ -4072,12 +4135,10 @@ function renderAllProfilesCard(summary) {
   const ampouleText = summary.ampoule.configured
     ? summary.status === 'skipped'
       ? `Ampułka ${summary.ampoule.number} · bez podania dzisiaj`
-      : `Ampułka ${summary.ampoule.number} · dawka ${summary.ampoule.doseNumber || '—'}`
+      : `Ampułka ${summary.ampoule.number} · ${summary.ampoule.completedDoseCount} z ${summary.ampoule.targetDoseCount}`
     : summary.ampoule.label;
   const remainingText = summary.ampoule.configured
-    ? summary.status === 'pending'
-      ? `Teraz ${formatMl(summary.ampoule.currentRemaining)} ml · po dawce ${summary.ampoule.dosesLeft} ${plural(summary.ampoule.dosesLeft, 'pełna dawka', 'pełne dawki', 'pełnych dawek')}`
-      : `Pozostało ${formatMl(summary.ampoule.currentRemaining)} ml · ${summary.ampoule.dosesLeft} ${plural(summary.ampoule.dosesLeft, 'pełna dawka', 'pełne dawki', 'pełnych dawek')}${summary.ampoule.todayIsLast ? ' · ostatnia dawka' : ''}`
+    ? `Pozostało ${summary.ampoule.dosesLeft} ${plural(summary.ampoule.dosesLeft, 'podanie', 'podania', 'podań')}`
     : 'Uzupełnij ustawienia ampułki';
 
   return `
@@ -4145,7 +4206,7 @@ function getProfileAmpouleDashboard(profile, todayEntry, today = localDateISO())
   const paused = ampoules.filter(
     (ampoule) =>
       ampoule.id !== profile.activeAmpouleId &&
-      getProfileAmpouleRemainingMl(profile, ampoule) > 0.000001
+      getProfileAmpouleRemainingDoseCount(profile, ampoule) > 0
   );
   if (!displayAmpoule) {
     return {
@@ -4153,18 +4214,21 @@ function getProfileAmpouleDashboard(profile, todayEntry, today = localDateISO())
       label: paused.length ? 'Wybierz odłożoną ampułkę' : 'Ampułka nie jest rozpoczęta',
       number: 0,
       doseNumber: 0,
+      completedDoseCount: 0,
       dosesLeft: 0,
       currentRemaining: 0,
       remainingAfterToday: 0,
       todayIsLast: false,
       openDays: 0,
       maxOpenDays: Number(profile?.settings?.ampouleMaxOpenDays) || 0,
+      targetDoseCount: normalizeAmpouleDoseCount(profile?.settings?.ampouleDoseCount),
       tooLong: false,
     };
   }
 
   const active = displayAmpoule;
   const doseMl = decimalToNumber(active.doseMl);
+  const targetDoseCount = normalizeAmpouleDoseCount(active.targetDoseCount);
   const given = (Array.isArray(profile.entries) ? profile.entries : [])
     .filter((entry) => entry.ampouleId === active.id && entry.status === 'given')
     .sort((a, b) =>
@@ -4174,12 +4238,11 @@ function getProfileAmpouleDashboard(profile, todayEntry, today = localDateISO())
     todayEntry?.status === 'given' && todayEntry.ampouleId === active.id
       ? given.findIndex((entry) => entry.id === todayEntry.id)
       : -1;
-  const givenBeforeToday = given.filter((entry) => entry.date < today).length;
-  const doseNumber = todayGivenIndex >= 0 ? todayGivenIndex + 1 : givenBeforeToday + 1;
+  const doseNumber = todayGivenIndex >= 0 ? todayGivenIndex + 1 : 0;
+  const completedDoseCount = given.length;
   const remainingNow = getProfileAmpouleRemainingMl(profile, active);
-  const projectedDose = !todayEntry ? doseMl : 0;
-  const remainingAfterToday = Math.max(0, remainingNow - projectedDose);
-  const dosesLeft = doseMl > 0 ? Math.floor((remainingAfterToday + 0.000001) / doseMl) : 0;
+  const remainingAfterToday = remainingNow;
+  const dosesLeft = Math.max(0, targetDoseCount - completedDoseCount);
   const openDays =
     active.startDate && isValidIsoDate(active.startDate)
       ? Math.max(
@@ -4193,12 +4256,14 @@ function getProfileAmpouleDashboard(profile, todayEntry, today = localDateISO())
   const todayIsLast =
     statusForAmpouleDashboard(todayEntry) === 'given' &&
     todayEntry.ampouleId === active.id &&
-    remainingAfterToday <= 0.000001;
+    given.length >= targetDoseCount;
   return {
     configured: doseMl > 0,
     label: doseMl > 0 ? `Ampułka ${active.number}` : 'Brak dawki ampułki w ml',
     number: active.number,
     doseNumber,
+    completedDoseCount,
+    targetDoseCount,
     dosesLeft,
     currentRemaining: remainingNow,
     remainingAfterToday,
@@ -4207,6 +4272,14 @@ function getProfileAmpouleDashboard(profile, todayEntry, today = localDateISO())
     maxOpenDays,
     tooLong: Boolean(maxOpenDays && openDays > maxOpenDays),
   };
+}
+
+function getProfileAmpouleRemainingDoseCount(profile, ampoule) {
+  if (!ampoule) return 0;
+  const given = (Array.isArray(profile?.entries) ? profile.entries : []).filter(
+    (entry) => entry.ampouleId === ampoule.id && entry.status === 'given'
+  ).length;
+  return Math.max(0, normalizeAmpouleDoseCount(ampoule.targetDoseCount) - given);
 }
 
 function statusForAmpouleDashboard(entry) {
@@ -4258,29 +4331,18 @@ function renderMainTodayMetrics({ todayEntry, suggestion, ampouleInfo }) {
         : 'Brak aktywnego miejsca';
     el['main-dose-value'].textContent =
       `${formatDose(quickDraft.dose || data.settings.defaultDose)} ${quickDraft.unit || data.settings.unit}`;
-    el['main-time-value'].textContent = `godz. ${quickDraft.time || data.settings.defaultTime}`;
+    el['main-time-value'].textContent = 'Godzina zostanie zapisana automatycznie';
   }
 
   if (ampouleInfo.configured) {
     el['main-ampoule-value'].textContent = `Nr ${ampouleInfo.ampouleNumber}`;
-    el['main-dose-number-value'].textContent = ampouleInfo.todayDoseNumber
-      ? status === 'pending'
-        ? `Planowana dawka ${ampouleInfo.todayDoseNumber}`
-        : `Dawka ${ampouleInfo.todayDoseNumber}`
-      : status === 'skipped'
-        ? 'Bez podania dzisiaj'
-        : 'Numer dawki niedostępny';
-    el['main-remaining-ml-value'].textContent =
-      status === 'pending'
-        ? `Teraz ${formatMl(ampouleInfo.currentRemaining)} ml`
-        : `Pozostało ${formatMl(ampouleInfo.currentRemaining)} ml`;
-    const dosesLabel = `${ampouleInfo.approximateDosesLeftAfterToday} ${plural(ampouleInfo.approximateDosesLeftAfterToday, 'pełna dawka', 'pełne dawki', 'pełnych dawek')}`;
-    el['main-doses-left-value'].textContent = ampouleInfo.todayIsLast
-      ? `${dosesLabel} · ostatnia dawka`
-      : dosesLabel;
-    const limitText = ampouleInfo.maxOpenDays ? ` / limit ${ampouleInfo.maxOpenDays}` : '';
-    el['main-ampoule-open-value'].textContent =
-      `Start ${formatDateShort(ampouleInfo.ampouleStartDate)} · otwarta ${ampouleInfo.openDays} ${plural(ampouleInfo.openDays, 'dzień', 'dni', 'dni')}${limitText}`;
+    el['main-dose-number-value'].textContent =
+      `${ampouleInfo.completedDoseCount} z ${ampouleInfo.targetDoseCount}`;
+    el['main-remaining-ml-value'].textContent = '';
+    el['main-doses-left-value'].textContent =
+      `Pozostało ${ampouleInfo.dosesLeft} ${plural(ampouleInfo.dosesLeft, 'podanie', 'podania', 'podań')}`;
+    renderAmpouleProgress(ampouleInfo);
+    el['main-ampoule-open-value'].textContent = '';
     el['main-ampoule-open-value'].classList.toggle(
       'text-danger',
       Boolean(ampouleInfo.maxOpenDays && ampouleInfo.openDays > ampouleInfo.maxOpenDays)
@@ -4293,7 +4355,44 @@ function renderMainTodayMetrics({ todayEntry, suggestion, ampouleInfo }) {
     el['main-doses-left-value'].textContent = 'Brak wyliczenia';
     el['main-ampoule-open-value'].textContent = 'Uzupełnij ustawienia ampułki';
     el['main-ampoule-open-value'].classList.remove('text-danger');
+    renderAmpouleProgress(null);
   }
+}
+
+function renderAmpouleProgress(info) {
+  if (!el['ampoule-progress']) return;
+  if (!info?.configured) {
+    el['ampoule-progress'].classList.add('is-unconfigured');
+    el['ampoule-progress'].setAttribute('aria-valuemax', '10');
+    el['ampoule-progress'].setAttribute('aria-valuenow', '0');
+    el['ampoule-progress-label'].textContent = 'Skonfiguruj licznik podań';
+    el['ampoule-progress-percent'].textContent = '—';
+    el['ampoule-progress-caption'].textContent = 'Ustaw liczbę zastrzyków przypadających na jedną ampułkę.';
+    el['ampoule-progress-fill'].style.setProperty('--ampoule-progress', '0%');
+    el['ampoule-progress-marker'].style.setProperty('--ampoule-progress', '0%');
+    return;
+  }
+  const target = normalizeAmpouleDoseCount(info.targetDoseCount);
+  const count = Math.min(target, info.completedDoseCount);
+  const percent = Math.max(0, Math.min(100, Math.round((count / target) * 100)));
+  const initialized = el['ampoule-progress'].dataset.completedCount !== undefined;
+  if (!initialized) el['ampoule-progress'].classList.add('is-initializing');
+  el['ampoule-progress'].dataset.completedCount = String(count);
+  el['ampoule-progress'].classList.remove('is-unconfigured');
+  el['ampoule-progress'].classList.toggle('is-complete', count >= target);
+  el['ampoule-progress'].setAttribute('aria-valuemax', String(target));
+  el['ampoule-progress'].setAttribute('aria-valuenow', String(count));
+  el['ampoule-progress-label'].textContent = `${count} z ${target}`;
+  el['ampoule-progress-percent'].textContent = `${percent}%`;
+  el['ampoule-progress-caption'].textContent =
+    count >= target
+      ? 'Ampułka została wykorzystana.'
+      : `Pozostało ${target - count} ${plural(target - count, 'podanie', 'podania', 'podań')}.`;
+  el['ampoule-progress-fill'].style.setProperty('--ampoule-progress', `${percent}%`);
+  el['ampoule-progress-marker'].style.setProperty('--ampoule-progress', `${percent}%`);
+  window.requestAnimationFrame(() => {
+    el['ampoule-progress']?.classList.remove('is-initializing');
+  });
 }
 function renderAll() {
   applyThemePreference();
@@ -4387,7 +4486,7 @@ function renderToday() {
       ? capitalize(formatPlace(suggestion.side, suggestion.site))
       : 'Brak aktywnego miejsca';
 
-  const ampouleInfo = getAmpouleInfo(todayEntry ? null : quickDraft);
+  const ampouleInfo = getAmpouleInfo();
   renderMainRecommendation({ todayEntry, ready, suggestion, ampouleInfo, editingExisting });
   renderTodayReminder(todayEntry);
   renderTodayUndoAction();
@@ -4403,7 +4502,8 @@ let renderMainRecommendation = function renderMainRecommendation({
 
   el['recommended-save-button'].classList.remove('is-hidden');
   el['recommended-save-button'].disabled = false;
-  el['recommended-edit-button'].classList.toggle('is-hidden', Boolean(todayEntry));
+  el['recommended-edit-button'].hidden = true;
+  el['recommended-edit-button'].classList.add('is-hidden');
   el['recommended-skip-button'].classList.toggle('is-hidden', Boolean(todayEntry));
   el['recommended-manual-button'].classList.add('is-hidden');
   el['recommended-manual-button'].textContent = 'Ustaw ampułkę';
@@ -4413,13 +4513,13 @@ let renderMainRecommendation = function renderMainRecommendation({
     el['main-action-heading'].textContent = 'Dzisiejsze podanie zapisane';
     el['main-action-text'].textContent =
       `Zapisano o ${todayEntry.time}: ${formatDose(todayEntry.dose)} ${todayEntry.unit}, ${formatPlace(todayEntry.side, todayEntry.site)}.`;
-    el['recommended-save-button'].innerHTML = `${iconSvg('edit')} Edytuj dzisiejszy wpis`;
+    el['recommended-save-button'].classList.add('is-hidden');
     el['today-confirmation'].className = 'today-confirmation today-confirmation--given';
   } else if (todayEntry?.status === 'skipped') {
     el['main-action-heading'].textContent = 'Dzisiejsza dawka pominięta';
     el['main-action-text'].textContent =
       `Pominięcie zapisano o ${todayEntry.time}. Możesz poprawić wpis albo cofnąć ostatnią operację.`;
-    el['recommended-save-button'].innerHTML = `${iconSvg('edit')} Edytuj dzisiejszy wpis`;
+    el['recommended-save-button'].classList.add('is-hidden');
     el['today-confirmation'].className = 'today-confirmation today-confirmation--skipped';
   } else if (!hasSuggestion) {
     el['main-action-heading'].textContent = 'Brak aktywnych miejsc wkłucia';
@@ -4428,8 +4528,7 @@ let renderMainRecommendation = function renderMainRecommendation({
     el['today-confirmation'].className = 'today-confirmation today-confirmation--warning';
   } else {
     el['main-action-heading'].textContent = 'Dzisiejsze podanie';
-    el['main-action-text'].textContent =
-      'Dawka i miejsce są gotowe. Dotknij „Zapisz podanie”, aby zakończyć.';
+    el['main-action-text'].textContent = 'Gotowe do zapisania.';
     el['recommended-save-button'].innerHTML = `${iconSvg('check')} Zapisz podanie`;
     el['today-confirmation'].className = 'today-confirmation today-confirmation--pending';
   }
@@ -4457,6 +4556,8 @@ let renderMainRecommendation = function renderMainRecommendation({
   el['ampoule-alert-title'].textContent = ampouleMessage.title;
   el['ampoule-alert-text'].textContent = ampouleMessage.text;
   el['ampoule-alert'].className = `ampoule-alert ampoule-alert--${ampouleMessage.level}`;
+  el['ampoule-alert'].hidden = Boolean(ampouleInfo.configured && ampouleMessage.level === 'ok');
+  el['today-confirmation'].hidden = true;
 };
 
 function adjustTodayDose(direction) {
@@ -4564,7 +4665,7 @@ function renderCalendar() {
   calendarProfileScope = populateProfileScopeSelect(
     el['calendar-profile-filter'],
     calendarProfileScope,
-    'Wszystkie dzieci'
+    'Wszystkie profile'
   );
   const year = calendarCursor.getFullYear();
   const month = calendarCursor.getMonth();
@@ -4705,7 +4806,7 @@ function renderHistory() {
   historyProfileScope = populateProfileScopeSelect(
     el['history-profile-filter'],
     historyProfileScope,
-    'Wszystkie dzieci'
+    'Wszystkie profile'
   );
   const filters = getHistoryFilters();
   const records = filterHistoryRecords(
@@ -4852,6 +4953,7 @@ function renderSettings() {
   el['ampoule-volume'].value =
     activeAmpoule?.volumeMl || data.settings.ampouleVolumeMl || DEFAULT_AMPOULE_VOLUME_ML;
   el['ampoule-dose-ml'].value = data.settings.ampouleDoseMl || '';
+  el['ampoule-dose-count'].value = data.settings.ampouleDoseCount || 10;
   el['ampoule-max-open-days'].value = data.settings.ampouleMaxOpenDays || '';
   renderAmpouleManagement();
   renderInjectionOrderSettings();
@@ -5367,7 +5469,7 @@ function confirmRecommendedInjection() {
   const entry = sanitizeEntry({
     id: entryId,
     date: today,
-    time: isValidTime(preparedDraft.time) ? preparedDraft.time : data.settings.defaultTime,
+    time: localTime(),
     dose,
     unit: preparedDraft.unit || data.settings.unit,
     side: suggestion.side,
@@ -5497,16 +5599,107 @@ function confirmSkippedToday() {
 }
 
 function openAmpouleSettings() {
-  openSettingsSection('ampoules', { focus: false });
-  window.setTimeout(() => {
-    const field = el['ampoule-start-date'];
-    if (!field) return;
-    field.focus({ preventScroll: false });
-    try {
-      field.showPicker?.();
-    } catch {}
-    field.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  }, 60);
+  const active = getActiveAmpoule();
+  const used = active ? getAmpouleUsedDoseCount(active.id) : 0;
+  el['ampoule-quick-number'].value = active?.number || nextAmpouleNumber(Boolean(data.ampoules.length));
+  el['ampoule-quick-date'].value = active?.startDate || localDateISO();
+  el['ampoule-quick-dose-count'].value = active?.targetDoseCount || data.settings.ampouleDoseCount || 10;
+  el['ampoule-quick-max-days'].value = data.settings.ampouleMaxOpenDays || '';
+  el['ampoule-quick-summary'].textContent = active
+    ? `Ampułka ${active.number} · wykorzystano ${used} z ${normalizeAmpouleDoseCount(active.targetDoseCount)}`
+    : 'Rozpocznij pierwszą ampułkę';
+  el['ampoule-quick-warning'].textContent = active && used
+    ? `Liczba docelowa nie może być mniejsza niż ${used}, ponieważ tyle podań jest już zapisanych.`
+    : '';
+  el['ampoule-quick-new-button'].hidden = !active;
+  if (!el['ampoule-quick-dialog'].open) el['ampoule-quick-dialog'].showModal();
+  window.setTimeout(() => el['ampoule-quick-dose-count'].focus({ preventScroll: true }), 30);
+}
+
+function closeQuickAmpouleDialog() {
+  if (!el['ampoule-quick-dialog']?.open) return;
+  el['ampoule-quick-dialog'].close();
+}
+
+function readQuickAmpouleValues() {
+  const date = el['ampoule-quick-date'].value;
+  const count = normalizeAmpouleDoseCount(el['ampoule-quick-dose-count'].value, 0);
+  const maxDays = normalizeOptionalDayLimit(el['ampoule-quick-max-days'].value);
+  if (!isValidIsoDate(date)) {
+    showToast('Podaj prawidłową datę rozpoczęcia ampułki.', 'error');
+    return null;
+  }
+  if (!count) {
+    showToast('Podaj liczbę zastrzyków od 1 do 999.', 'error');
+    return null;
+  }
+  if (el['ampoule-quick-max-days'].value.trim() && !maxDays) {
+    showToast('Limit otwarcia musi wynosić od 1 do 365 dni.', 'error');
+    return null;
+  }
+  return {
+    number: normalizeAmpouleNumber(el['ampoule-quick-number'].value),
+    date,
+    count,
+    maxDays,
+  };
+}
+
+function applyQuickAmpouleValues(values, { forceNew = false } = {}) {
+  if (!values) return false;
+  let active = getActiveAmpoule();
+  if (active && !forceNew && values.count < getAmpouleUsedDoseCount(active.id)) {
+    showToast('Licznik nie może być mniejszy niż liczba zapisanych podań.', 'error');
+    return false;
+  }
+  data.settings.ampouleStartDate = values.date;
+  data.settings.ampouleStartNumber = values.number;
+  data.settings.ampouleDoseCount = values.count;
+  data.settings.ampouleMaxOpenDays = values.maxDays;
+  const volumeMl = decimalToNumber(data.settings.ampouleVolumeMl) || 10;
+  const doseMl = decimalToNumber(data.settings.ampouleDoseMl) || volumeMl / values.count;
+
+  if (forceNew && active) {
+    active.status = getAmpouleRemainingDoseCount(active.id) > 0 ? 'paused' : 'finished';
+    active = null;
+  }
+  if (!active) {
+    active = createAmpouleRecord({
+      number: values.number,
+      startDate: values.date,
+      volumeMl,
+      doseMl,
+      targetDoseCount: values.count,
+      status: 'active',
+    });
+    data.ampoules.push(active);
+    data.activeAmpouleId = active.id;
+  } else {
+    active.number = values.number;
+    active.startDate = values.date;
+    active.targetDoseCount = values.count;
+    active.updatedAt = new Date().toISOString();
+  }
+  reconcileAmpouleStatuses();
+  if (!persistData()) return false;
+  closeQuickAmpouleDialog();
+  renderAll();
+  if (forceNew) openSettingsSection('ampoules', { focus: false });
+  showToast(`Ampułka ${active.number}: ustawiono ${values.count} ${plural(values.count, 'podanie', 'podania', 'podań')}.`, 'success');
+  return true;
+}
+
+function saveQuickAmpouleSettings(event) {
+  event.preventDefault();
+  return applyQuickAmpouleValues(readQuickAmpouleValues());
+}
+
+function startNewAmpouleFromQuickDialog() {
+  const values = readQuickAmpouleValues();
+  if (!values) return;
+  values.number = nextAmpouleNumber(true);
+  values.date = localDateISO();
+  applyQuickAmpouleValues(values, { forceNew: true });
 }
 
 function setAmpouleStartToday() {
@@ -5533,6 +5726,7 @@ function setAmpouleStartToday() {
         startDate: today,
         volumeMl,
         doseMl,
+        targetDoseCount: data.settings.ampouleDoseCount,
         status: 'active',
       });
       data.ampoules.push(ampoule);
@@ -5551,18 +5745,21 @@ function setAmpouleStartToday() {
 function readAmpouleFormValues() {
   const volumeMl =
     normalizePositiveDecimal(el['ampoule-volume'].value) || DEFAULT_AMPOULE_VOLUME_ML;
+  const targetDoseCount = normalizeAmpouleDoseCount(el['ampoule-dose-count'].value);
   const formUnit = ALLOWED_UNITS.has(el['settings-unit'].value)
     ? el['settings-unit'].value
     : data.settings.unit;
-  const doseMl =
+  const explicitDoseMl =
     formUnit === 'ml'
       ? normalizePositiveDecimal(el['settings-dose'].value)
       : normalizeOptionalPositiveDecimal(el['ampoule-dose-ml'].value);
+  const doseMl = explicitDoseMl || decimalToNumber(volumeMl) / targetDoseCount;
   return {
     volumeMl,
     doseMl,
     startDate: el['ampoule-start-date'].value || localDateISO(),
     number: normalizeAmpouleNumber(el['ampoule-start-number'].value),
+    targetDoseCount,
   };
 }
 
@@ -5575,7 +5772,7 @@ function startNewAmpoule() {
 
   const active = getActiveAmpoule();
   const hadActiveAmpoule = Boolean(active);
-  if (active && getAmpouleRemainingMl(active.id) > 0.000001) active.status = 'paused';
+  if (active && getAmpouleRemainingDoseCount(active.id) > 0) active.status = 'paused';
   else if (active) active.status = 'finished';
 
   const ampoule = createAmpouleRecord({
@@ -5583,6 +5780,7 @@ function startNewAmpoule() {
     startDate: localDateISO(),
     volumeMl: values.volumeMl,
     doseMl: values.doseMl,
+    targetDoseCount: values.targetDoseCount,
     status: 'active',
   });
   data.ampoules.push(ampoule);
@@ -5591,14 +5789,29 @@ function startNewAmpoule() {
   data.settings.ampouleStartNumber = ampoule.number;
   data.settings.ampouleVolumeMl = ampoule.volumeMl;
   data.settings.ampouleDoseMl = data.settings.unit === 'ml' ? '' : ampoule.doseMl;
+  data.settings.ampouleDoseCount = ampoule.targetDoseCount;
   if (!persistData()) return;
   renderAll();
+  openSettingsSection('ampoules', { focus: false });
   showToast(
     hadActiveAmpoule
       ? `Rozpoczęto ampułkę ${ampoule.number}. Poprzednia ampułka została odłożona i możesz ją później wznowić z listy odłożonych.`
       : `Rozpoczęto ampułkę ${ampoule.number}.`,
     'success'
   );
+}
+
+function pauseAmpoule(ampouleId) {
+  const active = getActiveAmpoule();
+  if (!active || active.id !== ampouleId) return false;
+  if (getAmpouleRemainingDoseCount(active.id) <= 0) return false;
+  active.status = 'paused';
+  active.updatedAt = new Date().toISOString();
+  data.activeAmpouleId = '';
+  if (!persistData()) return false;
+  renderAll();
+  showToast(`Odłożono ampułkę ${active.number}.`, 'success');
+  return true;
 }
 
 function handleAmpouleListAction(event) {
@@ -5609,13 +5822,13 @@ function handleAmpouleListAction(event) {
 
 function resumeAmpoule(ampouleId) {
   const target = getAmpouleById(ampouleId);
-  if (!target || getAmpouleRemainingMl(target.id) <= 0.000001) {
+  if (!target || getAmpouleRemainingDoseCount(target.id) <= 0) {
     showToast('Tej ampułki nie można wznowić, ponieważ jest już zużyta.', 'error');
     return;
   }
   const active = getActiveAmpoule();
   if (active && active.id !== target.id)
-    active.status = getAmpouleRemainingMl(active.id) > 0.000001 ? 'paused' : 'finished';
+    active.status = getAmpouleRemainingDoseCount(active.id) > 0 ? 'paused' : 'finished';
   target.status = 'active';
   target.updatedAt = new Date().toISOString();
   data.activeAmpouleId = target.id;
@@ -5623,6 +5836,7 @@ function resumeAmpoule(ampouleId) {
   data.settings.ampouleStartNumber = target.number;
   data.settings.ampouleVolumeMl = target.volumeMl;
   data.settings.ampouleDoseMl = data.settings.unit === 'ml' ? '' : target.doseMl;
+  data.settings.ampouleDoseCount = target.targetDoseCount;
   if (!persistData()) return;
   renderAll();
   showToast(
@@ -5637,7 +5851,7 @@ function resumeAmpoule(ampouleId) {
 function formatPausedAmpouleShortList(ampoules) {
   if (!ampoules.length) return 'brak';
   return ampoules
-    .map((ampoule) => `nr ${ampoule.number} (${formatMl(getAmpouleRemainingMl(ampoule.id))} ml)`)
+    .map((ampoule) => `nr ${ampoule.number} (${getAmpouleRemainingDoseCount(ampoule.id)} podań)`)
     .join(', ');
 }
 
@@ -5661,7 +5875,7 @@ function renderAmpouleManagement() {
     const openWarning = isAmpouleOpenTooLong(active)
       ? ' Przekroczono ustawiony limit czasu od otwarcia.'
       : '';
-    const baseSummary = `Aktywna: ampułka ${active.number}, pozostało około ${formatMl(getAmpouleRemainingMl(active.id))} ml.${openWarning}`;
+    const baseSummary = `Aktywna: ampułka ${active.number}, pozostało ${getAmpouleRemainingDoseCount(active.id)} z ${normalizeAmpouleDoseCount(active.targetDoseCount)} podań.${openWarning}`;
     el['ampoule-management-summary'].textContent = paused.length
       ? `${baseSummary} Odłożone: ${pausedListShort}.`
       : `${baseSummary} Brak odłożonych ampułek.`;
@@ -5693,14 +5907,15 @@ function renderAmpouleManagement() {
     ? visible
         .map((ampoule) => {
           const remaining = getAmpouleRemainingMl(ampoule.id);
+          const remainingDoses = getAmpouleRemainingDoseCount(ampoule.id);
           const status = ampoule.id === data.activeAmpouleId ? 'Aktywna' : 'Odłożona';
           const openDays = getAmpouleOpenDays(ampoule);
           const tooLong = isAmpouleOpenTooLong(ampoule);
           const action =
-            ampoule.id !== data.activeAmpouleId && remaining > 0.000001
+            ampoule.id !== data.activeAmpouleId && remainingDoses > 0
               ? `<button class="mini-button" type="button" data-resume-ampoule-id="${ampoule.id}">Wznów</button>`
               : '';
-          return `<div class="ampoule-list-item${tooLong ? ' ampoule-list-item--warning' : ''}"><div><strong>Ampułka ${ampoule.number}</strong><span>${status} · start ${formatDateShort(ampoule.startDate)} · otwarta ${openDays} ${plural(openDays, 'dzień', 'dni', 'dni')} · pozostało ${formatMl(remaining)} ml${tooLong ? ' · przekroczony limit' : ''}</span></div>${action}</div>`;
+          return `<div class="ampoule-list-item${tooLong ? ' ampoule-list-item--warning' : ''}"><div><strong>Ampułka ${ampoule.number}</strong><span>${status} · start ${formatDateShort(ampoule.startDate)} · otwarta ${openDays} ${plural(openDays, 'dzień', 'dni', 'dni')} · pozostało ${remainingDoses} ${plural(remainingDoses, 'podanie', 'podania', 'podań')} (${formatMl(remaining)} ml)${tooLong ? ' · przekroczony limit' : ''}</span></div>${action}</div>`;
         })
         .join('')
     : '<p class="muted">Lista rozpoczętych ampułek jest pusta.</p>';
@@ -5744,6 +5959,10 @@ function saveQuickDraft() {
   const entry = sanitizeEntry({
     ...quickDraft,
     id: entryId,
+    time:
+      !existingById && quickDraft.date === localDateISO() && !quickDraftTimeExplicit
+        ? localTime()
+        : quickDraft.time,
     dose: quickDraft.status === 'given' ? quickDraft.dose : '',
     unit: quickDraft.status === 'given' ? quickDraft.unit : '',
     side: quickDraft.status === 'given' ? quickDraft.side : '',
@@ -5827,13 +6046,27 @@ function useSuggestedPlace() {
   renderToday();
   el['save-button'].focus();
 }
-function createAmpouleRecord({ number, startDate, volumeMl, doseMl, status = 'paused' }) {
+function createAmpouleRecord({
+  number,
+  startDate,
+  volumeMl,
+  doseMl,
+  targetDoseCount,
+  status = 'paused',
+}) {
+  const normalizedVolumeMl = normalizePositiveDecimal(volumeMl) || DEFAULT_AMPOULE_VOLUME_ML;
+  const normalizedDoseMl = normalizePositiveDecimal(doseMl) || '1';
+  const inferredDoseCount = Math.max(
+    1,
+    Math.floor(decimalToNumber(normalizedVolumeMl) / decimalToNumber(normalizedDoseMl) + 0.000001)
+  );
   return {
     id: `ampoule-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
     number: normalizeAmpouleNumber(number),
     startDate: isValidIsoDate(startDate) ? startDate : localDateISO(),
-    volumeMl: normalizePositiveDecimal(volumeMl) || DEFAULT_AMPOULE_VOLUME_ML,
-    doseMl: normalizePositiveDecimal(doseMl) || '1',
+    volumeMl: normalizedVolumeMl,
+    doseMl: normalizedDoseMl,
+    targetDoseCount: normalizeAmpouleDoseCount(targetDoseCount, inferredDoseCount),
     status: ALLOWED_AMPOULE_STATUSES.has(status) ? status : 'paused',
     createdAt: new Date().toISOString(),
     updatedAt: '',
@@ -5863,6 +6096,16 @@ function getAmpouleRemainingMl(ampouleId) {
   return Math.max(0, decimalToNumber(ampoule.volumeMl) - used);
 }
 
+function getAmpouleUsedDoseCount(ampouleId) {
+  return getEntriesForAmpoule(ampouleId).filter((entry) => entry.status === 'given').length;
+}
+
+function getAmpouleRemainingDoseCount(ampouleId) {
+  const ampoule = getAmpouleById(ampouleId);
+  if (!ampoule) return 0;
+  return Math.max(0, normalizeAmpouleDoseCount(ampoule.targetDoseCount) - getAmpouleUsedDoseCount(ampouleId));
+}
+
 function getAmpouleOpenDays(ampoule) {
   if (!ampoule?.startDate || !isValidIsoDate(ampoule.startDate)) return 0;
   const start = parseISODate(ampoule.startDate);
@@ -5877,7 +6120,8 @@ function isAmpouleOpenTooLong(ampoule) {
 
 function getOpenPausedAmpoules() {
   return data.ampoules.filter(
-    (ampoule) => ampoule.id !== data.activeAmpouleId && getAmpouleRemainingMl(ampoule.id) > 0.000001
+    (ampoule) =>
+      ampoule.id !== data.activeAmpouleId && getAmpouleRemainingDoseCount(ampoule.id) > 0
   );
 }
 
@@ -5891,7 +6135,7 @@ function nextAmpouleNumber(incrementExisting = true) {
 
 function reconcileAmpouleStatuses() {
   data.ampoules.forEach((ampoule) => {
-    if (getAmpouleRemainingMl(ampoule.id) <= 0.000001) {
+    if (getAmpouleRemainingDoseCount(ampoule.id) <= 0) {
       ampoule.status = 'finished';
       if (data.activeAmpouleId === ampoule.id) data.activeAmpouleId = '';
     } else if (data.activeAmpouleId === ampoule.id) {
@@ -5914,6 +6158,7 @@ function ensureActiveAmpouleForDate(date) {
     startDate: data.ampoules.length ? date : data.settings.ampouleStartDate || date,
     volumeMl,
     doseMl,
+    targetDoseCount: data.settings.ampouleDoseCount,
     status: 'active',
   });
   data.ampoules.push(ampoule);
@@ -5921,13 +6166,10 @@ function ensureActiveAmpouleForDate(date) {
   return ampoule.id;
 }
 
-function getAmpouleInfo(plannedToday = null) {
+function getAmpouleInfo() {
   const today = localDateISO();
   const todayEntry = getEntryForDate(today);
-  const timeline = buildAmpouleTimeline({
-    includePlannedToday: !todayEntry,
-    plannedToday,
-  });
+  const timeline = buildAmpouleTimeline();
 
   const todayAmpoule = todayEntry?.ampouleId ? getAmpouleById(todayEntry.ampouleId) : null;
   const displayAmpoule =
@@ -5953,8 +6195,10 @@ function getAmpouleInfo(plannedToday = null) {
   const remainingBeforeToday = todayRow ? todayRow.remainingBefore : currentRemaining;
   const remainingAfterToday = todayRow ? todayRow.remainingAfter : currentRemaining;
   const todayDoseMl = todayRow ? todayRow.doseMl : 0;
-  const approximateDosesLeftAfterToday = Math.floor(
-    (remainingAfterToday + 0.000001) / decimalToNumber(active.doseMl)
+  const completedDoseCount = getAmpouleUsedDoseCount(active.id);
+  const dosesLeft = Math.max(
+    0,
+    normalizeAmpouleDoseCount(active.targetDoseCount) - completedDoseCount
   );
 
   return {
@@ -5975,7 +6219,10 @@ function getAmpouleInfo(plannedToday = null) {
     todayEntryStatus: todayEntry?.status || '',
     todayDoseMl,
     todayDoseNumber: todayRow?.doseNumber || 0,
-    approximateDosesLeftAfterToday,
+    targetDoseCount: normalizeAmpouleDoseCount(active.targetDoseCount),
+    completedDoseCount,
+    dosesLeft,
+    approximateDosesLeftAfterToday: dosesLeft,
     pausedCount: getOpenPausedAmpoules().length,
     openDays: getAmpouleOpenDays(active),
     maxOpenDays: Number(data.settings.ampouleMaxOpenDays) || 0,
@@ -6025,35 +6272,39 @@ function ampouleSummary(info) {
     };
   }
   if (info.todayIsLast) {
-    const prefix = info.todayEntryStatus === 'given' ? 'Dzisiejszy wpis był' : 'Dzisiaj jest';
-    const pausedText = info.pausedCount ? ' Po jej zużyciu możesz wznowić odłożoną ampułkę.' : '';
+    const pausedText = info.pausedCount ? ' Możesz teraz wznowić odłożoną ampułkę.' : '';
     return {
       level: 'danger',
-      short: `Ampułka ${info.ampouleNumber}: ostatni zastrzyk`,
-      title: `Ampułka ${info.ampouleNumber}: ostatni zastrzyk`,
-      text: `${prefix} ostatnim zastrzykiem z ampułki ${info.ampouleNumber}.${pausedText}`,
+      short: `Ampułka ${info.ampouleNumber}: wykorzystana`,
+      title: `Ampułka ${info.ampouleNumber} została wykorzystana`,
+      text: `Zapisano ${info.completedDoseCount} z ${info.targetDoseCount} podań.${pausedText}`,
     };
   }
   if (info.todayStartsNewAmpoule) {
     return {
       level: 'ok',
-      short: `Ampułka ${info.ampouleNumber}: rozpoczęta dzisiaj`,
+      short: `Ampułka ${info.ampouleNumber}: ${info.completedDoseCount} z ${info.targetDoseCount}`,
       title: `Ampułka ${info.ampouleNumber}: nowa ampułka`,
-      text: `Ta ampułka zaczyna się dzisiaj. Po dzisiejszej dawce zostanie około ${formatMl(info.remainingAfterToday)} ml.`,
+      text: `Pozostało ${info.dosesLeft} ${plural(info.dosesLeft, 'podanie', 'podania', 'podań')}.`,
     };
   }
-  const pausedText = info.pausedCount ? ` Odłożonych ampułek: ${info.pausedCount}.` : '';
   return {
     level: 'ok',
-    short: `Ampułka ${info.ampouleNumber}: zostanie ${formatMl(info.remainingAfterToday)} ml`,
+    short: `Ampułka ${info.ampouleNumber}: ${info.completedDoseCount} z ${info.targetDoseCount}`,
     title: `Ampułka ${info.ampouleNumber}`,
-    text: `Start tej ampułki: ${formatDateShort(info.ampouleStartDate)}. Po dzisiejszej dawce zostanie około ${formatMl(info.remainingAfterToday)} ml, czyli około ${info.approximateDosesLeftAfterToday} kolejnych pełnych podań.${pausedText}`,
+    text: `Pozostało ${info.dosesLeft} ${plural(info.dosesLeft, 'podanie', 'podania', 'podań')}.`,
   };
 }
 
 function getConfiguredAmpouleDoseMl() {
-  if (data.settings.unit === 'ml') return decimalToNumber(data.settings.defaultDose);
-  return decimalToNumber(data.settings.ampouleDoseMl);
+  const configured =
+    data.settings.unit === 'ml'
+      ? decimalToNumber(data.settings.defaultDose)
+      : decimalToNumber(data.settings.ampouleDoseMl);
+  if (configured) return configured;
+  const volume = decimalToNumber(data.settings.ampouleVolumeMl);
+  const count = normalizeAmpouleDoseCount(data.settings.ampouleDoseCount);
+  return volume && count ? volume / count : 0;
 }
 
 function getEntryAmpouleDoseMl(entry, fallbackDoseMl) {
@@ -6084,6 +6335,7 @@ function buildAmpouleTimeline({ includePlannedToday = false, plannedToday = null
     .forEach((ampoule) => {
       const volumeMl = decimalToNumber(ampoule.volumeMl);
       const doseMl = decimalToNumber(ampoule.doseMl);
+      const targetDoseCount = normalizeAmpouleDoseCount(ampoule.targetDoseCount);
       let remainingMl = volumeMl;
       let givenCount = 0;
       const ampouleEntries = getEntriesForAmpoule(ampoule.id);
@@ -6111,8 +6363,7 @@ function buildAmpouleTimeline({ includePlannedToday = false, plannedToday = null
             : remainingBefore;
           const startsNewAmpoule = isGiven && givenCount === 0;
           const doseNumber = isGiven ? givenCount + 1 : 0;
-          const isLastDose =
-            isGiven && entryDoseMl > 0 && entryDoseMl >= remainingBefore - 0.000001;
+          const isLastDose = isGiven && doseNumber >= targetDoseCount;
           if (isGiven) givenCount += 1;
           rows.push({
             entry,
@@ -6313,7 +6564,7 @@ function normalizeProfileScope(scope) {
   return available.some((profile) => profile.id === scope) ? scope : data.activeProfileId;
 }
 
-function populateProfileScopeSelect(select, scope, allLabel = 'Wszystkie dzieci') {
+function populateProfileScopeSelect(select, scope, allLabel = 'Wszystkie profile') {
   const normalized = normalizeProfileScope(scope);
   if (!select) return normalized;
   const profiles = getAvailableProfiles();
@@ -6365,7 +6616,7 @@ function groupScopedEntriesByDate(records) {
 
 function profileScopeDescription(scope, count) {
   const profiles = getProfilesForScope(scope);
-  const label = scope === 'all' ? 'Wszystkie dzieci' : profiles[0]?.name || getActiveProfile().name;
+  const label = scope === 'all' ? 'Wszystkie profile' : profiles[0]?.name || getActiveProfile().name;
   return `${label} · ${count} ${plural(count, 'wpis', 'wpisy', 'wpisów')}`;
 }
 
@@ -6569,6 +6820,7 @@ function saveAmpouleSettings() {
   const ampouleVolume =
     normalizePositiveDecimal(el['ampoule-volume'].value) || DEFAULT_AMPOULE_VOLUME_ML;
   const ampouleDoseMl = normalizeOptionalPositiveDecimal(el['ampoule-dose-ml'].value);
+  const ampouleDoseCount = normalizeAmpouleDoseCount(el['ampoule-dose-count'].value);
   const ampouleStartDate = el['ampoule-start-date'].value;
   const ampouleMaxOpenDays = normalizeOptionalDayLimit(el['ampoule-max-open-days'].value);
   if (ampouleStartDate && !isValidIsoDate(ampouleStartDate)) {
@@ -6588,6 +6840,7 @@ function saveAmpouleSettings() {
   data.settings.ampouleStartNumber = ampouleStartNumber;
   data.settings.ampouleVolumeMl = ampouleVolume;
   data.settings.ampouleDoseMl = ampouleDoseMl;
+  data.settings.ampouleDoseCount = ampouleDoseCount;
   data.settings.ampouleMaxOpenDays = ampouleMaxOpenDays;
 
   const configuredDoseMl = getConfiguredAmpouleDoseMl();
@@ -6597,6 +6850,7 @@ function saveAmpouleSettings() {
     active.startDate = ampouleStartDate || active.startDate;
     active.volumeMl = ampouleVolume;
     active.doseMl = normalizePositiveDecimal(configuredDoseMl);
+    active.targetDoseCount = ampouleDoseCount;
     active.updatedAt = new Date().toISOString();
   } else if (!data.ampoules.length && ampouleStartDate && configuredDoseMl) {
     const ampoule = createAmpouleRecord({
@@ -6604,6 +6858,7 @@ function saveAmpouleSettings() {
       startDate: ampouleStartDate,
       volumeMl: ampouleVolume,
       doseMl: configuredDoseMl,
+      targetDoseCount: ampouleDoseCount,
       status: 'active',
     });
     data.ampoules.push(ampoule);
@@ -6650,7 +6905,7 @@ async function saveReminderSettings() {
   const diagnostics = await refreshReminderDiagnostics();
   if (enabled && (!syncResult?.scheduled || !diagnostics?.scheduledProfiles)) {
     showToast(
-      'Ustawienia zapisano, ale system nie potwierdził zaplanowania alarmu. Sprawdź diagnostykę.',
+      'Ustawienia zapisano, ale system nie potwierdził przypomnienia. Sprawdź jego stan poniżej.',
       'error'
     );
     return;
@@ -6718,6 +6973,7 @@ function openExportReportPanel(trigger = null) {
 
 function openBackupPanel() {
   clearPendingImportPreview();
+  resetBackupEncryptionChoice();
   renderAutomaticBackupState();
   openDataDialog(el['backup-dialog'], el['backup-panel-button']);
   window.setTimeout(() => el['export-json-button']?.focus(), 30);
@@ -6793,7 +7049,7 @@ function renderReportConfiguration() {
   reportProfileScope = populateProfileScopeSelect(
     el['report-profile-filter'],
     reportProfileScope,
-    'Wszystkie dzieci'
+    'Wszystkie profile'
   );
   if (el['report-include-ampoules'].checked === undefined)
     el['report-include-ampoules'].checked = true;
@@ -6844,7 +7100,7 @@ function getReportConfiguration({ notify = true } = {}) {
     });
   }
   const scopeLabel =
-    scope === 'all' ? 'Wszystkie dzieci' : profiles[0]?.name || getActiveProfile().name;
+    scope === 'all' ? 'Wszystkie profile' : profiles[0]?.name || getActiveProfile().name;
   const periodText =
     from || to
       ? `${from ? formatDateShort(from) : 'początek'} – ${to ? formatDateShort(to) : 'dzisiaj'}`
@@ -6860,7 +7116,7 @@ function getReportPeriodText(entries) {
 
 function getReportColumns(config) {
   const columns = [];
-  if (config.profiles.length > 1) columns.push({ key: 'profile', label: 'Dziecko', weight: 125 });
+  if (config.profiles.length > 1) columns.push({ key: 'profile', label: 'Profil', weight: 125 });
   columns.push(
     { key: 'date', label: 'Data podania', weight: 120 },
     { key: 'time', label: 'Godzina', weight: 80 },
@@ -6894,12 +7150,12 @@ function getReportRecordValue(record, key) {
 }
 
 function getReportFilenameScope(config) {
-  return config.scope === 'all' ? 'wszystkie-dzieci' : safeFilenamePart(config.scopeLabel);
+  return config.scope === 'all' ? 'wszystkie-profile' : safeFilenamePart(config.scopeLabel);
 }
 
 function getReportFourthSummary(config) {
   if (config.profiles.length > 1)
-    return { number: String(config.profiles.length), text: 'dzieci w raporcie' };
+    return { number: String(config.profiles.length), text: 'profile w raporcie' };
   if (!config.includeAmpoules)
     return { number: String(config.profiles.length), text: 'profil w raporcie' };
   return withProfileContext(config.profiles[0].id, () => ampouleReportSummary(getAmpouleInfo()));
@@ -6959,7 +7215,7 @@ function buildDoctorReportProfileHtml(config) {
     <section class="doctor-profile-summary">
       <h2>Dane profilu i leczenia</h2>
       <dl class="doctor-profile-grid">
-        ${definition('Dziecko', profile.name)}
+        ${definition('Profil', profile.name)}
         ${definition('Data urodzenia', medical.birthDate ? formatDateShort(medical.birthDate) : '—')}
         ${definition('Lekarz prowadzący', medical.doctorName)}
         ${definition('Poradnia / placówka', medical.clinicName)}
@@ -7054,6 +7310,16 @@ function reportDocumentHtml(config = getReportConfiguration({ notify: false })) 
         tr:nth-child(even) td { background: #f8fbfd; }
         thead { display: table-header-group; }
         tr { break-inside: avoid; page-break-inside: avoid; }
+        @media screen and (max-width: 760px) {
+          body { padding: 10px; }
+          .report-sheet { padding: 18px 14px; box-shadow: none; }
+          .summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .summary div { min-width: 0; }
+          .doctor-profile-grid, .doctor-detail-columns { grid-template-columns: 1fr; }
+          .doctor-profile-grid div { grid-template-columns: 110px minmax(0, 1fr); }
+          table { font-size: 9px; }
+          th, td { padding: 5px 4px; }
+        }
         @media print { html, body { background: #fff; } body { padding: 0; } .report-sheet { max-width: none; margin: 0; padding: 0; box-shadow: none; } .doctor-detail-columns section { break-inside: avoid; } }
       </style></head><body><main class="report-sheet">${buildReportBodyForConfig(config)}</main></body></html>`;
 }
@@ -7582,13 +7848,24 @@ async function exportActiveProfileJson() {
 
 async function exportBackupScope(scope = 'all') {
   try {
+    const usePassword = Boolean(el['backup-encryption-toggle']?.checked);
     const activeProfile = getActiveProfile();
     const payload = createBackupPayload(scope, activeProfile.id);
+    let exportedPayload = payload;
+    let extension = 'json';
+    if (usePassword) {
+      const password = String(el['backup-password']?.value || '');
+      const confirmation = String(el['backup-password-confirm']?.value || '');
+      validateBackupPassword(password);
+      if (password !== confirmation) throw new Error('Wpisane hasła nie są takie same.');
+      exportedPayload = await encryptBackupPayload(payload, password);
+      extension = 'ghbackup';
+    }
     const filename =
       scope === 'profile'
-        ? `dzienniczek-profil-${safeFilenamePart(activeProfile.name)}-${localDateISO()}.json`
-        : `dzienniczek-kopia-${localDateISO()}.json`;
-    await downloadFile(filename, JSON.stringify(payload, null, 2), 'application/json');
+        ? `dzienniczek-profil-${safeFilenamePart(activeProfile.name)}-${localDateISO()}.${extension}`
+        : `dzienniczek-kopia-${localDateISO()}.${extension}`;
+    await downloadFile(filename, JSON.stringify(exportedPayload, null, 2), 'application/json');
     await flushSecureStorageWrites();
     try {
       localStorage.setItem(BACKUP_REMINDER_KEY, String(Date.now()));
@@ -7597,14 +7874,30 @@ async function exportBackupScope(scope = 'all') {
     }
     showToast(
       scope === 'profile'
-        ? `Pobrano kopię profilu „${activeProfile.name}”.`
-        : 'Pobrano kopię wszystkich profili.',
+        ? `Pobrano ${usePassword ? 'zaszyfrowaną ' : ''}kopię profilu „${activeProfile.name}”.`
+        : `Pobrano ${usePassword ? 'zaszyfrowaną ' : ''}kopię wszystkich profili.`,
       'success'
     );
+    resetBackupEncryptionChoice();
   } catch (error) {
     console.error(error);
     showToast(error.message || 'Nie udało się utworzyć kopii zapasowej.', 'error', 7000);
   }
+}
+
+function updateBackupEncryptionFields() {
+  const enabled = Boolean(el['backup-encryption-toggle']?.checked);
+  if (el['backup-password-fields']) el['backup-password-fields'].hidden = !enabled;
+  el['backup-encryption-toggle']?.setAttribute('aria-expanded', enabled ? 'true' : 'false');
+  if (!enabled) {
+    if (el['backup-password']) el['backup-password'].value = '';
+    if (el['backup-password-confirm']) el['backup-password-confirm'].value = '';
+  }
+}
+
+function resetBackupEncryptionChoice() {
+  if (el['backup-encryption-toggle']) el['backup-encryption-toggle'].checked = false;
+  updateBackupEncryptionFields();
 }
 
 function createBackupPayload(scope = 'all', profileId = data.activeProfileId, extra = {}) {
@@ -7830,7 +8123,7 @@ function inspectImportedData(imported) {
     entryCount += unique.entries.length;
     entryDates.push(...unique.entries.map((entry) => entry.date));
     if (profile.archivedAt) archivedProfileCount += 1;
-    profileNames.push(sanitizeProfileName(profile.name) || `Dziecko ${index + 1}`);
+    profileNames.push(sanitizeProfileName(profile.name) || `Profil ${index + 1}`);
   });
 
   entryDates.sort();
@@ -7903,10 +8196,10 @@ async function importJson(event) {
     let parsed = envelopeOrBackup;
     if (encrypted) {
       const password = window.prompt(
-        'To starsza, zaszyfrowana kopia .ghbackup. Podaj hasło użyte przy jej tworzeniu:'
+        'Ta kopia jest zabezpieczona. Podaj hasło użyte przy jej tworzeniu:'
       );
       if (password === null) throw new Error('Anulowano odczyt zaszyfrowanej kopii.');
-      if (!password) throw new Error('Nie podano hasła do starszej zaszyfrowanej kopii.');
+      if (!password) throw new Error('Nie podano hasła do zabezpieczonej kopii.');
       parsed = await decryptBackupEnvelope(envelopeOrBackup, password);
     }
     assertSafeJsonValue(parsed);
@@ -7947,13 +8240,13 @@ function renderImportPreview() {
       <strong>${escapeHtml(preview.filename)}</strong>
       <span>${summary.profileCount} ${plural(summary.profileCount, 'profil', 'profile', 'profili')} · ${summary.entryCount} ${plural(summary.entryCount, 'wpis', 'wpisy', 'wpisów')} · ${summary.ampouleCount} ${plural(summary.ampouleCount, 'ampułka', 'ampułki', 'ampułek')}</span>
       <span>Zakres historii: ${escapeHtml(dates)}</span>
-      <span>${preview.legacy ? 'Starszy format — zostanie bezpiecznie zmigrowany.' : `Format kopii ${preview.backupFormatVersion}, schemat danych ${preview.sourceDataVersion || 'nieznany'}.`}</span>`;
+      <span>${preview.legacy ? 'Kopia ze starszej wersji zostanie automatycznie dostosowana.' : 'Kopia jest zgodna z tą wersją aplikacji.'}</span>`;
   el['import-preview-profiles'].innerHTML = summary.profileNames
     .map((name) => `<li>${escapeHtml(name)}</li>`)
     .join('');
   el['import-preview-warning'].textContent = preview.encrypted
-    ? `${modeLabel} To starsza kopia .ghbackup, odszyfrowana podanym hasłem.`
-    : `${modeLabel} To kopia JSON bez hasła.`;
+    ? `${modeLabel} Kopia została poprawnie odblokowana.`
+    : `${modeLabel} Kopia nie jest zabezpieczona hasłem.`;
   el['import-confirm-button'].textContent =
     preview.mode === 'add-profile' ? 'Dodaj profil' : 'Zastąp wszystkie dane';
   container.hidden = false;
@@ -8031,7 +8324,7 @@ function createUniqueImportedProfile(profile) {
   clone.updatedAt = new Date().toISOString();
 
   const usedNames = new Set(data.profiles.map((item) => normalizeText(item.name)));
-  const baseName = sanitizeProfileName(clone.name) || 'Zaimportowane dziecko';
+  const baseName = sanitizeProfileName(clone.name) || 'Zaimportowany profil';
   let name = baseName;
   let nameSuffix = 2;
   while (usedNames.has(normalizeText(name))) name = `${baseName} (import ${nameSuffix++})`;
@@ -8083,7 +8376,7 @@ function applyInspectedImport(preview, { createSafetyBackup = true } = {}) {
       preview.mode === 'add-profile'
         ? `Dodano profil „${getActiveProfile().name}”.`
         : preview.normalized.migratedFromLegacy
-          ? 'Stara kopia została zaimportowana i przypisana do profilu „Dziecko 1”.'
+          ? 'Stara kopia została zaimportowana i przypisana do profilu „Profil 1”.'
           : 'Pełna kopia wszystkich profili została przywrócona.',
       'success',
       6500
@@ -8135,7 +8428,183 @@ function restoreAutomaticImportBackup() {
 
 function closeBackupPanel() {
   clearPendingImportPreview();
+  resetBackupEncryptionChoice();
   closeDataDialog(el['backup-dialog']);
+}
+let setupWizardStep = 0;
+let setupImportInspection = null;
+
+function isSetupCompleted() {
+  return Boolean(data.meta.setupCompleted);
+}
+
+function maybeShowFirstRunSetup() {
+  if (isSetupCompleted()) return false;
+  window.setTimeout(openSetupWizard, 120);
+  return true;
+}
+
+function openSetupWizard() {
+  setupWizardStep = 0;
+  renderSetupWizardStep();
+  if (!el['setup-dialog'].open) el['setup-dialog'].showModal();
+}
+
+function bindSetupWizardEvents() {
+  el['setup-new-button'].addEventListener('click', () => setSetupWizardStep(1));
+  el['setup-import-button'].addEventListener('click', () => el['setup-import-file'].click());
+  el['setup-import-file'].addEventListener('change', inspectSetupImportFile);
+  el['setup-import-confirm'].addEventListener('click', confirmSetupImport);
+  el['setup-back-button'].addEventListener('click', () => setSetupWizardStep(setupWizardStep - 1));
+  el['setup-next-button'].addEventListener('click', advanceSetupWizard);
+  el['setup-form'].addEventListener('submit', finishSetupWizard);
+  el['setup-dialog'].addEventListener('cancel', (event) => event.preventDefault());
+}
+
+function setSetupWizardStep(step) {
+  setupWizardStep = Math.max(0, Math.min(3, Number(step) || 0));
+  renderSetupWizardStep();
+}
+
+function renderSetupWizardStep() {
+  document.querySelectorAll('[data-setup-step]').forEach((panel) => {
+    const active = Number(panel.dataset.setupStep) === setupWizardStep;
+    panel.hidden = !active;
+    panel.classList.toggle('is-active', active);
+  });
+  const inConfiguration = setupWizardStep > 0;
+  el['setup-actions'].hidden = !inConfiguration;
+  el['setup-step-label'].textContent = `Krok ${setupWizardStep + 1} z 4`;
+  el['setup-progress-fill'].style.width = `${((setupWizardStep + 1) / 4) * 100}%`;
+  el['setup-back-button'].hidden = setupWizardStep <= 1;
+  el['setup-next-button'].hidden = setupWizardStep === 3;
+  el['setup-finish-button'].hidden = setupWizardStep !== 3;
+  window.setTimeout(() => {
+    document
+      .querySelector(`[data-setup-step="${setupWizardStep}"] input:not(.sr-only), [data-setup-step="${setupWizardStep}"] button`)
+      ?.focus({ preventScroll: true });
+  }, 30);
+}
+
+function validateCurrentSetupStep() {
+  if (setupWizardStep === 1) {
+    const name = sanitizeProfileName(el['setup-profile-name'].value);
+    if (!name) {
+      showToast('Podaj nazwę profilu.', 'error');
+      el['setup-profile-name'].focus();
+      return false;
+    }
+  }
+  if (setupWizardStep === 2) {
+    if (!normalizeDose(el['setup-dose'].value)) {
+      showToast('Podaj prawidłową dawkę.', 'error');
+      el['setup-dose'].focus();
+      return false;
+    }
+    if (!isValidTime(el['setup-time'].value)) {
+      showToast('Podaj prawidłową godzinę podania.', 'error');
+      return false;
+    }
+  }
+  return true;
+}
+
+function advanceSetupWizard() {
+  if (!validateCurrentSetupStep()) return;
+  setSetupWizardStep(setupWizardStep + 1);
+}
+
+async function inspectSetupImportFile(event) {
+  const file = event.target.files?.[0];
+  event.target.value = '';
+  if (!file) return;
+  try {
+    if (file.size > MAX_BACKUP_FILE_SIZE * 2) throw new Error('Plik przekracza limit 20 MB.');
+    let parsed = JSON.parse(await file.text());
+    assertSafeJsonValue(parsed);
+    const encrypted = isEncryptedBackupEnvelope(parsed);
+    if (encrypted) {
+      const password = window.prompt('Podaj hasło do zabezpieczonej kopii:');
+      if (!password) throw new Error('Nie podano hasła do kopii.');
+      parsed = await decryptBackupEnvelope(parsed, password);
+    }
+    setupImportInspection = {
+      ...inspectBackupPayload(parsed),
+      filename: file.name || 'kopia.json',
+      encrypted,
+    };
+    const summary = setupImportInspection.summary;
+    el['setup-import-name'].textContent = setupImportInspection.filename;
+    el['setup-import-summary'].textContent = `${summary.profileCount} ${plural(summary.profileCount, 'profil', 'profile', 'profili')} · ${summary.entryCount} ${plural(summary.entryCount, 'wpis', 'wpisy', 'wpisów')}`;
+    el['setup-import-preview'].hidden = false;
+  } catch (error) {
+    setupImportInspection = null;
+    el['setup-import-preview'].hidden = true;
+    showToast(`Nie udało się odczytać kopii. ${error.message || ''}`.trim(), 'error', 7000);
+  }
+}
+
+function confirmSetupImport() {
+  if (!setupImportInspection) return;
+  setupImportInspection.mode = 'replace-all';
+  if (!applyInspectedImport(setupImportInspection)) return;
+  data.meta.setupCompleted = true;
+  data.meta.onboardingCompleted = true;
+  if (!persistData()) return;
+  setupImportInspection = null;
+  el['setup-dialog'].close();
+  renderAll();
+  showToast('Dane i historia zostały przeniesione. Wszystko jest gotowe.', 'success', 6500);
+  maybeShowFirstRunPermissions();
+}
+
+function finishSetupWizard(event) {
+  event.preventDefault();
+  const name = sanitizeProfileName(el['setup-profile-name'].value);
+  const dose = normalizeDose(el['setup-dose'].value);
+  const unit = ALLOWED_UNITS.has(el['setup-unit'].value) ? el['setup-unit'].value : 'mg';
+  const time = isValidTime(el['setup-time'].value) ? el['setup-time'].value : '20:00';
+  const count = normalizeAmpouleDoseCount(el['setup-dose-count'].value, 0);
+  const reminderTime = isValidTime(el['setup-reminder-time'].value)
+    ? el['setup-reminder-time'].value
+    : '21:00';
+  if (!name || !dose || !count) {
+    showToast('Uzupełnij wymagane ustawienia.', 'error');
+    return;
+  }
+
+  const profile = getActiveProfile();
+  profile.name = name;
+  profile.icon = el['setup-type-child'].checked ? '🧒' : '🙂';
+  profile.settings.defaultDose = dose;
+  profile.settings.unit = unit;
+  profile.settings.defaultTime = time;
+  profile.settings.ampouleStartDate = localDateISO();
+  profile.settings.ampouleDoseCount = count;
+  profile.settings.reminderEnabled = el['setup-reminder-enabled'].checked;
+  profile.settings.reminderTime = reminderTime;
+  const volumeMl = decimalToNumber(profile.settings.ampouleVolumeMl) || 10;
+  const doseMl = decimalToNumber(profile.settings.ampouleDoseMl) || volumeMl / count;
+  const ampoule = createAmpouleRecord({
+    number: profile.settings.ampouleStartNumber,
+    startDate: localDateISO(),
+    volumeMl,
+    doseMl,
+    targetDoseCount: count,
+    status: 'active',
+  });
+  profile.ampoules = [ampoule];
+  profile.activeAmpouleId = ampoule.id;
+  data.appSettings.appearance.theme = 'elegant';
+  data.meta.setupCompleted = true;
+  if (!persistData()) return;
+  applyThemePreference('elegant');
+  resetQuickDraftForToday();
+  el['setup-dialog'].close();
+  renderAll();
+  scheduleDailyReminder();
+  showToast('Dzienniczek jest gotowy. Możesz zapisać pierwsze podanie.', 'success', 6500);
+  maybeShowFirstRunPermissions();
 }
 
 function exportCsv() {
@@ -8229,6 +8698,7 @@ function markPermissionsOnboardingCompleted() {
 }
 
 function maybeShowFirstRunPermissions() {
+  if (!isSetupCompleted()) return;
   if (isPermissionsOnboardingCompleted()) return;
   window.setTimeout(() => {
     openPermissionsDialog().catch((error) => {
@@ -8962,7 +9432,56 @@ async function registerPeriodicReminder() {
     console.info('Okresowa praca w tle nie została przyznana:', error);
   }
 }
+function setVoiceListeningState(listening) {
+  isListening = listening;
+  el['voice-button'].classList.toggle('is-listening', listening);
+  el['voice-button'].setAttribute('aria-pressed', listening ? 'true' : 'false');
+  el['voice-button'].querySelector('.voice-button-label').textContent = listening
+    ? 'Słucham…'
+    : 'Naciśnij i mów';
+}
+
 function configureSpeechRecognition() {
+  const nativeAndroid =
+    window.NativeBridge?.platform === 'android' &&
+    typeof window.NativeBridge.startVoiceRecognition === 'function';
+  if (nativeAndroid) {
+    recognition = {
+      isNative: true,
+      async start() {
+        setVoiceListeningState(true);
+        try {
+          const result = await window.NativeBridge.startVoiceRecognition();
+          setVoiceListeningState(false);
+          if (result.success && result.transcript) {
+            processVoiceCommand(result.transcript);
+          } else if (result.state === 'no_speech') {
+            showToast('Nie rozpoznano mowy. Spróbuj ponownie.', 'error');
+          } else if (['permission_denied', 'permission_required'].includes(result.state)) {
+            showToast(
+              'Zezwól aplikacji na dostęp do mikrofonu. Zgodę możesz też włączyć w Więcej → Informacje.',
+              'error'
+            );
+          } else if (result.state === 'network') {
+            showToast('Systemowe rozpoznawanie mowy nie ma teraz połączenia.', 'error');
+          } else if (!['cancelled', 'timeout'].includes(result.state)) {
+            showToast('Rozpoznawanie głosu jest niedostępne na tym urządzeniu.', 'error');
+          }
+        } catch (error) {
+          setVoiceListeningState(false);
+          console.warn(error);
+          showToast('Nie udało się rozpoznać polecenia.', 'error');
+        }
+      },
+      stop() {
+        window.NativeBridge.stopVoiceRecognition?.();
+        setVoiceListeningState(false);
+      },
+    };
+    setVoiceReadyState();
+    return;
+  }
+
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
     setVoiceUnavailableState();
@@ -8977,18 +9496,12 @@ function configureSpeechRecognition() {
   recognition.maxAlternatives = 3;
 
   recognition.addEventListener('start', () => {
-    isListening = true;
-    el['voice-button'].classList.add('is-listening');
-    el['voice-button'].setAttribute('aria-pressed', 'true');
-    el['voice-button'].querySelector('.voice-button-label').textContent = 'Słucham…';
+    setVoiceListeningState(true);
     announce('Rozpoznawanie głosu uruchomione.');
   });
 
   recognition.addEventListener('end', () => {
-    isListening = false;
-    el['voice-button'].classList.remove('is-listening');
-    el['voice-button'].setAttribute('aria-pressed', 'false');
-    el['voice-button'].querySelector('.voice-button-label').textContent = 'Powiedz miejsce';
+    setVoiceListeningState(false);
   });
 
   recognition.addEventListener('result', (event) => {
@@ -9010,26 +9523,20 @@ function configureSpeechRecognition() {
 function setVoiceUnavailableState() {
   el['voice-button'].disabled = true;
   el['voice-button'].classList.add('is-unavailable');
-  el['voice-button'].querySelector('.voice-button-label').textContent = 'Brak obsługi głosu';
-  el['voice-help'].textContent =
-    'Ta przeglądarka nie obsługuje rozpoznawania mowy. Wybierz miejsce wkłucia przyciskiem „Miejsce”.';
+  el['voice-button'].querySelector('.voice-button-label').textContent = 'Niedostępne';
+  el['voice-help'].textContent = 'Polecenia głosowe są niedostępne na tym urządzeniu.';
 }
 
 function setVoiceReadyState() {
   el['voice-button'].disabled = false;
   el['voice-button'].classList.remove('is-unavailable');
-  el['voice-button'].querySelector('.voice-button-label').textContent = 'Powiedz miejsce';
-  el['voice-help'].textContent =
-    'Np. „Kasia lewe udo”, „pomiń dawkę Tomkowi”, „zapisz Kasi” albo „historia Tomka”.';
+  el['voice-button'].querySelector('.voice-button-label').textContent = 'Naciśnij i mów';
+  el['voice-help'].textContent = 'Podanie, pominięcie lub zmiana ampułki.';
 }
 
 function toggleVoiceRecognition() {
   if (!recognition) {
-    showToast(
-      'Ta przeglądarka nie udostępnia rozpoznawania mowy. Wybierz miejsce ręcznie.',
-      'error'
-    );
-    openPlacePicker();
+    showToast('Rozpoznawanie głosu jest niedostępne na tym urządzeniu.', 'error');
     return;
   }
   if (isListening) {
@@ -9037,7 +9544,8 @@ function toggleVoiceRecognition() {
     return;
   }
   try {
-    recognition.start();
+    const started = recognition.start();
+    if (started?.catch) started.catch((error) => console.warn(error));
   } catch (error) {
     console.warn(error);
   }
@@ -9045,6 +9553,206 @@ function toggleVoiceRecognition() {
 
 function stopVoiceRecognition() {
   if (recognition && isListening) recognition.stop();
+}
+
+const VOICE_NUMBER_VALUES = Object.freeze({
+  zero: 0,
+  jeden: 1,
+  jedna: 1,
+  jedno: 1,
+  pierwszy: 1,
+  pierwsza: 1,
+  pierwszej: 1,
+  dwa: 2,
+  dwie: 2,
+  drugi: 2,
+  druga: 2,
+  drugiej: 2,
+  trzy: 3,
+  trzeci: 3,
+  trzecia: 3,
+  trzeciej: 3,
+  cztery: 4,
+  czwarty: 4,
+  czwarta: 4,
+  czwartej: 4,
+  piec: 5,
+  piaty: 5,
+  piata: 5,
+  piatej: 5,
+  szesc: 6,
+  szosty: 6,
+  szosta: 6,
+  szostej: 6,
+  siedem: 7,
+  siodmy: 7,
+  siodma: 7,
+  siodmej: 7,
+  osiem: 8,
+  osmy: 8,
+  osma: 8,
+  osmej: 8,
+  dziewiec: 9,
+  dziewiaty: 9,
+  dziewiata: 9,
+  dziewiatej: 9,
+  dziesiec: 10,
+  dziesiaty: 10,
+  dziesiata: 10,
+  dziesiatej: 10,
+  jedenascie: 11,
+  jedenasty: 11,
+  jedenasta: 11,
+  jedenastej: 11,
+  dwanascie: 12,
+  dwunasty: 12,
+  dwunasta: 12,
+  dwunastej: 12,
+  trzynascie: 13,
+  trzynasty: 13,
+  trzynasta: 13,
+  trzynastej: 13,
+  czternascie: 14,
+  czternasty: 14,
+  czternasta: 14,
+  czternastej: 14,
+  pietnascie: 15,
+  pietnasty: 15,
+  pietnasta: 15,
+  pietnastej: 15,
+  szesnascie: 16,
+  szesnasty: 16,
+  szesnasta: 16,
+  szesnastej: 16,
+  siedemnascie: 17,
+  siedemnasty: 17,
+  siedemnasta: 17,
+  siedemnastej: 17,
+  osiemnascie: 18,
+  osiemnasty: 18,
+  osiemnasta: 18,
+  osiemnastej: 18,
+  dziewietnascie: 19,
+  dziewietnasty: 19,
+  dziewietnasta: 19,
+  dziewietnastej: 19,
+  dwadziescia: 20,
+  dwudziesty: 20,
+  dwudziesta: 20,
+  dwudziestej: 20,
+  trzydziesci: 30,
+  trzydziesty: 30,
+  trzydziesta: 30,
+  trzydziestej: 30,
+  czterdziesci: 40,
+  czterdziesty: 40,
+  czterdziesta: 40,
+  czterdziestej: 40,
+  piecdziesiat: 50,
+  piecdziesiaty: 50,
+  piecdziesiata: 50,
+  piecdziesiatej: 50,
+  szescdziesiat: 60,
+  siedemdziesiat: 70,
+  osiemdziesiat: 80,
+  dziewiecdziesiat: 90,
+  sto: 100,
+  setny: 100,
+  setna: 100,
+});
+
+function parseSpokenNumber(value) {
+  const text = normalizeText(value);
+  const numeric = text.match(/\b\d{1,3}\b/);
+  if (numeric) return Number(numeric[0]);
+  let total = 0;
+  let found = false;
+  text.split(/\s+/).forEach((token) => {
+    if (!Object.hasOwn(VOICE_NUMBER_VALUES, token)) return;
+    total += VOICE_NUMBER_VALUES[token];
+    found = true;
+  });
+  return found ? total : null;
+}
+
+function parseVoiceAmpouleCommand(normalized) {
+  const text = normalizeText(normalized);
+  if (!/\bampul\w*/.test(text)) return null;
+  const pause = /\b(?:odloz\w*|odklad\w*|zostaw\w*|wstrzymaj\w*|przerwij\w*)\b/.test(
+    text
+  );
+  const resume =
+    /\b(?:wroc\w*|wrac\w*|wznow\w*|wznaw\w*|kontynu\w*|przelacz\w*)\b/.test(text);
+  if (!pause && !resume) return null;
+  return { action: pause ? 'pause' : 'resume', number: parseSpokenNumber(text) };
+}
+
+function executeVoiceAmpouleCommand(command) {
+  if (!command) return false;
+  const number = Number(command.number) || null;
+  const matching = number
+    ? data.ampoules.find((ampoule) => Number(ampoule.number) === number) || null
+    : null;
+
+  if (command.action === 'pause') {
+    const active = getActiveAmpoule();
+    if (!active) {
+      showToast('Nie ma aktywnej ampułki do odłożenia.', 'error');
+      return true;
+    }
+    if (number && Number(active.number) !== number) {
+      showToast(`Aktywna jest ampułka ${active.number}.`, 'error');
+      return true;
+    }
+    if (pauseAmpoule(active.id)) speakIfEnabled(`Odłożono ampułkę ${active.number}.`);
+    return true;
+  }
+
+  let target = matching;
+  if (!target && !number) {
+    const paused = getOpenPausedAmpoules();
+    if (paused.length === 1) target = paused[0];
+  }
+  if (!target) {
+    showToast(number ? `Nie znaleziono ampułki ${number}.` : 'Powiedz numer ampułki.', 'error');
+    return true;
+  }
+  if (target.id === data.activeAmpouleId) {
+    showToast(`Ampułka ${target.number} jest już aktywna.`, 'success');
+    return true;
+  }
+  if (getAmpouleRemainingDoseCount(target.id) <= 0) {
+    showToast(`Ampułka ${target.number} jest już wykorzystana.`, 'error');
+    return true;
+  }
+  resumeAmpoule(target.id);
+  speakIfEnabled(`Wznowiono ampułkę ${target.number}.`);
+  return true;
+}
+
+function handleVoicePlaceQuestion(normalized) {
+  const text = normalizeText(normalized);
+  const asksForPlace =
+    /\b(?:gdzie|w co|jakie miejsce|ktore miejsce|z ktorej strony)\b/.test(text) &&
+    /\b(?:zastrzyk\w*|wkluc\w*|naklu\w*|podac\w*|podam\w*|wstrzyk\w*)\b/.test(text);
+  if (!asksForPlace) return false;
+
+  const date = parseDateFromSpeech(text) || localDateISO();
+  const existing = getEntryForDate(date);
+  let message;
+  if (existing?.status === 'given') {
+    message = `${formatDateSpeech(date)}: ${formatPlace(existing.side, existing.site)}.`;
+  } else if (existing?.status === 'skipped') {
+    message = `${formatDateSpeech(date)}: podanie pominięte.`;
+  } else {
+    const suggestion = getSuggestedPlace(parseISODate(date));
+    message = suggestion.side && suggestion.site
+      ? `${formatDateSpeech(date)}: proponowane miejsce to ${formatPlace(suggestion.side, suggestion.site)}.`
+      : 'Nie ma aktywnego miejsca wkłucia.';
+  }
+  showToast(capitalize(message), existing?.status === 'skipped' ? 'error' : 'success');
+  speakIfEnabled(capitalize(message));
+  return true;
 }
 
 function voiceProfileVariants(word) {
@@ -9152,17 +9860,17 @@ function processVoiceCommand(transcript) {
 
   if (profileMatch.ambiguous) {
     showToast(
-      'Nie wiadomo, którego dziecka dotyczy polecenie. Powiedz pełną nazwę profilu.',
+      'Nie wiadomo, którego profilu dotyczy polecenie. Powiedz pełną nazwę profilu.',
       'error'
     );
-    speakIfEnabled('Powiedz pełną nazwę dziecka.');
+    speakIfEnabled('Powiedz pełną nazwę profilu.');
     return;
   }
 
   let normalized = profileMatch.command || originalNormalized;
   const targetProfile = profileMatch.profile;
   if (targetProfile && !activateVoiceProfile(targetProfile)) {
-    showToast('Nie udało się przełączyć profilu dziecka.', 'error');
+    showToast('Nie udało się przełączyć profilu.', 'error');
     return;
   }
 
@@ -9181,8 +9889,14 @@ function processVoiceCommand(transcript) {
     return;
   }
 
+  const ampouleCommand = parseVoiceAmpouleCommand(normalized);
+  if (executeVoiceAmpouleCommand(ampouleCommand)) return;
+
+  if (handleVoicePlaceQuestion(normalized)) return;
+
   if (
     /\b(zapisz|potwierdz|tak)\b/.test(normalized) &&
+    !containsInjectionDetails(normalized) &&
     (quickDraft.status === 'skipped' || (quickDraft.side && quickDraft.site))
   ) {
     saveQuickDraft();
@@ -9222,6 +9936,7 @@ function processVoiceCommand(transcript) {
     return;
   }
 
+  const voiceRequestedSave = /\b(?:zapisz|potwierdz)\b/.test(normalized);
   const parsed = parseVoiceEntry(normalized);
   if (!Object.keys(parsed).length) {
     showToast('Nie rozpoznano daty, dawki ani miejsca wkłucia.', 'error');
@@ -9232,6 +9947,11 @@ function processVoiceCommand(transcript) {
   quickDraftTouched = true;
   renderToday();
 
+  if (voiceRequestedSave) {
+    saveQuickDraft();
+    return;
+  }
+
   const profileName = getActiveProfile().name;
   if (quickDraft.status === 'skipped') {
     const message = `Rozpoznano pominięcie dawki dla profilu ${profileName}, ${formatDateSpeech(quickDraft.date)}.`;
@@ -9240,7 +9960,7 @@ function processVoiceCommand(transcript) {
       'success'
     );
     speakIfEnabled(`${message} Powiedz zapisz, aby potwierdzić.`);
-    if (!data.settings.voiceConfirm) saveQuickDraft();
+    if (!data.settings.voiceConfirm && quickDraft.date <= localDateISO()) saveQuickDraft();
     return;
   }
 
@@ -9260,7 +9980,7 @@ function processVoiceCommand(transcript) {
   const message = `${profileName}: rozpoznano ${formatPlace(quickDraft.side, quickDraft.site)}, dawka ${formatDose(quickDraft.dose)} ${quickDraft.unit}, ${formatDateSpeech(quickDraft.date)}.`;
   showToast(`${message} Potwierdź zapis.`, 'success');
   speakIfEnabled(`${message} Powiedz zapisz, aby potwierdzić.`);
-  if (!data.settings.voiceConfirm) saveQuickDraft();
+  if (!data.settings.voiceConfirm && quickDraft.date <= localDateISO()) saveQuickDraft();
 }
 
 function applyVoiceEntryToDraft(parsed) {
@@ -9269,9 +9989,16 @@ function applyVoiceEntryToDraft(parsed) {
     const existing = getEntryForDate(parsed.date);
     base = existing
       ? { ...existing }
-      : createDefaultDraft({ date: parsed.date, time: parsed.time || localTime() });
+      : createDefaultDraft({
+          date: parsed.date,
+          time:
+            parsed.time ||
+            (parsed.date === localDateISO() ? localTime() : data.settings.defaultTime),
+        });
+    quickDraftTimeExplicit = false;
   }
   quickDraft = { ...base, ...parsed };
+  if (parsed.time) quickDraftTimeExplicit = true;
 
   if (parsed.status === 'skipped') {
     quickDraft.dose = '';
@@ -9288,29 +10015,37 @@ function applyVoiceEntryToDraft(parsed) {
   }
 }
 
-function parseVoiceEntry(normalized) {
-  const now = new Date();
+function parseVoiceEntry(normalized, now = new Date()) {
   const result = {};
   const date = parseDateFromSpeech(normalized, now);
   const time = parseTimeFromSpeech(normalized);
   if (date) result.date = date;
   if (time) result.time = time;
 
-  const skipped = /\b(pomin|pomini|nie podano|bez dawki)\w*/.test(normalized);
+  const skipped =
+    /\b(?:pomin\w*|pomij\w*|nie podal\w*|nie podano|nie podaje\w*|nie podam|bez dawki|bez zastrzyku|odpuszcz\w*)\b/.test(
+      normalized
+    );
   if (skipped) result.status = 'skipped';
 
   if (/\blew\w*/.test(normalized)) result.side = 'lewa';
   else if (/\bpraw\w*/.test(normalized)) result.side = 'prawa';
 
-  if (/brzuch|brzusz/.test(normalized)) result.site = 'brzuch';
-  else if (/\budo\b|\buda\b|\bnog\w*/.test(normalized)) result.site = 'udo';
-  else if (/ramie|ramienia/.test(normalized)) result.site = 'ramię';
-  else if (/poslad/.test(normalized)) result.site = 'pośladek';
-  else if (/lopatk/.test(normalized)) result.site = 'łopatka';
+  if (/brzuch\w*|brzusz\w*/.test(normalized)) result.site = 'brzuch';
+  else if (/\bud\w*|\bnog\w*/.test(normalized)) result.site = 'udo';
+  else if (/rami\w*|\brek\w*|\brece\b/.test(normalized)) result.site = 'ramię';
+  else if (/poslad\w*|\bpup\w*/.test(normalized)) result.site = 'pośladek';
+  else if (/lopatk\w*/.test(normalized)) result.site = 'łopatka';
 
   const dose = parseDoseFromSpeech(normalized);
   if (dose) result.dose = dose;
-  if (!skipped && (result.side || result.site || result.dose)) result.status = 'given';
+  const givenVerb =
+    /\b(?:podal\w*|podaje\w*|podam|wstrzykn\w*|wstrzykuj\w*|naklu\w*|wkluw\w*|zrobil\w*|zrobie|zastrzyk)\b/.test(
+      normalized
+    );
+  if (!skipped && (result.side || result.site || result.dose || givenVerb)) {
+    result.status = 'given';
+  }
   return result;
 }
 
@@ -9326,6 +10061,40 @@ function parseDateFromSpeech(text, now = new Date()) {
     return localDateISO(date);
   }
   if (/dzis/.test(text)) return localDateISO(now);
+  if (/popojutrze/.test(text)) {
+    const date = new Date(now);
+    date.setDate(date.getDate() + 3);
+    return localDateISO(date);
+  }
+  if (/pojutrze/.test(text)) {
+    const date = new Date(now);
+    date.setDate(date.getDate() + 2);
+    return localDateISO(date);
+  }
+  if (/jutro/.test(text)) {
+    const date = new Date(now);
+    date.setDate(date.getDate() + 1);
+    return localDateISO(date);
+  }
+
+  const daysAgo = text.match(/\b(.+?)\s+dni?\s+temu\b/);
+  if (daysAgo) {
+    const amount = parseSpokenNumber(daysAgo[1]);
+    if (amount !== null && amount >= 0 && amount <= 366) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - amount);
+      return localDateISO(date);
+    }
+  }
+  const daysAhead = text.match(/\bza\s+(.+?)\s+(?:dni|dzien)\b/);
+  if (daysAhead) {
+    const amount = parseSpokenNumber(daysAhead[1]);
+    if (amount !== null && amount >= 0 && amount <= 366) {
+      const date = new Date(now);
+      date.setDate(date.getDate() + amount);
+      return localDateISO(date);
+    }
+  }
 
   const numeric = text.match(/\b(\d{1,2})[.\-/](\d{1,2})(?:[.\-/](\d{2,4}))?\b/);
   if (numeric) {
@@ -9344,16 +10113,61 @@ function parseDateFromSpeech(text, now = new Date()) {
     const year = words[3] ? Number(words[3]) : now.getFullYear();
     if (isValidDateParts(year, month, day)) return datePartsToISO(year, month, day);
   }
+
+  const weekdays = [
+    { pattern: /niedziel\w*/, day: 0 },
+    { pattern: /poniedzial\w*/, day: 1 },
+    { pattern: /wtork\w*|wtorek/, day: 2 },
+    { pattern: /srod\w*/, day: 3 },
+    { pattern: /czwart\w*/, day: 4 },
+    { pattern: /piat\w*/, day: 5 },
+    { pattern: /sobot\w*/, day: 6 },
+  ];
+  const weekday = weekdays.find((item) => item.pattern.test(text));
+  if (weekday) {
+    let offset = weekday.day - now.getDay();
+    const previous = /\b(?:zeszl\w*|minion\w*|ostatni\w*)\b/.test(text);
+    if (previous) {
+      if (offset >= 0) offset -= 7;
+    } else if (offset <= 0) {
+      offset += 7;
+    }
+    const date = new Date(now);
+    date.setDate(date.getDate() + offset);
+    return localDateISO(date);
+  }
   return '';
 }
 
 function parseTimeFromSpeech(text) {
   const match = text.match(/(?:godzina|godzine|\bo)\s+(\d{1,2})(?:(?::|\s)(\d{2}))?\b/);
-  if (!match) return '';
-  const hour = Number(match[1]);
-  const minute = match[2] ? Number(match[2]) : 0;
-  if (hour > 23 || minute > 59) return '';
-  return `${pad(hour)}:${pad(minute)}`;
+  if (match) {
+    const hour = Number(match[1]);
+    const minute = match[2] ? Number(match[2]) : 0;
+    if (hour <= 23 && minute <= 59) return `${pad(hour)}:${pad(minute)}`;
+  }
+
+  const marker = text.match(/(?:godzina|godzinie|godzine|\bo)\s+/);
+  if (!marker) return '';
+  const tokens = [];
+  for (const token of text
+    .slice((marker.index || 0) + marker[0].length)
+    .split(/\s+/)) {
+    if (!Object.hasOwn(VOICE_NUMBER_VALUES, token)) break;
+    tokens.push(token);
+    if (tokens.length === 3) break;
+  }
+  if (!tokens.length) return '';
+  for (let hourLength = Math.min(2, tokens.length); hourLength >= 1; hourLength -= 1) {
+    const hour = parseSpokenNumber(tokens.slice(0, hourLength).join(' '));
+    const minute = tokens.length > hourLength
+      ? parseSpokenNumber(tokens.slice(hourLength).join(' '))
+      : 0;
+    if (hour !== null && minute !== null && hour <= 23 && minute <= 59) {
+      return `${pad(hour)}:${pad(minute)}`;
+    }
+  }
+  return '';
 }
 
 function parseDoseFromSpeech(text) {
@@ -9365,35 +10179,21 @@ function parseDoseFromSpeech(text) {
   );
   if (!wordMatch) return '';
   const phrase = wordMatch[1].trim();
-  const numberWords = {
-    zero: '0',
-    jeden: '1',
-    jedna: '1',
-    jedno: '1',
-    dwa: '2',
-    dwie: '2',
-    trzy: '3',
-    cztery: '4',
-    piec: '5',
-    szesc: '6',
-    siedem: '7',
-    osiem: '8',
-    dziewiec: '9',
-    dziesiec: '10',
-  };
   const parts = phrase.split(/\s+(?:przecinek|kropka)\s+/);
-  const left = numberWords[parts[0]] ?? '';
-  if (!left) return '';
-  if (parts.length === 1) return `${left},0`;
+  const left = parseSpokenNumber(parts[0]);
+  if (left === null) return '';
+  if (parts.length === 1) return normalizeDose(String(left));
   const rightTokens = parts[1]
     .split(/\s+/)
-    .map((token) => numberWords[token])
-    .filter((token) => token !== undefined);
-  return rightTokens.length ? `${left},${rightTokens.join('')}` : '';
+    .map((token) => VOICE_NUMBER_VALUES[token])
+    .filter((token) => token !== undefined && token >= 0 && token <= 9);
+  return rightTokens.length ? normalizeDose(`${left},${rightTokens.join('')}`) : '';
 }
 
 function containsInjectionDetails(text) {
-  return /brzuch|udo|nog|ramie|poslad|lopatk|dawk|pomin|lew\w*|praw\w*/.test(text);
+  return /brzuch|brzusz|\bud\w*|nog|rami|poslad|pup|lopatk|dawk|pomin|pomij|zastrzyk|naklu|wkluw|wstrzy|lew\w*|praw\w*/.test(
+    text
+  );
 }
 
 function speakIfEnabled(text) {
@@ -9600,6 +10400,10 @@ function updateOnlineInstallState() {
   const standalone = isStandalonePwa();
   const native = isNativeAndroidApp();
   const browserPwa = !native && !standalone;
+  const settingsCallout =
+    document.getElementById('settings-install-callout') ||
+    el['settings-install-button']?.closest('.settings-install-callout');
+  if (settingsCallout) settingsCallout.hidden = !browserPwa;
   [el['header-install-button'], el['desktop-install-button']].forEach((button) => {
     button?.classList.toggle('is-hidden', !browserPwa || !deferredInstallPrompt);
   });
@@ -9647,11 +10451,11 @@ function showPwaUpdateReady(worker) {
   if (!worker || isNativeAndroidApp()) return;
   pendingPwaWorker = worker;
   el['apply-pwa-update-button']?.classList.remove('is-hidden');
-  setUpdateStatus('Dostępna jest nowa wersja PWA. Zastosuj ją, aby odświeżyć aplikację.', 'success');
+  setUpdateStatus('Dostępna jest nowa wersja. Zastosuj ją, aby odświeżyć aplikację.', 'success');
   setPwaDiagnostic('pwa-worker-status', 'Aktualizacja gotowa', 'warning');
   if (!pwaUpdateToastShown) {
     pwaUpdateToastShown = true;
-    showToast('Dostępna jest nowa wersja aplikacji PWA.', 'success');
+    showToast('Dostępna jest nowa wersja aplikacji.', 'success');
   }
 }
 
@@ -9777,11 +10581,11 @@ function waitForPwaWorker(worker, timeoutMs = 12000) {
 async function checkPwaUpdate({ announce = true } = {}) {
   if (isNativeAndroidApp()) return false;
   if (!serviceWorkerRegistration) {
-    setUpdateStatus('Service worker nie jest jeszcze gotowy.', 'error');
+    setUpdateStatus('Mechanizm aktualizacji nie jest jeszcze gotowy.', 'error');
     return false;
   }
   setPwaControlsBusy(true);
-  setUpdateStatus('Sprawdzanie nowej wersji PWA…');
+  setUpdateStatus('Sprawdzanie nowej wersji…');
   try {
     await serviceWorkerRegistration.update();
     if (serviceWorkerRegistration.installing) {
@@ -9794,14 +10598,14 @@ async function checkPwaUpdate({ announce = true } = {}) {
       return true;
     }
     setUpdateStatus(`Masz aktualną wersję ${currentAppVersion}.`, 'success');
-    if (announce) showToast('PWA korzysta z aktualnej wersji.', 'success');
+    if (announce) showToast('Aplikacja korzysta z aktualnej wersji.', 'success');
     await refreshPwaRuntimeStatus();
     return false;
   } catch (error) {
     console.warn('Nie udało się sprawdzić aktualizacji PWA:', error);
     setUpdateStatus(
       navigator.onLine
-        ? 'Nie udało się sprawdzić aktualizacji PWA.'
+        ? 'Nie udało się sprawdzić aktualizacji.'
         : 'Brak internetu — aplikacja nadal działa z zapisanych zasobów.',
       'error'
     );
@@ -9814,11 +10618,11 @@ async function checkPwaUpdate({ announce = true } = {}) {
 async function applyPwaUpdate() {
   const worker = serviceWorkerRegistration?.waiting || pendingPwaWorker;
   if (!worker) {
-    showToast('Nie ma oczekującej aktualizacji PWA.', 'error');
+    showToast('Nie ma oczekującej aktualizacji.', 'error');
     return false;
   }
   setPwaControlsBusy(true);
-  setUpdateStatus('Włączanie nowej wersji PWA…');
+  setUpdateStatus('Włączanie nowej wersji…');
   reloadAfterPwaActivation = true;
   worker.postMessage({ type: 'SKIP_WAITING' });
   window.setTimeout(() => {
@@ -9837,7 +10641,7 @@ async function refreshPwaResources() {
     return false;
   }
   setPwaControlsBusy(true);
-  setUpdateStatus('Pobieranie świeżych zasobów PWA…');
+  setUpdateStatus('Pobieranie aktualnych plików aplikacji…');
   try {
     await serviceWorkerRegistration?.update();
     if (serviceWorkerRegistration?.installing) {
@@ -9858,7 +10662,7 @@ async function refreshPwaResources() {
   } catch (error) {
     console.warn('Nie udało się odświeżyć zasobów PWA:', error);
     setUpdateStatus('Nie udało się odświeżyć zasobów. Dotychczasowy cache pozostaje aktywny.', 'error');
-    showToast('Odświeżenie zasobów PWA nie powiodło się.', 'error');
+    showToast('Odświeżenie aplikacji nie powiodło się.', 'error');
     return false;
   } finally {
     setPwaControlsBusy(false);
@@ -9924,46 +10728,6 @@ async function registerServiceWorker() {
     return null;
   }
 }
-const GITHUB_RELEASE_API =
-  'https://api.github.com/repos/tomalawsb/Hormon-Wzrostu-APK/releases/latest';
-const GITHUB_APK_DOWNLOAD_PATH =
-  '/tomalawsb/Hormon-Wzrostu-APK/releases/download/';
-
-function isAllowedUpdateApkUrl(value) {
-  try {
-    const url = new URL(String(value || '').trim());
-    if (url.protocol !== 'https:' || url.hostname !== 'github.com' || url.port) return false;
-    if (url.username || url.password || url.search || url.hash) return false;
-    if (!url.pathname.startsWith(GITHUB_APK_DOWNLOAD_PATH)) return false;
-    const remainder = url.pathname.slice(GITHUB_APK_DOWNLOAD_PATH.length);
-    const parts = remainder.split('/');
-    return parts.length === 2 && Boolean(parts[0]) && /^[^/]+\.apk$/i.test(parts[1]);
-  } catch {
-    return false;
-  }
-}
-
-function parseVersionParts(value) {
-  const normalized = String(value || '').trim().replace(/^v/i, '');
-  const [base = '', build = '0'] = normalized.split('-', 2);
-  const baseParts = base
-    .split('.')
-    .slice(0, 3)
-    .map((part) => Number.parseInt(part, 10) || 0);
-  while (baseParts.length < 3) baseParts.push(0);
-  return [...baseParts, Number.parseInt(build, 10) || 0];
-}
-
-function compareVersions(left, right) {
-  const a = parseVersionParts(left);
-  const b = parseVersionParts(right);
-  for (let index = 0; index < 4; index += 1) {
-    if (a[index] > b[index]) return 1;
-    if (a[index] < b[index]) return -1;
-  }
-  return 0;
-}
-
 function setUpdateStatus(message, kind = '') {
   if (!el['update-status']) return;
   el['update-status'].textContent = message;
@@ -9971,98 +10735,29 @@ function setUpdateStatus(message, kind = '') {
   el['update-status'].classList.toggle('text-danger', kind === 'error');
 }
 
-async function checkForUpdates({ autoDownload = false } = {}) {
+async function checkForUpdates() {
   if (!isNativeAndroidApp()) return checkPwaUpdate({ announce: true });
   const button = el['check-update-button'];
-  latestUpdateUrl = '';
-  latestUpdateVersion = '';
-  el['download-update-button'].classList.add('is-hidden');
   button.disabled = true;
-  setUpdateStatus('Sprawdzanie najnowszego wydania…');
+  setUpdateStatus('Sprawdzanie wersji aplikacji…');
   try {
     const localVersionResponse = await fetch('./app-version.json', { cache: 'no-store' });
     if (localVersionResponse.ok) {
       const localVersion = await localVersionResponse.json();
       currentAppVersion = String(localVersion.version || currentAppVersion).replace(/^v/i, '');
     }
-    const response = await fetch(GITHUB_RELEASE_API, {
-      cache: 'no-store',
-      headers: { Accept: 'application/vnd.github+json' },
-    });
-    if (response.status === 404) {
-      setUpdateStatus('Nie opublikowano jeszcze pliku APK do aktualizacji.');
-      return;
-    }
-    if (!response.ok) throw new Error(`GitHub odpowiedział kodem ${response.status}`);
-    const release = await response.json();
-    const releaseVersion = String(release.tag_name || '').replace(/^v/i, '');
-    const assets = Array.isArray(release.assets) ? release.assets : [];
-    const apk =
-      assets.find((asset) => /Dzienniczek.*\.apk$/i.test(asset.name || '')) ||
-      assets.find((asset) => /\.apk$/i.test(asset.name || ''));
-
-    if (!releaseVersion || compareVersions(releaseVersion, currentAppVersion) <= 0) {
-      setUpdateStatus(`Masz najnowszą wersję ${currentAppVersion}.`, 'success');
-      return;
-    }
-    if (!apk?.browser_download_url || !isAllowedUpdateApkUrl(apk.browser_download_url)) {
-      setUpdateStatus(
-        `Jest wersja ${releaseVersion}, ale nie zawiera prawidłowego pliku APK.`,
-        'error'
-      );
-      return;
-    }
-
-    latestUpdateUrl = String(apk.browser_download_url);
-    latestUpdateVersion = releaseVersion;
-    el['download-update-button'].textContent = `Pobierz wersję ${releaseVersion}`;
-    el['download-update-button'].classList.remove('is-hidden');
     setUpdateStatus(
-      `Dostępna jest nowsza wersja ${releaseVersion}. Rozpoczynam pobieranie APK…`,
+      `Wersja ${currentAppVersion}. Aktualizacje są instalowane bezpiecznie przez Google Play.`,
       'success'
     );
-    if (autoDownload) await downloadAvailableUpdate({ skipCheck: true });
   } catch (error) {
-    console.warn('Nie udało się sprawdzić aktualizacji:', error);
-    setUpdateStatus(
-      'Nie udało się sprawdzić aktualizacji. Sprawdź internet i spróbuj ponownie.',
-      'error'
-    );
+    console.warn('Nie udało się odczytać wersji aplikacji:', error);
+    setUpdateStatus('Aktualizacje są instalowane bezpiecznie przez Google Play.');
   } finally {
     button.disabled = false;
   }
 }
-
-async function downloadAvailableUpdate({ skipCheck = false } = {}) {
-  if (!latestUpdateUrl) {
-    if (skipCheck) return;
-    await checkForUpdates({ autoDownload: false });
-    return;
-  }
-  if (!isAllowedUpdateApkUrl(latestUpdateUrl)) {
-    latestUpdateUrl = '';
-    latestUpdateVersion = '';
-    el['download-update-button'].classList.add('is-hidden');
-    showToast('Zablokowano nieprawidłowy adres aktualizacji.', 'error');
-    return;
-  }
-  let opened;
-  if (typeof window.NativeBridge?.openExternal === 'function') {
-    opened = await window.NativeBridge.openExternal(latestUpdateUrl);
-  } else {
-    opened = Boolean(window.open(latestUpdateUrl, '_blank', 'noopener,noreferrer'));
-  }
-  if (!opened) {
-    showToast('Nie udało się otworzyć pliku aktualizacji.', 'error');
-    return;
-  }
-  showToast(
-    `Pobieranie wersji ${latestUpdateVersion} rozpoczęte. Po pobraniu zatwierdź instalację.`,
-    'success'
-  );
-}
-// APK nie przyznaje WebView dostępu do sieci. Wersję pakietu i odpowiedź
-// GitHub Release przekazuje ograniczony most Java, a PWA używa zwykłego fetch().
+// Wersja Android działa wyłącznie na zasobach dołączonych do aplikacji.
 const browserFetchBeforeNativeFix = window.fetch.bind(window);
 window.fetch = async function nativeAwareFetch(input, options) {
   const rawUrl =
@@ -10086,68 +10781,8 @@ window.fetch = async function nativeAwareFetch(input, options) {
     }
   }
 
-  if (
-    isNativeAndroidApp() &&
-    absoluteUrl === GITHUB_RELEASE_API &&
-    typeof window.AndroidNative?.latestReleaseJson === 'function'
-  ) {
-    const payload = String(window.AndroidNative.latestReleaseJson() || '').trim();
-    if (!payload) return new Response('', { status: 503 });
-    try {
-      JSON.parse(payload);
-      return new Response(payload, {
-        status: 200,
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      });
-    } catch {
-      return new Response('', { status: 502 });
-    }
-  }
-
   return browserFetchBeforeNativeFix(input, options);
 };
-
-// Czytelniejsza propozycja: etykieta i samo miejsce w osobnych wierszach.
-const renderMainRecommendationBeforeEmphasis = renderMainRecommendation;
-renderMainRecommendation = function renderMainRecommendationWithEmphasis(options) {
-  renderMainRecommendationBeforeEmphasis(options);
-  const todayEntry = options?.todayEntry;
-  const suggestion = options?.suggestion;
-  if (!todayEntry && suggestion?.side && suggestion?.site) {
-    const place = capitalize(formatPlace(suggestion.side, suggestion.site));
-    el['main-action-eyebrow'].textContent = 'Dzisiaj do podania';
-    el['main-action-heading'].innerHTML =
-      `<span class="recommendation-heading-label">Proponowane miejsce</span>` +
-      `<span class="recommendation-heading-place">${escapeHtml(place)}</span>`;
-  }
-};
-
-const recommendationStyle = document.createElement('style');
-recommendationStyle.textContent = `
-    #main-action-heading .recommendation-heading-label {
-      display: block;
-      margin-bottom: 7px;
-      color: #0b8e80;
-      font-size: .46em;
-      font-weight: 900;
-      line-height: 1.1;
-      letter-spacing: .055em;
-      text-transform: uppercase;
-    }
-    #main-action-heading .recommendation-heading-place {
-      display: block;
-      color: #082f55;
-      font-size: 1.18em;
-      font-weight: 900;
-      line-height: 1.04;
-      letter-spacing: -.035em;
-    }
-    @media (max-width: 820px) {
-      #main-action-heading .recommendation-heading-label { font-size: .48em; }
-      #main-action-heading .recommendation-heading-place { font-size: 1.15em; }
-    }
-  `;
-document.head.appendChild(recommendationStyle);
 
 function applyRuntimeLayoutFixes() {
   if (typeof document.querySelector !== 'function') return;
@@ -10240,6 +10875,11 @@ if (document.readyState === 'loading') {
     return Number.isFinite(number) && number >= 1 && number <= 999 ? number : 1;
   }
 
+  function normalizeAmpouleDoseCount(value, fallback = 10) {
+    const number = Number.parseInt(String(value ?? '').trim(), 10);
+    return Number.isFinite(number) && number >= 1 && number <= 999 ? number : fallback;
+  }
+
   function normalizeOptionalDayLimit(value) {
     const text = String(value ?? '').trim();
     if (!text) return '';
@@ -10289,6 +10929,10 @@ if (document.readyState === 'loading') {
     if (iso === localDateISO()) return 'dzisiaj';
     const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
     if (iso === localDateISO(yesterday)) return 'wczoraj';
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    if (iso === localDateISO(tomorrow)) return 'jutro';
+    const dayAfterTomorrow = new Date(); dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+    if (iso === localDateISO(dayAfterTomorrow)) return 'pojutrze';
     const date = parseISODate(iso);
     return `${date.getDate()} ${MONTHS[date.getMonth()]}`;
   }

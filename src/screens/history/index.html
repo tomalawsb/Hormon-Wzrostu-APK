@@ -11,10 +11,15 @@
           </div>
 
           <article class="card history-card history-card--timeline">
-            <div class="history-filters" role="search" aria-label="Filtry historii">
+            <details id="history-filter-disclosure" class="history-filter-disclosure" open>
+              <summary>
+                <span><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-search"></use></svg> Filtry historii</span>
+                <svg class="app-icon history-filter-chevron" aria-hidden="true" focusable="false"><use href="#icon-chevron-down"></use></svg>
+              </summary>
+              <div class="history-filters" role="search" aria-label="Filtry historii">
               <label>
-                <span>Dziecko</span>
-                <select id="history-profile-filter" aria-label="Wybierz dziecko w historii"></select>
+                <span>Profil</span>
+                <select id="history-profile-filter" aria-label="Wybierz profil w historii"></select>
               </label>
               <label class="search-field">
                 <span class="sr-only">Szukaj w historii</span>
@@ -48,7 +53,8 @@
                   <option value="original">Bez poprawek</option>
                 </select>
               </label>
-            </div>
+              </div>
+            </details>
 
             <div class="history-results-heading">
               <div id="history-scope-label" class="history-scope-label muted" aria-live="polite">—</div>

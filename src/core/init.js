@@ -1,6 +1,10 @@
 
   async function init() {
     cacheElements();
+    document.documentElement.classList.toggle('native-android', isNativeAndroidApp());
+    if (window.matchMedia('(max-width: 700px)').matches) {
+      document.getElementById('history-filter-disclosure')?.removeAttribute('open');
+    }
     try {
       await initializeSecureStorage();
       data = attachActiveProfileAliases(loadData());
@@ -36,7 +40,7 @@
     scheduleDailyReminder();
     scheduleMidnightRefresh();
     checkReminderDue();
-    maybeShowFirstRunPermissions();
+    if (!maybeShowFirstRunSetup()) maybeShowFirstRunPermissions();
     flushStartupWarnings();
     maybeScheduleBackupReminder();
   }

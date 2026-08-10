@@ -356,7 +356,7 @@ function confirmRecommendedInjection() {
   const entry = sanitizeEntry({
     id: entryId,
     date: today,
-    time: isValidTime(preparedDraft.time) ? preparedDraft.time : data.settings.defaultTime,
+    time: localTime(),
     dose,
     unit: preparedDraft.unit || data.settings.unit,
     side: suggestion.side,

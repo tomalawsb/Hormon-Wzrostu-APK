@@ -69,7 +69,7 @@ function renderReportConfiguration() {
   reportProfileScope = populateProfileScopeSelect(
     el['report-profile-filter'],
     reportProfileScope,
-    'Wszystkie dzieci'
+    'Wszystkie profile'
   );
   if (el['report-include-ampoules'].checked === undefined)
     el['report-include-ampoules'].checked = true;
@@ -120,7 +120,7 @@ function getReportConfiguration({ notify = true } = {}) {
     });
   }
   const scopeLabel =
-    scope === 'all' ? 'Wszystkie dzieci' : profiles[0]?.name || getActiveProfile().name;
+    scope === 'all' ? 'Wszystkie profile' : profiles[0]?.name || getActiveProfile().name;
   const periodText =
     from || to
       ? `${from ? formatDateShort(from) : 'początek'} – ${to ? formatDateShort(to) : 'dzisiaj'}`
@@ -136,7 +136,7 @@ function getReportPeriodText(entries) {
 
 function getReportColumns(config) {
   const columns = [];
-  if (config.profiles.length > 1) columns.push({ key: 'profile', label: 'Dziecko', weight: 125 });
+  if (config.profiles.length > 1) columns.push({ key: 'profile', label: 'Profil', weight: 125 });
   columns.push(
     { key: 'date', label: 'Data podania', weight: 120 },
     { key: 'time', label: 'Godzina', weight: 80 },
@@ -170,12 +170,12 @@ function getReportRecordValue(record, key) {
 }
 
 function getReportFilenameScope(config) {
-  return config.scope === 'all' ? 'wszystkie-dzieci' : safeFilenamePart(config.scopeLabel);
+  return config.scope === 'all' ? 'wszystkie-profile' : safeFilenamePart(config.scopeLabel);
 }
 
 function getReportFourthSummary(config) {
   if (config.profiles.length > 1)
-    return { number: String(config.profiles.length), text: 'dzieci w raporcie' };
+    return { number: String(config.profiles.length), text: 'profile w raporcie' };
   if (!config.includeAmpoules)
     return { number: String(config.profiles.length), text: 'profil w raporcie' };
   return withProfileContext(config.profiles[0].id, () => ampouleReportSummary(getAmpouleInfo()));
@@ -235,7 +235,7 @@ function buildDoctorReportProfileHtml(config) {
     <section class="doctor-profile-summary">
       <h2>Dane profilu i leczenia</h2>
       <dl class="doctor-profile-grid">
-        ${definition('Dziecko', profile.name)}
+        ${definition('Profil', profile.name)}
         ${definition('Data urodzenia', medical.birthDate ? formatDateShort(medical.birthDate) : '—')}
         ${definition('Lekarz prowadzący', medical.doctorName)}
         ${definition('Poradnia / placówka', medical.clinicName)}
@@ -330,6 +330,16 @@ function reportDocumentHtml(config = getReportConfiguration({ notify: false })) 
         tr:nth-child(even) td { background: #f8fbfd; }
         thead { display: table-header-group; }
         tr { break-inside: avoid; page-break-inside: avoid; }
+        @media screen and (max-width: 760px) {
+          body { padding: 10px; }
+          .report-sheet { padding: 18px 14px; box-shadow: none; }
+          .summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .summary div { min-width: 0; }
+          .doctor-profile-grid, .doctor-detail-columns { grid-template-columns: 1fr; }
+          .doctor-profile-grid div { grid-template-columns: 110px minmax(0, 1fr); }
+          table { font-size: 9px; }
+          th, td { padding: 5px 4px; }
+        }
         @media print { html, body { background: #fff; } body { padding: 0; } .report-sheet { max-width: none; margin: 0; padding: 0; box-shadow: none; } .doctor-detail-columns section { break-inside: avoid; } }
       </style></head><body><main class="report-sheet">${buildReportBodyForConfig(config)}</main></body></html>`;
 }

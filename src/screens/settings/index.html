@@ -13,7 +13,7 @@
             <span id="settings-profile-avatar" class="profile-avatar profile-avatar--large" data-profile-color="teal" aria-hidden="true">🧒</span>
             <div>
               <span>Edytujesz dane profilu</span>
-              <strong id="settings-profile-name">Dziecko 1</strong>
+              <strong id="settings-profile-name">Profil 1</strong>
               <small id="settings-profile-note">Ustawienia dotyczą wyłącznie aktywnego profilu.</small>
             </div>
           </div>
@@ -23,49 +23,72 @@
               <div class="settings-category-card__heading">
                 <p class="eyebrow">Kategorie</p>
                 <h2>Wybierz kategorię</h2>
-                <p class="muted">Każda kategoria otwiera osobny ekran.</p>
+                <p class="muted">Wybierz obszar, który chcesz zmienić.</p>
               </div>
               <div id="settings-category-list" class="settings-category-list" role="tablist" aria-label="Kategorie ustawień">
-                <button class="settings-category-button is-active" type="button" role="tab" aria-selected="true" data-settings-target="profiles">
-                  <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-users"></use></svg></span>
-                  <span><strong>Profil</strong><small>Dziecko, pomiary i raport</small></span>
-                  <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
-                </button>
-                <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="treatment">
-                  <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-syringe"></use></svg></span>
-                  <span><strong>Dawkowanie</strong><small>Dawka, godzina i rotacja wkłuć</small></span>
-                  <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
-                </button>
-                <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="reminders">
-                  <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-bell"></use></svg></span>
-                  <span><strong>Przypomnienia</strong><small>Godzina, zgoda i test</small></span>
-                  <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
-                </button>
-                <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="ampoules">
-                  <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-ampoule"></use></svg></span>
-                  <span><strong>Ampułki</strong><small>Zużycie i stan leku</small></span>
-                  <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
-                </button>
-                <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="appearance">
-                  <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-palette"></use></svg></span>
-                  <span><strong>Wygląd</strong><small>Motyw aplikacji</small></span>
-                  <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
-                </button>
-                <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="data">
-                  <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-database"></use></svg></span>
-                  <span><strong>Dane i kopie zapasowe</strong><small>Raport, eksport i import</small></span>
-                  <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
-                </button>
-                <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="security">
-                  <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-lock"></use></svg></span>
-                  <span><strong>Bezpieczeństwo</strong><small>PIN, biometria i blokada</small></span>
-                  <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
-                </button>
-                <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="about">
-                  <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-info"></use></svg></span>
-                  <span><strong>Informacje o aplikacji</strong><small>Wersja, aktualizacje i zgody</small></span>
-                  <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
-                </button>
+                <section class="settings-category-group" aria-labelledby="settings-group-treatment">
+                  <h3 id="settings-group-treatment">Leczenie</h3>
+                  <div class="settings-category-group__items">
+                    <button class="settings-category-button is-active" type="button" role="tab" aria-selected="true" data-settings-target="profiles">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-users"></use></svg></span>
+                      <span><strong>Profil</strong><small>Osoba i pomiary</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                    <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="treatment">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-syringe"></use></svg></span>
+                      <span><strong>Dawkowanie</strong><small>Dawka i miejsca wkłuć</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                    <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="reminders">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-bell"></use></svg></span>
+                      <span><strong>Przypomnienia</strong><small>Godzina i powiadomienia</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                    <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="ampoules">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-ampoule"></use></svg></span>
+                      <span><strong>Ampułki</strong><small>Licznik i zmiana ampułki</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                  </div>
+                </section>
+
+                <section class="settings-category-group" aria-labelledby="settings-group-data">
+                  <h3 id="settings-group-data">Raporty i dane</h3>
+                  <div class="settings-category-group__items">
+                    <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="data">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-database"></use></svg></span>
+                      <span><strong>Raporty i kopie</strong><small>Raport, eksport i import</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                  </div>
+                </section>
+
+                <section class="settings-category-group" aria-labelledby="settings-group-appearance">
+                  <h3 id="settings-group-appearance">Wygląd i obsługa</h3>
+                  <div class="settings-category-group__items">
+                    <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="appearance">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-palette"></use></svg></span>
+                      <span><strong>Wygląd</strong><small>Motyw i czytelność</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                  </div>
+                </section>
+
+                <section class="settings-category-group" aria-labelledby="settings-group-security">
+                  <h3 id="settings-group-security">Bezpieczeństwo i aplikacja</h3>
+                  <div class="settings-category-group__items">
+                    <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="security">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-lock"></use></svg></span>
+                      <span><strong>Bezpieczeństwo</strong><small>PIN, biometria i blokada</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                    <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="about">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-info"></use></svg></span>
+                      <span><strong>O aplikacji</strong><small>Wersja, aktualizacje i zgody</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                  </div>
+                </section>
               </div>
             </aside>
 
@@ -79,8 +102,8 @@
                   <article class="card settings-card profiles-settings-card profile-health-overview">
                     <div class="card-heading-row">
                       <div>
-                        <p class="eyebrow">Profil dziecka</p>
-                        <h2 id="profile-health-name">Dziecko 1</h2>
+                        <p class="eyebrow">Profil osoby</p>
+                        <h2 id="profile-health-name">Profil 1</h2>
                       </div>
                       <span id="profiles-summary" class="profile-count-badge">1 aktywny profil</span>
                     </div>
@@ -156,7 +179,7 @@
 
                     <article class="card settings-card profile-measurements-card">
                       <div>
-                        <p class="eyebrow">Rozwój dziecka</p>
+                        <p class="eyebrow">Pomiary</p>
                         <h2>Wzrost i masa</h2>
                       </div>
                       <form id="profile-measurement-form" class="profile-record-form">
@@ -313,8 +336,14 @@
                         <input id="ampoule-volume" inputmode="decimal" autocomplete="off" value="10">
                       </label>
                       <label>
+                        <span>Liczba podań z ampułki</span>
+                        <input id="ampoule-dose-count" type="number" min="1" max="999" step="1" inputmode="numeric" autocomplete="off" value="10">
+                        <small>Ustaw np. 11, jeśli ampułka wystarcza na 11 zastrzyków.</small>
+                      </label>
+                      <label>
                         <span>Zużycie na jedno podanie w ml</span>
                         <input id="ampoule-dose-ml" inputmode="decimal" autocomplete="off" placeholder="np. 1,0">
+                        <small>Opcjonalne — aplikacja może wyliczyć wartość z liczby podań.</small>
                       </label>
                       <label>
                         <span>Maks. dni od otwarcia (opcjonalnie)</span>
@@ -330,7 +359,7 @@
                       <strong id="ampoule-management-summary">Nie ma odłożonych ampułek.</strong>
                       <div id="ampoule-list" class="ampoule-list"></div>
                     </div>
-                    <p class="muted">Jeżeli dawka jest podawana w ml, aplikacja użyje dawki domyślnej. Przy innych jednostkach wpisz osobno zużycie w ml.</p>
+                    <p class="muted">Liczba zapisanych podań pokazuje stan ampułki. Wyliczenie ilości w ml jest orientacyjne.</p>
                     <button id="save-ampoule-settings-button" class="button button--primary button--small" type="button">Zapisz ustawienia ampułki</button>
                   </article>
                 </section>
@@ -371,17 +400,17 @@
                     <div class="card-heading-row">
                       <div>
                         <p class="eyebrow">Kontrola działania</p>
-                        <h2 id="reminder-diagnostics-title">Diagnostyka przypomnień</h2>
+                        <h2 id="reminder-diagnostics-title">Stan przypomnienia</h2>
                       </div>
                       <span id="reminder-diagnostics-overall" class="profile-count-badge" data-state="checking">Sprawdzanie…</span>
                     </div>
                     <div class="reminder-diagnostics-grid" aria-live="polite">
                       <div><span>Powiadomienia</span><strong id="reminder-diagnostic-permission">Sprawdzanie…</strong></div>
-                      <div><span>Kanał Android</span><strong id="reminder-diagnostic-channel">Sprawdzanie…</strong></div>
-                      <div><span>Dokładna godzina</span><strong id="reminder-diagnostic-exact-alarm">Sprawdzanie…</strong></div>
+                      <div><span>Ustawienia systemu</span><strong id="reminder-diagnostic-channel">Sprawdzanie…</strong></div>
+                      <div><span>Sposób działania</span><strong id="reminder-diagnostic-exact-alarm">Sprawdzanie…</strong></div>
                       <div><span>Następne przypomnienie</span><strong id="reminder-diagnostic-next">Sprawdzanie…</strong></div>
                     </div>
-                    <p id="reminder-diagnostics-note" class="muted reminder-note">Aplikacja sprawdza ustawienia systemowe i zapisany alarm aktywnego profilu.</p>
+                    <p id="reminder-diagnostics-note" class="muted reminder-note">Tutaj sprawdzisz, czy przypomnienie jest gotowe.</p>
                     <div class="button-row-wrap">
                       <button id="refresh-reminder-diagnostics-button" class="button button--secondary button--small" type="button">Sprawdź ponownie</button>
                       <button id="open-notification-settings-button" class="button button--secondary button--small" type="button">Ustawienia powiadomień</button>
@@ -392,7 +421,7 @@
 
                   <details id="settings-advanced-voice" class="settings-advanced">
                     <summary>
-                      <span><strong>Opcje zaawansowane</strong><small>Obsługa głosowa i potwierdzanie zapisu</small></span>
+                      <span><strong>Polecenia głosowe</strong><small>Odczyt i potwierdzanie zapisu</small></span>
                     </summary>
                     <div class="settings-advanced__content">
                   <article class="card settings-card">
@@ -418,7 +447,7 @@
                       <summary>Przykłady poleceń</summary>
                     <div class="tip-box">
                       <strong>Przykłady poleceń</strong>
-                      <span>„lewy brzuch”, „wczoraj”, potem „prawe ramię”, „dawka jeden przecinek jeden”, „pomiń dzisiaj”, „zapisz”.</span>
+                      <span>„Wczoraj o 20 podałam w lewe udo”, „jutro pomijam”, „odkładam ampułkę osiemnastą”, „kontynuuj ampułkę siedemnastą”.</span>
                     </div>
                     </details>
                     <button id="save-voice-settings-button" class="button button--primary button--small" type="button">Zapisz obsługę głosową</button>
@@ -487,13 +516,13 @@
                   <article class="card settings-card security-status-card">
                     <div>
                       <p class="eyebrow">Ochrona danych</p>
-                      <h2>Szyfrowany magazyn</h2>
+                      <h2>Bezpieczne przechowywanie</h2>
                     </div>
                     <div class="security-status-row">
                       <span>Dane profili, podań i ampułek</span>
                       <strong id="security-storage-status">sprawdzanie…</strong>
                     </div>
-                    <p class="muted">Dane medyczne nie są zapisywane w localStorage. W APK klucz pozostaje w Android Keystore, a w PWA jest niewyciągalnym kluczem Web Crypto.</p>
+                    <p class="muted">Historia leczenia jest przechowywana lokalnie i chroniona mechanizmami dostępnymi na tym urządzeniu.</p>
                   </article>
 
                   <article class="card settings-card">
@@ -548,7 +577,6 @@
                       </select>
                     </label>
                     <button id="security-lock-now-button" class="button button--secondary button--small" type="button" disabled>Zablokuj teraz</button>
-                    <p class="muted">APK dodatkowo blokuje zrzuty ekranu, nagrywanie i podgląd zawartości w ostatnich aplikacjach.</p>
                   </article>
                 </section>
 
@@ -558,7 +586,7 @@
                       <p class="eyebrow">Dokumentacja leczenia</p>
                       <h2>Raporty i kopia danych</h2>
                     </div>
-                    <p class="muted">Utwórz raport dla lekarza albo zaszyfrowaną kopię do późniejszego przywrócenia.</p>
+                    <p class="muted">Utwórz raport dla lekarza albo kopię do późniejszego przywrócenia. Hasło do kopii jest opcjonalne.</p>
                     <div class="report-config-card" aria-label="Zakres raportu">
                       <div class="report-config-heading">
                         <strong>Zakres raportu</strong>
@@ -566,8 +594,8 @@
                       </div>
                       <div class="report-config-grid">
                         <label class="form-field">
-                          <span>Dziecko</span>
-                          <select id="report-profile-filter" aria-label="Wybierz dziecko do raportu"></select>
+                          <span>Profil</span>
+                          <select id="report-profile-filter" aria-label="Wybierz profil do raportu"></select>
                         </label>
                         <label class="form-field">
                           <span>Data od</span>
@@ -594,9 +622,9 @@
                         <span><strong>Eksportuj raport</strong><small>PDF, Word (.docx) lub CSV</small></span>
                         <svg class="app-icon data-main-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
                       </button>
-                      <button id="backup-panel-button" class="data-main-button data-main-button--backup" type="button" title="Zapisz lub przywróć kopię danych JSON">
+                      <button id="backup-panel-button" class="data-main-button data-main-button--backup" type="button" title="Zapisz lub przywróć kopię danych">
                         <span class="data-main-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-backup"></use></svg></span>
-                        <span><strong>Kopia zapasowa</strong><small>Zapisz lub przywróć plik JSON</small></span>
+                        <span><strong>Kopia zapasowa</strong><small>Zapisz bez hasła lub opcjonalnie zaszyfruj</small></span>
                         <svg class="app-icon data-main-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
                       </button>
                     </div>
@@ -622,30 +650,33 @@
                     </div>
                     <div class="settings-version-row">
                       <span>Zainstalowana wersja</span>
-                      <strong id="settings-version-label">v2.0-2007260834</strong>
+                      <strong id="settings-version-label">v2.0-1008262005</strong>
                     </div>
                     <p id="update-status" class="muted" role="status" aria-live="polite">Sprawdź, czy jest dostępna nowsza wersja aplikacji.</p>
                     <div class="dialog-actions dialog-actions--start">
                       <button id="check-update-button" class="button button--primary button--small" type="button">Sprawdź aktualizacje</button>
-                      <button id="download-update-button" class="button button--secondary button--small is-hidden" type="button">Pobierz ponownie</button>
+                      <button id="download-update-button" type="button" hidden tabindex="-1" aria-hidden="true"></button>
                     </div>
-                    <div id="pwa-maintenance-controls" class="pwa-maintenance" hidden>
-                      <div class="pwa-diagnostic-grid" aria-label="Stan aplikacji PWA">
-                        <span>Service worker</span>
+                    <details id="pwa-maintenance-controls" class="pwa-maintenance settings-advanced" hidden>
+                      <summary><span><strong>Pomoc techniczna</strong><small>Stan instalacji i pracy bez internetu</small></span></summary>
+                      <div class="settings-advanced__content">
+                      <div class="pwa-diagnostic-grid" aria-label="Stan aplikacji">
+                        <span>Aktualizacje</span>
                         <strong id="pwa-worker-status" data-state="neutral">Sprawdzanie…</strong>
                         <span>Zasoby offline</span>
                         <strong id="pwa-cache-status" data-state="neutral">Sprawdzanie…</strong>
                         <span>Połączenie</span>
                         <strong id="pwa-online-status" data-state="neutral">Sprawdzanie…</strong>
-                        <span>Instalacja PWA</span>
+                        <span>Instalacja</span>
                         <strong id="pwa-install-status" data-state="neutral">Sprawdzanie…</strong>
                       </div>
-                      <p class="muted">Ręczne odświeżenie pobiera kompletny zestaw zasobów. Dotychczasowy cache pozostaje aktywny, jeśli pobieranie się nie powiedzie.</p>
+                      <p class="muted">Jeśli aplikacja nie odświeżyła się automatycznie, możesz ponownie pobrać jej pliki.</p>
                       <div class="dialog-actions dialog-actions--start">
-                        <button id="refresh-pwa-resources-button" class="button button--secondary button--small" type="button">Odśwież zasoby</button>
+                        <button id="refresh-pwa-resources-button" class="button button--secondary button--small" type="button">Odśwież aplikację</button>
                         <button id="apply-pwa-update-button" class="button button--primary button--small is-hidden" type="button">Zastosuj nową wersję</button>
                       </div>
-                    </div>
+                      </div>
+                    </details>
                   </article>
 
                   <article class="card settings-card app-information-card">
@@ -654,12 +685,26 @@
                       <h2>Informacje</h2>
                     </div>
                     <p>Aplikacja zapisuje historię leczenia. Nie dobiera dawki i nie zastępuje zaleceń lekarza.</p>
-                    <div class="settings-install-callout">
+                    <div id="settings-install-callout" class="settings-install-callout" hidden>
                       <div class="settings-install-callout__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-download"></use></svg></div>
-                      <div><strong>Zainstaluj wersję PWA</strong><span>Dodaj aplikację do ekranu telefonu lub pulpitu komputera.</span></div>
+                      <div><strong>Zainstaluj aplikację</strong><span>Dodaj ją do ekranu telefonu lub pulpitu komputera.</span></div>
                       <button id="settings-install-button" class="button button--primary settings-install-button is-hidden" type="button">Zainstaluj aplikację teraz</button>
                     </div>
                   </article>
+
+                  <details class="settings-advanced privacy-policy-card">
+                    <summary>
+                      <span><strong>Polityka prywatności</strong><small>Jak aplikacja chroni i wykorzystuje dane</small></span>
+                    </summary>
+                    <div class="settings-advanced__content privacy-policy-content">
+                      <p><strong>Dane pozostają na urządzeniu.</strong> Twórca aplikacji nie otrzymuje historii leczenia i nie prowadzi kont użytkowników.</p>
+                      <p>Profile, podania, pomiary, ampułki i ustawienia służą wyłącznie do historii, raportów, przypomnień i licznika ampułki. Nie są sprzedawane ani używane do reklam.</p>
+                      <p>Kopię zapasową można zapisać bez hasła albo opcjonalnie ją zaszyfrować. Eksport zapisuje plik w wybranym przez użytkownika miejscu, dlatego należy chronić go we własnym zakresie.</p>
+                      <p>Powiadomienia i dostęp do plików są używane tylko po wykonaniu odpowiedniej czynności. Aplikacja nie wysyła historii leczenia do internetu. Na Androidzie dostęp do mikrofonu jest opcjonalny i uruchamiany dopiero po naciśnięciu mikrofonu. Dźwięk obsługuje systemowe rozpoznawanie mowy, a aplikacja otrzymuje tekst polecenia.</p>
+                      <p>Dane można usunąć w aplikacji, przez wyczyszczenie jej danych w systemie albo odinstalowanie. Aplikacja nie dobiera dawki i nie zastępuje zaleceń lekarza.</p>
+                      <p class="muted">Pełna polityka prywatności obowiązuje od 9 sierpnia 2026 r. i znajduje się w pliku privacy.html dołączonym do projektu.</p>
+                    </div>
+                  </details>
 
                   <details id="settings-advanced-permissions" class="settings-advanced">
                     <summary>
@@ -672,7 +717,7 @@
                           <h2>Zgody aplikacji</h2>
                         </div>
                         <div class="permission-list">
-                          <div><span>Mikrofon</span><strong id="microphone-permission-settings">sprawdzanie…</strong></div>
+                          <div class="permission-row--microphone"><span>Mikrofon</span><strong id="microphone-permission-settings">sprawdzanie…</strong></div>
                           <div><span>Powiadomienia</span><strong id="notification-permission-settings">sprawdzanie…</strong></div>
                           <div><span>Trwałe przechowywanie</span><strong id="storage-permission-settings">sprawdzanie…</strong></div>
                         </div>

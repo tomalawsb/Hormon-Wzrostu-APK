@@ -65,7 +65,7 @@ function renderSecuritySettings() {
         ? settings.biometricEnabled
           ? 'Biometria jest włączona'
           : 'Biometria jest dostępna'
-        : 'Biometria jest dostępna tylko w zgodnym APK na Androidzie';
+        : 'Biometria jest dostępna w zgodnej aplikacji na Androidzie';
   }
   if (el['security-biometric-button']) {
     el['security-biometric-button'].hidden = biometricState !== 'available';

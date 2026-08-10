@@ -7,6 +7,7 @@ function openExportReportPanel(trigger = null) {
 
 function openBackupPanel() {
   clearPendingImportPreview();
+  resetBackupEncryptionChoice();
   renderAutomaticBackupState();
   openDataDialog(el['backup-dialog'], el['backup-panel-button']);
   window.setTimeout(() => el['export-json-button']?.focus(), 30);

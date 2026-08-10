@@ -298,27 +298,19 @@ final class ReminderScheduler {
                 PendingIntent.FLAG_UPDATE_CURRENT
         );
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (canScheduleExact(context)) {
-                    manager.setExactAndAllowWhileIdle(
-                            AlarmManager.RTC_WAKEUP,
-                            trigger.atMillis,
-                            operation
-                    );
-                    return "exact";
-                }
-                manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger.atMillis, operation);
-                return "inexact";
+            if (canScheduleExact(context)) {
+                manager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        trigger.atMillis,
+                        operation
+                );
+                return "exact";
             }
-            manager.setExact(AlarmManager.RTC_WAKEUP, trigger.atMillis, operation);
-            return "exact";
+            manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger.atMillis, operation);
+            return "inexact";
         } catch (SecurityException error) {
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger.atMillis, operation);
-                } else {
-                    manager.set(AlarmManager.RTC_WAKEUP, trigger.atMillis, operation);
-                }
+                manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger.atMillis, operation);
                 return "inexact";
             } catch (Exception ignored) {
                 return "none";
@@ -358,8 +350,7 @@ final class ReminderScheduler {
         intent.setAction(ACTION_REMINDER);
         intent.putExtra(EXTRA_PROFILE_ID, profileId);
         if (!date.isEmpty()) intent.putExtra(EXTRA_DATE, date);
-        int flags = behaviorFlag;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags |= PendingIntent.FLAG_IMMUTABLE;
+        int flags = behaviorFlag | PendingIntent.FLAG_IMMUTABLE;
         return PendingIntent.getBroadcast(context, stableId(profileId), intent, flags);
     }
 
@@ -383,8 +374,7 @@ final class ReminderScheduler {
         openIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         openIntent.putExtra(EXTRA_PROFILE_ID, profileId);
         openIntent.putExtra(EXTRA_DATE, date);
-        int pendingFlags = PendingIntent.FLAG_UPDATE_CURRENT;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) pendingFlags |= PendingIntent.FLAG_IMMUTABLE;
+        int pendingFlags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
         PendingIntent contentIntent = PendingIntent.getActivity(
                 context,
                 stableId("open:" + profileId),
