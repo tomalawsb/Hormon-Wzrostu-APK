@@ -60,8 +60,10 @@ public class MainActivity extends FragmentActivity {
     private static final String PREFS = "permission_state";
     private static final String APP_ASSET_HOST = "appassets.androidplatform.net";
     private static final String APP_ASSET_PREFIX = "/assets/web/";
+    private static final String NATIVE_BOOTSTRAP_PATH = "/assets/native-bootstrap.html";
+    private static final String NATIVE_BOOTSTRAP_SCRIPT_PATH = "/assets/native-bootstrap.js";
     private static final String APP_START_URL =
-            "https://" + APP_ASSET_HOST + APP_ASSET_PREFIX + "index.html";
+            "https://" + APP_ASSET_HOST + NATIVE_BOOTSTRAP_PATH;
     private static final int MAX_NOTIFICATION_JSON_CHARS = 32 * 1024;
     private static final int MAX_REMINDER_JSON_CHARS = 1024 * 1024;
     private static final int MAX_EXPORT_JSON_CHARS = 20 * 1024 * 1024;
@@ -76,6 +78,8 @@ public class MainActivity extends FragmentActivity {
                     + "form-action 'self'; frame-ancestors 'none'";
     private static final Set<String> TRUSTED_ASSET_PATHS = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(
+                    NATIVE_BOOTSTRAP_PATH,
+                    NATIVE_BOOTSTRAP_SCRIPT_PATH,
                     APP_ASSET_PREFIX + "index.html",
                     APP_ASSET_PREFIX + "app.js",
                     APP_ASSET_PREFIX + "native-bridge.js",
@@ -219,6 +223,14 @@ public class MainActivity extends FragmentActivity {
         return isTrustedAppAsset(uri) && (APP_ASSET_PREFIX + "index.html").equals(uri.getPath());
     }
 
+    private static boolean isTrustedBootstrapDocument(Uri uri) {
+        return isTrustedAppAsset(uri) && NATIVE_BOOTSTRAP_PATH.equals(uri.getPath());
+    }
+
+    private static boolean isTrustedMainDocument(Uri uri) {
+        return isTrustedDocument(uri) || isTrustedBootstrapDocument(uri);
+    }
+
     private static boolean isTrustedInternalFrame(Uri uri) {
         if (uri == null || !"about".equalsIgnoreCase(uri.getScheme())) return false;
         String value = uri.getSchemeSpecificPart();
@@ -248,7 +260,7 @@ public class MainActivity extends FragmentActivity {
         headers.put("Cache-Control", "no-store");
         headers.put("Referrer-Policy", "no-referrer");
         headers.put("X-Content-Type-Options", "nosniff");
-        if (isTrustedDocument(uri)) {
+        if (isTrustedMainDocument(uri)) {
             headers.put("Content-Security-Policy", APP_CONTENT_SECURITY_POLICY);
             headers.put("Permissions-Policy", "microphone=(), camera=(), geolocation=()");
         }
@@ -291,7 +303,7 @@ public class MainActivity extends FragmentActivity {
         }
 
         private boolean handleNavigation(Uri uri, boolean isForMainFrame) {
-            if (isTrustedDocument(uri)) return false;
+            if (isTrustedMainDocument(uri)) return false;
             if (!isForMainFrame && isTrustedInternalFrame(uri)) return false;
             return true;
         }
@@ -299,8 +311,9 @@ public class MainActivity extends FragmentActivity {
         @Override
         public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
             notificationEventsReady = false;
-            bridgeEnabled = isTrustedDocument(url == null ? null : Uri.parse(url));
-            if (!bridgeEnabled) {
+            Uri uri = url == null ? null : Uri.parse(url);
+            bridgeEnabled = isTrustedDocument(uri);
+            if (!isTrustedMainDocument(uri)) {
                 view.stopLoading();
             }
             super.onPageStarted(view, url, favicon);
@@ -308,14 +321,16 @@ public class MainActivity extends FragmentActivity {
 
         @Override
         public void onPageCommitVisible(WebView view, String url) {
-            bridgeEnabled = isTrustedDocument(url == null ? null : Uri.parse(url));
-            if (!bridgeEnabled) view.stopLoading();
+            Uri uri = url == null ? null : Uri.parse(url);
+            bridgeEnabled = isTrustedDocument(uri);
+            if (!isTrustedMainDocument(uri)) view.stopLoading();
             super.onPageCommitVisible(view, url);
         }
 
         @Override
         public void onPageFinished(WebView view, String url) {
-            if (!isTrustedDocument(url == null ? null : Uri.parse(url))) bridgeEnabled = false;
+            Uri uri = url == null ? null : Uri.parse(url);
+            if (!isTrustedDocument(uri)) bridgeEnabled = false;
             super.onPageFinished(view, url);
             if (bridgeEnabled) dispatchPendingNotificationAction();
         }

@@ -77,6 +77,12 @@ vm.runInContext(
     globalThis.__nativeRecognizerPreferred = recognition?.isNative === true;
     globalThis.__browserRecognizerCreatedForAndroid = browserRecognizerCreated;
 
+    window.NativeBridge.platform = 'web';
+    window.NativeBridge.isNative = true;
+    configureSpeechRecognition();
+    globalThis.__nativeRecognizerIgnoresPlatformLabel =
+      recognition?.isNative === true && browserRecognizerCreated === 0;
+
     window.NativeBridge = { platform: 'web' };
     configureSpeechRecognition();
     globalThis.__browserRecognizerUsedForPwa = browserRecognizerCreated === 1 && !recognition?.isNative;
@@ -93,6 +99,11 @@ assert.equal(
   vm.runInContext('__browserRecognizerCreatedForAndroid', context),
   0,
   'WebView nie może uruchamiać przeglądarkowego mikrofonu w APK.'
+);
+assert.equal(
+  vm.runInContext('__nativeRecognizerIgnoresPlatformLabel', context),
+  true,
+  'APK nie może zależeć od etykiety platformy zwracanej przez WebView.'
 );
 assert.equal(
   vm.runInContext('__browserRecognizerUsedForPwa', context),

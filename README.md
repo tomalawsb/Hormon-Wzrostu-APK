@@ -1,6 +1,6 @@
 # Dzienniczek Hormonu — Android APK
 
-**Wersja: v2.0-1008262005**
+**Wersja: v2.0-1008262049**
 
 Wersja 2.1.0 wprowadza kreator pierwszego uruchomienia z importem dotychczasowych
 plików JSON, neutralne profile dla dzieci i dorosłych, licznik podań z ampułki,

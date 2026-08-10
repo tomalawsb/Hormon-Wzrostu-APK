@@ -9443,8 +9443,12 @@ function setVoiceListeningState(listening) {
 
 function configureSpeechRecognition() {
   const nativeAndroid =
-    window.NativeBridge?.platform === 'android' &&
-    typeof window.NativeBridge.startVoiceRecognition === 'function';
+    Boolean(
+      window.NativeBridge?.isNative ||
+        window.NativeBridge?.platform === 'android' ||
+        window.AndroidNative
+    ) &&
+    typeof window.NativeBridge?.startVoiceRecognition === 'function';
   if (nativeAndroid) {
     recognition = {
       isNative: true,

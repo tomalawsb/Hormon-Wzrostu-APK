@@ -60,7 +60,7 @@ require(
 )
 require("WebViewAssetLoader" in main, "brak WebViewAssetLoader")
 require("new WebViewAssetLoader.AssetsPathHandler(this)" in main, "zasoby APK nie mają lokalnego handlera")
-require("https://\" + APP_ASSET_HOST + APP_ASSET_PREFIX + \"index.html" in main, "brak startu przez zaufane HTTPS")
+require("https://\" + APP_ASSET_HOST + NATIVE_BOOTSTRAP_PATH" in main, "brak natywnego startu przez zaufane HTTPS")
 require("file:///android_asset" not in main, "pozostało bezpośrednie ładowanie file://")
 
 for setting in (
@@ -81,6 +81,8 @@ require("Intent.ACTION_OPEN_DOCUMENT" in main, "import plików nie używa system
 require("Intent.FLAG_GRANT_READ_URI_PERMISSION" in main, "wybrany plik nie dostaje ograniczonego prawa odczytu")
 require("WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)" in main, "debugowanie WebView nie zależy od wariantu builda")
 require("setHttpAllowed(false)" in main, "WebViewAssetLoader dopuszcza HTTP")
+require("isTrustedBootstrapDocument" in main and "isTrustedMainDocument" in main,
+        "natywny ekran startowy nie jest ograniczony do zaufanego zasobu")
 require("shouldInterceptRequest" in main and "blockedWebResponse()" in main, "obce żądania zasobów nie są blokowane")
 require("shouldOverrideUrlLoading" in main and "isForMainFrame" in main, "nawigacja nie jest kontrolowana")
 require("isTrustedInternalFrame" in main and '"srcdoc".equalsIgnoreCase(value)' in main, "lokalny podgląd raportu nie ma bezpiecznego wyjątku")
@@ -174,6 +176,13 @@ require("Manifest.permission.RECORD_AUDIO" in main and "REQ_MICROPHONE" in main,
         "Android nie pyta o zgodę na mikrofon przy pierwszym użyciu")
 require("nativeVoiceRecognitionResult" in main,
         "wynik rozpoznawania mowy nie wraca do aplikacji")
+bootstrap = read("android/app/src/main/assets/native-bootstrap.js")
+require("serviceWorker.getRegistrations()" in bootstrap and "registration.unregister()" in bootstrap,
+        "start APK nie usuwa starego service workera PWA")
+require("name.startsWith('dzienniczek-hormonu-v')" in bootstrap,
+        "start APK nie ogranicza czyszczenia cache do plików interfejsu")
+require("indexedDB" not in bootstrap and "localStorage" not in bootstrap,
+        "start APK nie może usuwać historii leczenia")
 require("MAX_NOTIFICATION_JSON_CHARS" in main, "brak limitu danych powiadomienia")
 require("MAX_REMINDER_JSON_CHARS" in main, "brak limitu danych przypomnień")
 require("MAX_EXPORT_JSON_CHARS" in main, "brak limitu natywnego eksportu JSON")

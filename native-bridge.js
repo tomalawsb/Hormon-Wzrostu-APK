@@ -783,7 +783,13 @@
   var initialized = false;
   var initializing = null;
   function hasAndroidWebViewBridge() {
-    return typeof window.AndroidNative === "object" && window.AndroidNative !== null;
+    try {
+      return Boolean(
+        window.AndroidNative && typeof window.AndroidNative.isNative === "function" && typeof window.AndroidNative.startVoiceRecognition === "function"
+      );
+    } catch {
+      return false;
+    }
   }
   function isNative() {
     return hasAndroidWebViewBridge() || Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
