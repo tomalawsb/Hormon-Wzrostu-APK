@@ -1,0 +1,43 @@
+name: Build Moja Lista APK
+
+on:
+  push:
+    branches:
+      - chatgpt-moja-lista-build
+    paths:
+      - 'moja-lista/**'
+      - '.github/workflows/build-moja-lista.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Gradle 8.11.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Build debug APK
+        run: gradle -p moja-lista :app:assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Moja-Lista-APK
+          path: moja-lista/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
