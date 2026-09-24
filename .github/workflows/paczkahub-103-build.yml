@@ -1,4 +1,4 @@
-name: PaczkaHub 1.0.5 APK
+name: PaczkaHub 1.0.6 APK
 
 on:
   push:
@@ -15,7 +15,7 @@ env:
 
 jobs:
   build:
-    name: Build PaczkaHub 1.0.5
+    name: Build PaczkaHub 1.0.6
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -37,7 +37,7 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Restore PaczkaHub 1.0.5 source
+      - name: Restore PaczkaHub 1.0.6 source
         shell: bash
         run: |
           cat ci-paczkahub/part-*.txt | base64 --decode > /tmp/paczkahub.zip
@@ -63,9 +63,13 @@ jobs:
           base64 -d ../ci-paczkahub-v105/paczkahub-1.0.5.patch.gz.b64 | gzip -d > /tmp/paczkahub-1.0.5.patch
           patch --batch -p1 < /tmp/paczkahub-1.0.5.patch
 
-          grep -q "versionName '1.0.5'" app/build.gradle
+          base64 -d ../ci-paczkahub-v106/paczkahub-1.0.6.patch.gz.b64 | gzip -d > /tmp/paczkahub-1.0.6.patch
+          patch --batch -p1 < /tmp/paczkahub-1.0.6.patch
+
+          grep -q "versionName '1.0.6'" app/build.gradle
           grep -q "Diagnostyka logowania Google" app/src/main/java/pl/paczkahub/SettingsActivity.java
           grep -q "play-services-auth:22.0.0" app/build.gradle
+          ! grep -q "setPersisted(true)" app/src/main/java/pl/paczkahub/sync/SyncScheduler.java
 
       - name: Build APK
         working-directory: paczkahub
@@ -77,17 +81,17 @@ jobs:
           mkdir -p dist
           APK="paczkahub/app/build/outputs/apk/debug/app-debug.apk"
           "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/CERTIFICATE.txt
-          cp "$APK" dist/PaczkaHub-1.0.5.apk
-          sha256sum dist/PaczkaHub-1.0.5.apk > dist/SHA256SUMS.txt
+          cp "$APK" dist/PaczkaHub-1.0.6.apk
+          sha256sum dist/PaczkaHub-1.0.6.apk > dist/SHA256SUMS.txt
 
           rm -rf paczkahub/app/build paczkahub/.gradle paczkahub/build
           cd paczkahub
-          zip -qr ../dist/PaczkaHub-1.0.5-kod-zrodlowy.zip . \
+          zip -qr ../dist/PaczkaHub-1.0.6-kod-zrodlowy.zip . \
             -x '*/build/*' '.gradle/*' '*.apk' '*.aab' 'local.properties'
 
       - uses: actions/upload-artifact@v4
         with:
-          name: PaczkaHub-1.0.5
+          name: PaczkaHub-1.0.6
           path: dist/*
           if-no-files-found: error
           retention-days: 7
