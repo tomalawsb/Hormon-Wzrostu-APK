@@ -75,6 +75,9 @@ jobs:
           base64 -d ../ci-paczkahub-v107/paczkahub-1.0.7.patch.gz.b64 | gzip -d > /tmp/paczkahub-1.0.7.patch
           patch --batch -p1 < /tmp/paczkahub-1.0.7.patch
 
+          base64 -d ../ci-paczkahub-v107/paczkahub-1.0.7-hotfix.patch.gz.b64 | gzip -d > /tmp/paczkahub-1.0.7-hotfix.patch
+          patch --batch -p1 < /tmp/paczkahub-1.0.7-hotfix.patch
+
           grep -q "versionName '1.0.7'" app/build.gradle
           grep -q "SELECT_ACCOUNT" app/src/main/java/pl/paczkahub/mail/GoogleAuth.java
           grep -q "parseAll" app/src/main/java/pl/paczkahub/mail/MailParser.java
