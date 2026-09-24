@@ -1,4 +1,4 @@
-name: PaczkaHub 1.0.1 APK artifact
+name: PaczkaHub 1.0.2 responsive APK
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ env:
 
 jobs:
   apk:
-    name: Build verified PaczkaHub 1.0.1 APK
+    name: Build verified PaczkaHub 1.0.2 APK
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -32,7 +32,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Restore fixed source
+      - name: Restore PaczkaHub 1.0.2 source
         shell: bash
         run: |
           cat ci-paczkahub/part-*.txt | base64 --decode > /tmp/paczkahub.zip
@@ -41,8 +41,11 @@ jobs:
           unzip -q /tmp/paczkahub.zip -d paczkahub
           cat ci-paczkahub-v101/main-*.b64 | base64 --decode > paczkahub/app/src/main/java/pl/paczkahub/MainActivity.java
           cp ci-paczkahub/build.gradle.1.0.1 paczkahub/app/build.gradle
-          grep -q "versionName '1.0.1'" paczkahub/app/build.gradle
-          grep -q "showStartupError" paczkahub/app/src/main/java/pl/paczkahub/MainActivity.java
+          cat ci-paczkahub-v102/patch-part-*.b64 | base64 --decode > /tmp/paczkahub-1.0.2.patch
+          cd paczkahub
+          patch --batch -p4 < /tmp/paczkahub-1.0.2.patch
+          grep -q "versionName '1.0.2'" app/build.gradle
+          grep -q "applySafeArea" app/src/main/java/pl/paczkahub/util/Ui.java
       - name: Build APK
         working-directory: paczkahub
         run: gradle --no-daemon :app:assembleDebug --stacktrace
@@ -52,11 +55,11 @@ jobs:
           APK="paczkahub/app/build/outputs/apk/debug/app-debug.apk"
           "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" verify --verbose "$APK"
           mkdir -p dist
-          cp "$APK" dist/PaczkaHub-1.0.1-debug.apk
-          sha256sum dist/PaczkaHub-1.0.1-debug.apk > dist/SHA256SUMS.txt
+          cp "$APK" dist/PaczkaHub-1.0.2-debug.apk
+          sha256sum dist/PaczkaHub-1.0.2-debug.apk > dist/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: PaczkaHub-1.0.1-debug
+          name: PaczkaHub-1.0.2-debug
           path: dist/*
           if-no-files-found: error
           retention-days: 7
