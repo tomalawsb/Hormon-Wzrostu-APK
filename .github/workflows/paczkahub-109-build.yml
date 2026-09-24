@@ -106,7 +106,7 @@ jobs:
           base64 -d ../ci-paczkahub-v108/paczkahub-1.0.8.patch.gz.b64 | gzip -d > /tmp/paczkahub-1.0.8.patch
           patch --batch -p1 < /tmp/paczkahub-1.0.8.patch
 
-          base64 -d ../ci-paczkahub-v109/paczkahub-1.0.9.patch.gz.b64 | gzip -d > /tmp/paczkahub-1.0.9.patch
+          cat ../ci-paczkahub-v109/part-*.b64 | base64 -d | gzip -d > /tmp/paczkahub-1.0.9.patch
           patch --batch -p1 < /tmp/paczkahub-1.0.9.patch
 
           grep -q "versionName '1.0.9'" app/build.gradle
