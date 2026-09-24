@@ -1,4 +1,4 @@
-name: PaczkaHub 1.0.9 Fixed APK
+name: PaczkaHub 1.0.10 APK
 
 on:
   push:
@@ -15,6 +15,7 @@ env:
 
 jobs:
   build:
+    name: Build PaczkaHub 1.0.10
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -43,12 +44,12 @@ jobs:
         run: |
           keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey | tee /tmp/key.txt
           grep -q 'SHA1: 1D:73:57:B6:99:98:6C:F1:7D:68:BF:45:D2:CE:0C:4F:AB:57:6E:5A' /tmp/key.txt
-      - name: Build, test and package
+      - name: Build, test and package 1.0.10
         shell: bash
-        run: bash ci-paczkahub-v109/build-fixed.sh
+        run: bash ci-paczkahub-v110/build.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: PaczkaHub-1.0.9-fixed
+          name: PaczkaHub-1.0.10
           path: dist/*
           if-no-files-found: error
           retention-days: 7
