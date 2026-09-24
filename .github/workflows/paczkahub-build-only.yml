@@ -1,4 +1,4 @@
-name: PaczkaHub 1.0.2 responsive APK
+name: PaczkaHub 1.0.3 Google APK
 
 on:
   pull_request:
@@ -14,12 +14,12 @@ env:
 
 jobs:
   apk:
-    name: Build verified PaczkaHub 1.0.2 APK
+    name: Build PaczkaHub 1.0.3 Google
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -32,7 +32,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Restore PaczkaHub 1.0.2 source
+      - name: Restore PaczkaHub source
         shell: bash
         run: |
           cat ci-paczkahub/part-*.txt | base64 --decode > /tmp/paczkahub.zip
@@ -44,36 +44,37 @@ jobs:
           cat ci-paczkahub-v102/patch-part-*.b64 | base64 --decode > /tmp/paczkahub-1.0.2.patch
           cd paczkahub
           patch --batch -p4 < /tmp/paczkahub-1.0.2.patch
-          grep -q "versionName '1.0.2'" app/build.gradle
-          grep -q "applySafeArea" app/src/main/java/pl/paczkahub/util/Ui.java
+          base64 -d ../ci-paczkahub-v103/paczkahub-1.0.3.patch.gz.b64 | gzip -d > /tmp/paczkahub-1.0.3.patch
+          patch --batch -p4 < /tmp/paczkahub-1.0.3.patch
+          grep -q "versionName '1.0.3'" app/build.gradle
+          grep -q "Dodaj konto Google" app/src/main/java/pl/paczkahub/SettingsActivity.java
+          grep -q "play-services-auth:21.6.0" app/build.gradle
       - name: Build APK
         working-directory: paczkahub
         run: gradle --no-daemon :app:assembleDebug --stacktrace
-      - name: Verify and package APK
+      - name: Sign stable development APK
         shell: bash
         run: |
-          APK="paczkahub/app/build/outputs/apk/debug/app-debug.apk"
-          "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" verify --verbose "$APK"
           mkdir -p dist
-          cp "$APK" dist/PaczkaHub-1.0.2-debug.apk
-          sha256sum dist/PaczkaHub-1.0.2-debug.apk > dist/SHA256SUMS.txt
+          APK="paczkahub/app/build/outputs/apk/debug/app-debug.apk"
+          "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" sign \
+            --ks ci-paczkahub-v103/paczkahub-dev.jks \
+            --ks-key-alias paczkahubdev \
+            --ks-pass pass:paczkahub-dev-2026 \
+            --key-pass pass:paczkahub-dev-2026 \
+            --out dist/PaczkaHub-1.0.3.apk "$APK"
+          "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" verify --verbose --print-certs dist/PaczkaHub-1.0.3.apk | tee dist/CERTIFICATE.txt
+          sha256sum dist/PaczkaHub-1.0.3.apk > dist/SHA256SUMS.txt
       - name: Package clean source
         shell: bash
         run: |
-          rm -rf paczkahub/.gradle paczkahub/build paczkahub/app/build
-          zip -qr dist/PaczkaHub-1.0.2-source.zip paczkahub
-          sha256sum dist/PaczkaHub-1.0.2-source.zip >> dist/SHA256SUMS.txt
+          rm -rf paczkahub/app/build paczkahub/.gradle paczkahub/build
+          cd paczkahub
+          zip -qr ../dist/PaczkaHub-1.0.3-kod-zrodlowy.zip . \
+            -x '*/build/*' '.gradle/*' '*.apk' '*.aab' 'local.properties'
       - uses: actions/upload-artifact@v4
         with:
-          name: PaczkaHub-1.0.2-debug
-          path: |
-            dist/PaczkaHub-1.0.2-debug.apk
-            dist/SHA256SUMS.txt
-          if-no-files-found: error
-          retention-days: 7
-      - uses: actions/upload-artifact@v4
-        with:
-          name: PaczkaHub-1.0.2-source
-          path: dist/PaczkaHub-1.0.2-source.zip
+          name: PaczkaHub-1.0.3
+          path: dist/*
           if-no-files-found: error
           retention-days: 7
