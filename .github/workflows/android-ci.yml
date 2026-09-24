@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: paczkahub-startup-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 env:
   ANDROID_HOME: /usr/local/lib/android/sdk
   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
@@ -16,7 +20,7 @@ jobs:
   build-paczkahub:
     name: Build and startup-test PaczkaHub APK
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -27,6 +31,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+
+      - name: Enable KVM
+        shell: bash
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+          ls -l /dev/kvm || true
 
       - name: Android SDK
         shell: bash
@@ -65,12 +77,12 @@ jobs:
         run: |
           export PATH="$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
           echo no | avdmanager create avd -n paczkahub_test -k "system-images;android-35;google_apis;x86_64" --force
-          nohup emulator -avd paczkahub_test -no-window -noaudio -no-boot-anim -gpu swiftshader_indirect -accel off > /tmp/emulator.log 2>&1 &
+          nohup emulator -avd paczkahub_test -no-window -noaudio -no-boot-anim -gpu swiftshader_indirect -no-snapshot > /tmp/emulator.log 2>&1 &
           adb wait-for-device
-          for i in $(seq 1 120); do
+          for i in $(seq 1 90); do
             BOOT="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"
             [ "$BOOT" = "1" ] && break
-            sleep 5
+            sleep 3
           done
           adb shell input keyevent 82 || true
           adb install -r paczkahub/app/build/outputs/apk/debug/app-debug.apk
@@ -82,11 +94,11 @@ jobs:
           adb logcat -d > /tmp/paczkahub-logcat.txt
           if [ -z "$PID" ]; then
             echo "APPLICATION_PROCESS_DIED"
-            grep -n -A 80 -B 20 -E "FATAL EXCEPTION|AndroidRuntime|pl.paczkahub" /tmp/paczkahub-logcat.txt || true
+            grep -n -A 100 -B 30 -E "FATAL EXCEPTION|AndroidRuntime|pl.paczkahub" /tmp/paczkahub-logcat.txt || true
             exit 1
           fi
           echo "APPLICATION_ALIVE PID=$PID"
-          grep -n -A 30 -B 10 -E "pl.paczkahub|AndroidRuntime" /tmp/paczkahub-logcat.txt || true
+          grep -n -A 40 -B 20 -E "pl.paczkahub|AndroidRuntime" /tmp/paczkahub-logcat.txt || true
 
       - name: Upload diagnostics
         if: always()
@@ -114,5 +126,3 @@ jobs:
           path: dist/PaczkaHub-1.0.0-debug.apk
           if-no-files-found: error
           retention-days: 7
-
-# diagnostic revision 3
