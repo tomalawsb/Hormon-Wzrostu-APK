@@ -49,7 +49,7 @@ jobs:
       - name: Build APK
         working-directory: paczkahub
         run: gradle --no-daemon :app:assembleDebug --stacktrace
-      - name: Verify and package
+      - name: Verify and package APK
         shell: bash
         run: |
           APK="paczkahub/app/build/outputs/apk/debug/app-debug.apk"
@@ -57,9 +57,23 @@ jobs:
           mkdir -p dist
           cp "$APK" dist/PaczkaHub-1.0.2-debug.apk
           sha256sum dist/PaczkaHub-1.0.2-debug.apk > dist/SHA256SUMS.txt
+      - name: Package clean source
+        shell: bash
+        run: |
+          rm -rf paczkahub/.gradle paczkahub/build paczkahub/app/build
+          zip -qr dist/PaczkaHub-1.0.2-source.zip paczkahub
+          sha256sum dist/PaczkaHub-1.0.2-source.zip >> dist/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: PaczkaHub-1.0.2-debug
-          path: dist/*
+          path: |
+            dist/PaczkaHub-1.0.2-debug.apk
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PaczkaHub-1.0.2-source
+          path: dist/PaczkaHub-1.0.2-source.zip
           if-no-files-found: error
           retention-days: 7
