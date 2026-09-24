@@ -81,6 +81,8 @@ jobs:
             adb shell am start -W -n pl.paczkahub/.MainActivity
             sleep 3
             test -n "$(adb shell pidof pl.paczkahub | tr -d '\r')"
+            adb shell input tap 360 708
+            sleep 1
             adb shell input tap 660 130
             sleep 2
             adb shell uiautomator dump /sdcard/paczkahub-settings-top.xml
