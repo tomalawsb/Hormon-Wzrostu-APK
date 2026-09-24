@@ -1,0 +1,71 @@
+name: PaczkaHub 1.0.3 clean build
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  ANDROID_HOME: /usr/local/lib/android/sdk
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
+jobs:
+  build:
+    name: Build PaczkaHub 1.0.3
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Android SDK
+        shell: bash
+        run: |
+          SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Restore PaczkaHub 1.0.3 source
+        shell: bash
+        run: |
+          cat ci-paczkahub/part-*.txt | base64 --decode > /tmp/paczkahub.zip
+          echo "0603befea83865501db520cbb7db77bb4614497bbe3bfc7b49cd246c1066b829  /tmp/paczkahub.zip" | sha256sum -c -
+          rm -rf paczkahub && mkdir paczkahub
+          unzip -q /tmp/paczkahub.zip -d paczkahub
+          cat ci-paczkahub-v101/main-*.b64 | base64 --decode > paczkahub/app/src/main/java/pl/paczkahub/MainActivity.java
+          cp ci-paczkahub/build.gradle.1.0.1 paczkahub/app/build.gradle
+          cat ci-paczkahub-v102/patch-part-*.b64 | base64 --decode > /tmp/paczkahub-1.0.2.patch
+          cd paczkahub
+          patch --batch -p4 < /tmp/paczkahub-1.0.2.patch
+          base64 -d ../ci-paczkahub-v103/paczkahub-1.0.3.patch.gz.b64 | gzip -d > /tmp/paczkahub-1.0.3.patch
+          patch --batch -p5 < /tmp/paczkahub-1.0.3.patch
+          grep -q "versionName '1.0.3'" app/build.gradle
+          grep -q "Dodaj konto Google" app/src/main/java/pl/paczkahub/SettingsActivity.java
+          grep -q "play-services-auth:21.6.0" app/build.gradle
+      - name: Build APK
+        working-directory: paczkahub
+        run: gradle --no-daemon :app:assembleDebug --stacktrace
+      - name: Package APK, source and signing tool
+        shell: bash
+        run: |
+          mkdir -p dist/sign-tools
+          cp paczkahub/app/build/outputs/apk/debug/app-debug.apk dist/PaczkaHub-1.0.3-build.apk
+          cp "$ANDROID_SDK_ROOT/build-tools/35.0.0/lib/apksigner.jar" dist/sign-tools/apksigner.jar
+          rm -rf paczkahub/app/build paczkahub/.gradle paczkahub/build
+          cd paczkahub
+          zip -qr ../dist/PaczkaHub-1.0.3-kod-zrodlowy.zip . -x '*/build/*' '.gradle/*' '*.apk' '*.aab' 'local.properties'
+          cd ../dist
+          sha256sum PaczkaHub-1.0.3-build.apk PaczkaHub-1.0.3-kod-zrodlowy.zip > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PaczkaHub-1.0.3-clean
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
