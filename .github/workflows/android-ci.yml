@@ -1,4 +1,4 @@
-name: PaczkaHub temporary APK build
+name: PaczkaHub 1.0.1 startup test
 
 on:
   pull_request:
@@ -18,7 +18,7 @@ env:
 
 jobs:
   build-paczkahub:
-    name: Build and startup-test PaczkaHub APK
+    name: Build and startup-test PaczkaHub 1.0.1
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -40,19 +40,19 @@ jobs:
           sudo udevadm trigger --name-match=kvm || true
           ls -l /dev/kvm || true
 
-      - name: Android SDK
+      - name: Android SDK 36
         shell: bash
         run: |
           SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
           yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
-          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0" "emulator" "system-images;android-35;google_apis;x86_64"
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "platforms;android-36" "build-tools;35.0.0" "emulator" "system-images;android-36;google_apis;x86_64"
 
       - name: Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Restore PaczkaHub source
+      - name: Restore PaczkaHub 1.0.1 source
         shell: bash
         run: |
           cat ci-paczkahub/part-*.txt | base64 --decode > /tmp/paczkahub.zip
@@ -60,6 +60,10 @@ jobs:
           rm -rf paczkahub
           mkdir paczkahub
           unzip -q /tmp/paczkahub.zip -d paczkahub
+          cat ci-paczkahub-v101/main-*.b64 | base64 --decode > paczkahub/app/src/main/java/pl/paczkahub/MainActivity.java
+          cp ci-paczkahub/build.gradle.1.0.1 paczkahub/app/build.gradle
+          grep -q "versionName '1.0.1'" paczkahub/app/build.gradle
+          grep -q "showStartupError" paczkahub/app/src/main/java/pl/paczkahub/MainActivity.java
 
       - name: Build debug APK
         working-directory: paczkahub
@@ -72,41 +76,49 @@ jobs:
           test -s "$APK"
           "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" verify --verbose "$APK"
 
-      - name: Start emulator and launch application
+      - name: Start Android 16 emulator and launch application
         shell: bash
         run: |
           export PATH="$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
-          echo no | avdmanager create avd -n paczkahub_test -k "system-images;android-35;google_apis;x86_64" --force
+          echo no | avdmanager create avd -n paczkahub_test -k "system-images;android-36;google_apis;x86_64" --force
           nohup emulator -avd paczkahub_test -no-window -noaudio -no-boot-anim -gpu swiftshader_indirect -no-snapshot > /tmp/emulator.log 2>&1 &
           adb wait-for-device
-          for i in $(seq 1 90); do
+          BOOTED=0
+          for i in $(seq 1 100); do
             BOOT="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"
-            [ "$BOOT" = "1" ] && break
+            if [ "$BOOT" = "1" ]; then BOOTED=1; break; fi
             sleep 3
           done
+          if [ "$BOOTED" != "1" ]; then
+            echo "EMULATOR_BOOT_FAILED"
+            tail -200 /tmp/emulator.log || true
+            exit 1
+          fi
           adb shell input keyevent 82 || true
           adb install -r paczkahub/app/build/outputs/apk/debug/app-debug.apk
           adb logcat -c
           adb shell am force-stop pl.paczkahub
           adb shell am start -W -n pl.paczkahub/.MainActivity || true
-          sleep 5
+          sleep 6
           PID="$(adb shell pidof pl.paczkahub 2>/dev/null | tr -d '\r')"
           adb logcat -d > /tmp/paczkahub-logcat.txt
+          adb shell dumpsys activity activities | grep -A 5 -B 5 pl.paczkahub > /tmp/paczkahub-activity.txt || true
           if [ -z "$PID" ]; then
             echo "APPLICATION_PROCESS_DIED"
-            grep -n -A 100 -B 30 -E "FATAL EXCEPTION|AndroidRuntime|pl.paczkahub" /tmp/paczkahub-logcat.txt || true
+            grep -n -A 120 -B 30 -E "FATAL EXCEPTION|AndroidRuntime|pl.paczkahub" /tmp/paczkahub-logcat.txt || true
             exit 1
           fi
           echo "APPLICATION_ALIVE PID=$PID"
-          grep -n -A 40 -B 20 -E "pl.paczkahub|AndroidRuntime" /tmp/paczkahub-logcat.txt || true
+          grep -n -A 60 -B 20 -E "FATAL EXCEPTION|AndroidRuntime|pl.paczkahub" /tmp/paczkahub-logcat.txt || true
 
       - name: Upload diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: PaczkaHub-startup-diagnostics
+          name: PaczkaHub-1.0.1-startup-diagnostics
           path: |
             /tmp/paczkahub-logcat.txt
+            /tmp/paczkahub-activity.txt
             /tmp/emulator.log
           if-no-files-found: ignore
           retention-days: 2
@@ -116,13 +128,14 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          cp paczkahub/app/build/outputs/apk/debug/app-debug.apk dist/PaczkaHub-1.0.0-debug.apk
+          cp paczkahub/app/build/outputs/apk/debug/app-debug.apk dist/PaczkaHub-1.0.1-debug.apk
+          sha256sum dist/PaczkaHub-1.0.1-debug.apk > dist/SHA256SUMS.txt
 
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: PaczkaHub-1.0.0-debug
-          path: dist/PaczkaHub-1.0.0-debug.apk
+          name: PaczkaHub-1.0.1-debug
+          path: dist/*
           if-no-files-found: error
           retention-days: 7
