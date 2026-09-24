@@ -1,199 +1,70 @@
-name: Testy i automatyczne wydanie APK
+name: PaczkaHub temporary APK build
 
 on:
   pull_request:
-  push:
     branches:
       - main
-  workflow_dispatch:
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
-
-concurrency:
-  group: android-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  HAS_SIGNING: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && secrets.ANDROID_KEYSTORE_PASSWORD != '' && secrets.ANDROID_KEY_ALIAS != '' && secrets.ANDROID_KEY_PASSWORD != '' }}
-  ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-  ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-  ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+  contents: read
 
 jobs:
-  test-and-build:
-    name: Testy i APK
+  build-paczkahub:
+    name: Zbuduj PaczkaHub APK
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 30
 
     steps:
       - name: Pobierz kod
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Ustaw Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
 
       - name: Ustaw Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
-          cache: gradle
 
       - name: Ustaw Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Zainstaluj Android API 36
+      - name: Zainstaluj Android API 35
         shell: bash
         run: |
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Zainstaluj zależności
-        run: npm ci --no-audit --no-fund
+      - name: Ustaw Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
 
-      - name: Synchronizuj pliki wersji
+      - name: Odtworz projekt PaczkaHub
         shell: bash
         run: |
-          VERSION_NAME="$(awk -F= '$1=="VERSION_NAME" {print $2}' android/version.properties)"
-          VERSION_CODE="$(awk -F= '$1=="VERSION_CODE" {print $2}' android/version.properties)"
-          node tools/run_python.js tools/set_version.py "$VERSION_NAME" "$VERSION_CODE" --sync
+          cat ci-paczkahub/part-*.txt | base64 --decode > /tmp/paczkahub.zip
+          echo "0603befea83865501db520cbb7db77bb4614497bbe3bfc7b49cd246c1066b829  /tmp/paczkahub.zip" | sha256sum -c -
+          rm -rf paczkahub
+          mkdir paczkahub
+          unzip -q /tmp/paczkahub.zip -d paczkahub
 
-      - name: Nadaj uprawnienia Gradle Wrapperowi
-        shell: bash
-        run: chmod +x android/gradlew
+      - name: Zbuduj APK debug
+        working-directory: paczkahub
+        run: gradle --no-daemon :app:assembleDebug --stacktrace
 
-      - name: Przygotuj i sprawdź cały projekt
-        env:
-          ANDROID_CHECK_REQUIRED: '1'
-        run: npm test
-
-      - name: Spakuj aktualną wersję PWA
-        if: github.event_name != 'pull_request'
+      - name: Zweryfikuj APK
         shell: bash
         run: |
+          APK="paczkahub/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" verify --verbose "$APK"
           mkdir -p dist
-          cd www
-          zip -r ../dist/Dzienniczek_Hormonu_PWA_${{ github.run_number }}.zip .
+          cp "$APK" dist/PaczkaHub-1.0.0-debug.apk
+          sha256sum dist/PaczkaHub-1.0.0-debug.apk
 
-      - name: Udostępnij PWA jako artefakt
-        if: github.event_name != 'pull_request'
+      - name: Udostepnij APK
         uses: actions/upload-artifact@v4
         with:
-          name: Dzienniczek-Hormonu-PWA-${{ github.run_number }}
-          path: www/
+          name: PaczkaHub-1.0.0-debug
+          path: dist/PaczkaHub-1.0.0-debug.apk
           if-no-files-found: error
-          retention-days: 30
-
-      - name: Przygotuj GitHub Pages
-        if: github.event_name != 'pull_request'
-        uses: actions/configure-pages@v5
-
-      - name: Wyślij PWA do GitHub Pages
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: www
-
-      - name: Udostępnij APK debug jako artefakt
-        uses: actions/upload-artifact@v4
-        with:
-          name: Dzienniczek-Hormonu-debug-${{ github.run_number }}
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Wymagaj sekretów podpisu dla wydania
-        if: github.event_name != 'pull_request' && env.HAS_SIGNING != 'true'
-        shell: bash
-        run: |
-          echo "Brak sekretów podpisu Androida."
-          exit 1
-
-      - name: Odtwórz prywatny klucz podpisu
-        if: github.event_name != 'pull_request' && env.HAS_SIGNING == 'true'
-        shell: bash
-        env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        run: |
-          mkdir -p "$RUNNER_TEMP/dzienniczek-signing"
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/dzienniczek-signing/dzienniczek-release.p12"
-          test -s "$RUNNER_TEMP/dzienniczek-signing/dzienniczek-release.p12"
-          echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/dzienniczek-signing/dzienniczek-release.p12" >> "$GITHUB_ENV"
-
-      - name: Zbuduj podpisany APK i AAB
-        if: github.event_name != 'pull_request' && env.HAS_SIGNING == 'true'
-        working-directory: android
-        run: ./gradlew --no-daemon assembleRelease bundleRelease --stacktrace
-
-      - name: Przygotuj pliki wydania
-        if: github.event_name != 'pull_request' && env.HAS_SIGNING == 'true'
-        shell: bash
-        run: |
-          VERSION_NAME="$(awk -F= '$1=="VERSION_NAME" {print $2}' android/version.properties)"
-          VERSION_CODE="$(awk -F= '$1=="VERSION_CODE" {print $2}' android/version.properties)"
-          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
-          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
-          echo "RELEASE_TAG=v$VERSION_NAME" >> "$GITHUB_ENV"
-          mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk "dist/Dzienniczek_Hormonu_v${VERSION_NAME}.apk"
-          cp android/app/build/outputs/bundle/release/app-release.aab "dist/Dzienniczek_Hormonu_v${VERSION_NAME}.aab"
-          sha256sum dist/* > dist/SHA256SUMS.txt
-
-      - name: Zweryfikuj podpis
-        if: github.event_name != 'pull_request' && env.HAS_SIGNING == 'true'
-        shell: bash
-        run: |
-          APK_FILE="$(find dist -maxdepth 1 -name '*.apk' -print -quit)"
-          AAB_FILE="$(find dist -maxdepth 1 -name '*.aab' -print -quit)"
-          APKSIGNER="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
-          "$APKSIGNER" verify --verbose --print-certs "$APK_FILE"
-          jarsigner -verify "$AAB_FILE"
-
-      - name: Udostępnij podpisane pliki jako artefakt
-        if: github.event_name != 'pull_request' && env.HAS_SIGNING == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: Dzienniczek-Hormonu-release-${{ env.VERSION_NAME }}
-          path: dist/*
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Utwórz automatyczne wydanie GitHub
-        if: github.event_name != 'pull_request' && env.HAS_SIGNING == 'true'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            echo "Wydanie $RELEASE_TAG już istnieje."
-            exit 0
-          fi
-          gh release create "$RELEASE_TAG" \
-            dist/*.apk \
-            dist/*.aab \
-            dist/SHA256SUMS.txt \
-            dist/Dzienniczek_Hormonu_PWA_*.zip \
-            --target "$GITHUB_SHA" \
-            --title "Dzienniczek Hormonu $RELEASE_TAG" \
-            --notes "Automatyczne wydanie wersji $VERSION_NAME (versionCode $VERSION_CODE)."
-
-  deploy-pwa:
-    name: Publikacja PWA
-    if: github.event_name != 'pull_request'
-    needs: test-and-build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Opublikuj aktualną wersję PWA
-        id: deployment
-        uses: actions/deploy-pages@v4
+          retention-days: 7
