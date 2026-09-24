@@ -1,0 +1,62 @@
+name: PaczkaHub 1.0.1 APK artifact
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  ANDROID_HOME: /usr/local/lib/android/sdk
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
+jobs:
+  apk:
+    name: Build verified PaczkaHub 1.0.1 APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Android SDK
+        shell: bash
+        run: |
+          SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Restore fixed source
+        shell: bash
+        run: |
+          cat ci-paczkahub/part-*.txt | base64 --decode > /tmp/paczkahub.zip
+          echo "0603befea83865501db520cbb7db77bb4614497bbe3bfc7b49cd246c1066b829  /tmp/paczkahub.zip" | sha256sum -c -
+          rm -rf paczkahub && mkdir paczkahub
+          unzip -q /tmp/paczkahub.zip -d paczkahub
+          cat ci-paczkahub-v101/main-*.b64 | base64 --decode > paczkahub/app/src/main/java/pl/paczkahub/MainActivity.java
+          cp ci-paczkahub/build.gradle.1.0.1 paczkahub/app/build.gradle
+          grep -q "versionName '1.0.1'" paczkahub/app/build.gradle
+          grep -q "showStartupError" paczkahub/app/src/main/java/pl/paczkahub/MainActivity.java
+      - name: Build APK
+        working-directory: paczkahub
+        run: gradle --no-daemon :app:assembleDebug --stacktrace
+      - name: Verify and package
+        shell: bash
+        run: |
+          APK="paczkahub/app/build/outputs/apk/debug/app-debug.apk"
+          "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" verify --verbose "$APK"
+          mkdir -p dist
+          cp "$APK" dist/PaczkaHub-1.0.1-debug.apk
+          sha256sum dist/PaczkaHub-1.0.1-debug.apk > dist/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PaczkaHub-1.0.1-debug
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
