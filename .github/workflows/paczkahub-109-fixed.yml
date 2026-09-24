@@ -1,0 +1,54 @@
+name: PaczkaHub 1.0.9 Fixed APK
+
+on:
+  push:
+    branches:
+      - build-paczkahub-104-google-fix
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ANDROID_HOME: /usr/local/lib/android/sdk
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Android SDK
+        shell: bash
+        run: |
+          SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Restore stable signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: paczkahub-debug-keystore-v1
+          fail-on-cache-miss: true
+      - name: Verify signing key
+        shell: bash
+        run: |
+          keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey | tee /tmp/key.txt
+          grep -q 'SHA1: 1D:73:57:B6:99:98:6C:F1:7D:68:BF:45:D2:CE:0C:4F:AB:57:6E:5A' /tmp/key.txt
+      - name: Build, test and package
+        shell: bash
+        run: bash ci-paczkahub-v109/build-fixed.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PaczkaHub-1.0.9-fixed
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
