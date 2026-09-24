@@ -14,33 +14,33 @@ env:
 
 jobs:
   build-paczkahub:
-    name: Zbuduj PaczkaHub APK
+    name: Build and startup-test PaczkaHub APK
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
 
     steps:
-      - name: Pobierz kod
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Ustaw Java
+      - name: Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
 
-      - name: Zainstaluj Android API 35
+      - name: Android SDK
         shell: bash
         run: |
           SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
           yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
-          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0" "emulator" "system-images;android-35;google_apis;x86_64"
 
-      - name: Ustaw Gradle
+      - name: Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Odtworz projekt PaczkaHub
+      - name: Restore PaczkaHub source
         shell: bash
         run: |
           cat ci-paczkahub/part-*.txt | base64 --decode > /tmp/paczkahub.zip
@@ -49,21 +49,65 @@ jobs:
           mkdir paczkahub
           unzip -q /tmp/paczkahub.zip -d paczkahub
 
-      - name: Zbuduj APK debug
+      - name: Build debug APK
         working-directory: paczkahub
         run: gradle --no-daemon :app:assembleDebug --stacktrace
 
-      - name: Zweryfikuj APK
+      - name: Verify APK
         shell: bash
         run: |
           APK="paczkahub/app/build/outputs/apk/debug/app-debug.apk"
           test -s "$APK"
           "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" verify --verbose "$APK"
-          mkdir -p dist
-          cp "$APK" dist/PaczkaHub-1.0.0-debug.apk
-          sha256sum dist/PaczkaHub-1.0.0-debug.apk
 
-      - name: Udostepnij APK
+      - name: Start emulator and launch application
+        shell: bash
+        run: |
+          export PATH="$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
+          echo no | avdmanager create avd -n paczkahub_test -k "system-images;android-35;google_apis;x86_64" --force
+          nohup emulator -avd paczkahub_test -no-window -noaudio -no-boot-anim -gpu swiftshader_indirect -accel off > /tmp/emulator.log 2>&1 &
+          adb wait-for-device
+          for i in $(seq 1 120); do
+            BOOT="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"
+            [ "$BOOT" = "1" ] && break
+            sleep 5
+          done
+          adb shell input keyevent 82 || true
+          adb install -r paczkahub/app/build/outputs/apk/debug/app-debug.apk
+          adb logcat -c
+          adb shell am force-stop pl.paczkahub
+          adb shell am start -W -n pl.paczkahub/.MainActivity || true
+          sleep 5
+          PID="$(adb shell pidof pl.paczkahub 2>/dev/null | tr -d '\r')"
+          adb logcat -d > /tmp/paczkahub-logcat.txt
+          if [ -z "$PID" ]; then
+            echo "APPLICATION_PROCESS_DIED"
+            grep -n -A 80 -B 20 -E "FATAL EXCEPTION|AndroidRuntime|pl.paczkahub" /tmp/paczkahub-logcat.txt || true
+            exit 1
+          fi
+          echo "APPLICATION_ALIVE PID=$PID"
+          grep -n -A 30 -B 10 -E "pl.paczkahub|AndroidRuntime" /tmp/paczkahub-logcat.txt || true
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PaczkaHub-startup-diagnostics
+          path: |
+            /tmp/paczkahub-logcat.txt
+            /tmp/emulator.log
+          if-no-files-found: ignore
+          retention-days: 2
+
+      - name: Package APK
+        if: success()
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp paczkahub/app/build/outputs/apk/debug/app-debug.apk dist/PaczkaHub-1.0.0-debug.apk
+
+      - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: PaczkaHub-1.0.0-debug
