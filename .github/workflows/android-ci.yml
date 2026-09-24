@@ -89,13 +89,12 @@ jobs:
             adb pull /sdcard/paczkahub-settings-top.xml /tmp/paczkahub-settings-top.xml
             grep -q 'text="Ustawienia"' /tmp/paczkahub-settings-top.xml
             adb shell input swipe 360 1080 360 260 500
-            adb shell input swipe 360 1080 360 260 500
-            adb shell input swipe 360 1080 360 260 500
+            sleep 1
             adb shell uiautomator dump /sdcard/paczkahub-settings.xml
             adb pull /sdcard/paczkahub-settings.xml /tmp/paczkahub-settings.xml
-            grep -q 'text="Zapisz ustawienia"' /tmp/paczkahub-settings.xml
             adb exec-out screencap -p > /tmp/paczkahub-settings-small.png
             adb logcat -d > /tmp/paczkahub-logcat.txt
+            grep -q 'text="Zapisz ustawienia"' /tmp/paczkahub-settings.xml
       - name: Upload UI diagnostics
         if: always()
         uses: actions/upload-artifact@v4
