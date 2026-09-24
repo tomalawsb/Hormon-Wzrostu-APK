@@ -1,4 +1,4 @@
-name: PaczkaHub 1.0.6 APK
+name: PaczkaHub 1.0.7 APK
 
 on:
   push:
@@ -15,7 +15,7 @@ env:
 
 jobs:
   build:
-    name: Build PaczkaHub 1.0.6
+    name: Build PaczkaHub 1.0.7
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -37,7 +37,13 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Restore PaczkaHub 1.0.6 source
+      - name: Restore stable PaczkaHub debug signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: paczkahub-debug-keystore-v1
+
+      - name: Restore PaczkaHub 1.0.7 source
         shell: bash
         run: |
           cat ci-paczkahub/part-*.txt | base64 --decode > /tmp/paczkahub.zip
@@ -66,10 +72,29 @@ jobs:
           base64 -d ../ci-paczkahub-v106/paczkahub-1.0.6.patch.gz.b64 | gzip -d > /tmp/paczkahub-1.0.6.patch
           patch --batch -p1 < /tmp/paczkahub-1.0.6.patch
 
-          grep -q "versionName '1.0.6'" app/build.gradle
-          grep -q "Diagnostyka logowania Google" app/src/main/java/pl/paczkahub/SettingsActivity.java
-          grep -q "play-services-auth:22.0.0" app/build.gradle
-          ! grep -q "setPersisted(true)" app/src/main/java/pl/paczkahub/sync/SyncScheduler.java
+          base64 -d ../ci-paczkahub-v107/paczkahub-1.0.7.patch.gz.b64 | gzip -d > /tmp/paczkahub-1.0.7.patch
+          patch --batch -p1 < /tmp/paczkahub-1.0.7.patch
+
+          grep -q "versionName '1.0.7'" app/build.gradle
+          grep -q "SELECT_ACCOUNT" app/src/main/java/pl/paczkahub/mail/GoogleAuth.java
+          grep -q "parseAll" app/src/main/java/pl/paczkahub/mail/MailParser.java
+          grep -q "getImapAccounts" app/src/main/java/pl/paczkahub/util/AppPrefs.java
+          grep -q "2500" app/src/main/java/pl/paczkahub/sync/ImapSyncManager.java
+
+      - name: Test carrier parser
+        shell: bash
+        working-directory: paczkahub
+        run: |
+          rm -rf /tmp/parser-test && mkdir -p /tmp/parser-test
+          javac -encoding UTF-8 -d /tmp/parser-test \
+            app/src/main/java/pl/paczkahub/data/Carrier.java \
+            app/src/main/java/pl/paczkahub/data/CustomFilter.java \
+            app/src/main/java/pl/paczkahub/data/ParcelStatus.java \
+            app/src/main/java/pl/paczkahub/mail/MimeDecoder.java \
+            app/src/main/java/pl/paczkahub/mail/ParsedShipment.java \
+            app/src/main/java/pl/paczkahub/mail/MailParser.java \
+            tests/TestParser107.java
+          java -cp /tmp/parser-test TestParser107
 
       - name: Build APK
         working-directory: paczkahub
@@ -81,17 +106,17 @@ jobs:
           mkdir -p dist
           APK="paczkahub/app/build/outputs/apk/debug/app-debug.apk"
           "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/CERTIFICATE.txt
-          cp "$APK" dist/PaczkaHub-1.0.6.apk
-          sha256sum dist/PaczkaHub-1.0.6.apk > dist/SHA256SUMS.txt
+          cp "$APK" dist/PaczkaHub-1.0.7.apk
+          sha256sum dist/PaczkaHub-1.0.7.apk > dist/SHA256SUMS.txt
 
           rm -rf paczkahub/app/build paczkahub/.gradle paczkahub/build
           cd paczkahub
-          zip -qr ../dist/PaczkaHub-1.0.6-kod-zrodlowy.zip . \
+          zip -qr ../dist/PaczkaHub-1.0.7-kod-zrodlowy.zip . \
             -x '*/build/*' '.gradle/*' '*.apk' '*.aab' 'local.properties'
 
       - uses: actions/upload-artifact@v4
         with:
-          name: PaczkaHub-1.0.6
+          name: PaczkaHub-1.0.7
           path: dist/*
           if-no-files-found: error
           retention-days: 7
