@@ -9,8 +9,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: paczkahub-startup-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: paczkahub-startup-${{ github.sha }}
+  cancel-in-progress: false
 
 env:
   ANDROID_HOME: /usr/local/lib/android/sdk
