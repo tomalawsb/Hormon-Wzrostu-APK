@@ -102,9 +102,19 @@ jobs:
               if needle not in s:
                   raise SystemExit("Nie znaleziono miejsca dla poprawki IMAP")
               p.write_text(s.replace(needle, repl))
+
+          g = Path("app/build.gradle")
+          gs = g.read_text()
+          if "PACZKAHUB_STABLE_DEBUG_SIGNING" not in gs:
+              marker = "    buildTypes {\n"
+              replacement = '''    // PACZKAHUB_STABLE_DEBUG_SIGNING\n    signingConfigs {\n        debug {\n            storeFile file(System.getProperty("user.home") + "/.android/debug.keystore")\n            storePassword "android"\n            keyAlias "androiddebugkey"\n            keyPassword "android"\n        }\n    }\n\n    buildTypes {\n        debug {\n            signingConfig signingConfigs.debug\n        }\n'''
+              if marker not in gs:
+                  raise SystemExit("Nie znaleziono buildTypes dla podpisu")
+              g.write_text(gs.replace(marker, replacement, 1))
           PYFIX
 
           grep -q "versionName '1.0.7'" app/build.gradle
+          grep -q "PACZKAHUB_STABLE_DEBUG_SIGNING" app/build.gradle
           grep -q "SELECT_ACCOUNT" app/src/main/java/pl/paczkahub/mail/GoogleAuth.java
           grep -q "parseAll" app/src/main/java/pl/paczkahub/mail/MailParser.java
           grep -q "getImapAccounts" app/src/main/java/pl/paczkahub/util/AppPrefs.java
