@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+env:
+  ANDROID_HOME: /usr/local/lib/android/sdk
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
 jobs:
   build-paczkahub:
     name: Zbuduj PaczkaHub APK
@@ -24,14 +28,12 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Ustaw Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Zainstaluj Android API 35
         shell: bash
         run: |
-          yes | sdkmanager --licenses >/dev/null 2>&1 || true
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Ustaw Gradle
         uses: gradle/actions/setup-gradle@v4
