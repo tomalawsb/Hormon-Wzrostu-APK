@@ -46,6 +46,7 @@ jobs:
           patch --batch -p4 < /tmp/paczkahub-1.0.2.patch
           base64 -d ../ci-paczkahub-v103/paczkahub-1.0.3.patch.gz.b64 | gzip -d > /tmp/paczkahub-1.0.3.patch
           patch --batch -p5 < /tmp/paczkahub-1.0.3.patch
+          printf '\nandroid.useAndroidX=true\n' >> gradle.properties
           grep -q "versionName '1.0.3'" app/build.gradle
           grep -q "Dodaj konto Google" app/src/main/java/pl/paczkahub/SettingsActivity.java
           grep -q "play-services-auth:21.6.0" app/build.gradle
