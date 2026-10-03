@@ -23,6 +23,7 @@
     const launchedProfileChanged = applyProfileFromLaunchUrl();
     if (launchedProfileChanged) resetQuickDraftForToday();
     bindEvents();
+    bindAmpouleLifecycle();
     bindThemePreferences();
     bindSecurityEvents();
     bindNativeEvents();

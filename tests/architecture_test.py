@@ -68,7 +68,7 @@ style_manifest, style_parts = verify_manifest("src/styles/style-order.json", "fi
 
 require(len(app_parts) >= 40, "kod aplikacji nadal jest podzielony zbyt ogólnie")
 require(len(html_parts) >= 10, "HTML nadal jest monolitem")
-require(len(style_parts) == 5, "CSS nie ma pięciu ustalonych warstw")
+require(len(style_parts) == 6, "CSS nie ma sześciu ustalonych warstw")
 require(not (ROOT / "src/app").exists(), "pozostał stary katalog modułów src/app")
 require(not list((ROOT / "src/services").rglob("*.html")), "warstwa usług zawiera HTML widoku")
 

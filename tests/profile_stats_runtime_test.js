@@ -64,7 +64,8 @@ const injectedCheck = String.raw`
       scopeLabel: profile.name, periodText: 'test'
     };
     const reportHtml = buildDoctorReportProfileHtml(reportConfig);
-    const docxSection = buildDocxDoctorProfileSection(reportConfig);
+    reportConfig.fourth = { number: '1', text: 'profil' };
+    const docxSection = createReportModel(reportConfig).lines.join('\n');
     const invalidMeasurement = sanitizeProfileMeasurement({
       id: 'invalid', date: '2026-07-19', heightCm: '999', weightKg: ''
     });

@@ -15,7 +15,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -35,7 +34,7 @@ final class ReminderScheduler {
     private static final int MAX_PROFILE_ID_CHARS = 100;
     private static final int MAX_PROFILE_NAME_CHARS = 80;
     private static final int MAX_BODY_CHARS = 1400;
-    private static final long LATE_REMINDER_DELAY_MS = 5_000L;
+    static final String EXTRA_KIND = "reminder_kind";
     private static final Pattern PROFILE_ID = Pattern.compile("^[A-Za-z0-9_-]{1,100}$");
     private static final Pattern TIME = Pattern.compile("^(?:[01]\\d|2[0-3]):[0-5]\\d$");
     private static final Pattern ISO_DATE = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}$");
@@ -55,12 +54,25 @@ final class ReminderScheduler {
             for (int index = 0; index < incoming.length(); index += 1) {
                 JSONObject profile = sanitizeProfile(incoming.optJSONObject(index), false);
                 if (profile == null) continue;
-                JSONObject oldProfile = previousById.get(profile.optString("profileId"));
+                JSONObject oldProfile = previousById.get(scheduleKey(profile));
                 if (oldProfile != null) {
                     profile.put("lastDeliveredDate", oldProfile.optString("lastDeliveredDate"));
                     profile.put("lastAttemptDate", oldProfile.optString("lastAttemptDate"));
                 }
                 profiles.put(profile);
+                JSONObject source = incoming.optJSONObject(index);
+                if (source.optBoolean("replacementNeeded") && validDate(source.optString("replacementFromDate"))) {
+                    JSONObject warning = new JSONObject(profile.toString());
+                    warning.put("reminderKind", "ampoule");
+                    warning.put("fromDate", source.optString("replacementFromDate"));
+                    warning.put("body", bounded(source.optString("replacementBody"), MAX_BODY_CHARS,
+                            "Sprawdź wymianę ampułki i potwierdź ją w aplikacji."));
+                    warning.put("lastReminderDate", "");
+                    JSONObject oldWarning = previousById.get(scheduleKey(warning));
+                    warning.put("lastDeliveredDate", oldWarning == null ? "" : oldWarning.optString("lastDeliveredDate"));
+                    warning.put("lastAttemptDate", oldWarning == null ? "" : oldWarning.optString("lastAttemptDate"));
+                    profiles.put(warning);
+                }
             }
             return scheduleAndPersist(context, profiles);
         } catch (Exception error) {
@@ -78,30 +90,33 @@ final class ReminderScheduler {
         }
     }
 
-    static synchronized void handleAlarm(Context context, String profileId, String scheduledDate) {
+    static synchronized void handleAlarm(Context context, String profileId, String scheduledDate, String kind) {
         if (context == null || !validProfileId(profileId) || !validDate(scheduledDate)) return;
         try {
             JSONArray profiles = readProfiles(context);
-            JSONObject profile = findProfile(profiles, profileId);
+            JSONObject profile = findProfile(profiles, profileId, kind);
             if (profile == null || !profile.optBoolean("enabled")) return;
             String expectedDate = profile.optString("nextDate");
             if (!expectedDate.isEmpty() && !expectedDate.equals(scheduledDate)) return;
 
             String today = localDate(new Date());
-            boolean entryAlreadySaved = today.equals(profile.optString("today"))
+            boolean replacement = isReplacement(profile);
+            String deliveryDate = replacement ? scheduledDate : today;
+            boolean entryAlreadySaved = deliveryDate.equals(profile.optString("today"))
                     && profile.optBoolean("todayHasEntry");
             String lastKnown = maxDate(
                     profile.optString("lastReminderDate"),
                     profile.optString("lastDeliveredDate"),
                     profile.optString("lastAttemptDate")
             );
-            boolean shouldNotify = scheduledDate.compareTo(today) <= 0
-                    && !entryAlreadySaved
-                    && lastKnown.compareTo(today) < 0;
+            boolean due = replacement
+                    ? profile.optLong("nextAt", Long.MAX_VALUE) <= System.currentTimeMillis()
+                    : scheduledDate.compareTo(today) <= 0;
+            boolean shouldNotify = due && !entryAlreadySaved && lastKnown.compareTo(deliveryDate) < 0;
             if (shouldNotify) {
-                profile.put("lastAttemptDate", today);
-                if (showNotification(context, profile, today, false)) {
-                    profile.put("lastDeliveredDate", today);
+                profile.put("lastAttemptDate", deliveryDate);
+                if (showNotification(context, profile, deliveryDate, false)) {
+                    profile.put("lastDeliveredDate", deliveryDate);
                 }
             }
             scheduleAndPersist(context, profiles);
@@ -115,15 +130,20 @@ final class ReminderScheduler {
             JSONArray profiles = readProfiles(context);
             int configured = 0;
             int scheduled = 0;
+            int replacementScheduled = 0;
+            long replacementNextAt = 0L;
             long nextAt = 0L;
             String mode = "none";
             for (int index = 0; index < profiles.length(); index += 1) {
                 JSONObject profile = profiles.optJSONObject(index);
                 if (profile == null || !profile.optBoolean("enabled")) continue;
-                configured += 1;
+                if (!isReplacement(profile)) configured += 1;
                 long candidate = profile.optLong("nextAt", 0L);
                 if (candidate <= 0L) continue;
-                scheduled += 1;
+                if (isReplacement(profile)) {
+                    replacementScheduled += 1;
+                    if (replacementNextAt == 0L || candidate < replacementNextAt) replacementNextAt = candidate;
+                } else scheduled += 1;
                 if (nextAt == 0L || candidate < nextAt) nextAt = candidate;
                 String candidateMode = profile.optString("scheduleMode", "none");
                 if ("inexact".equals(candidateMode)) mode = "inexact";
@@ -133,6 +153,8 @@ final class ReminderScheduler {
             result.put("configuredProfiles", configured);
             result.put("scheduledProfiles", scheduled);
             result.put("nextTriggerAt", nextAt);
+            result.put("replacementScheduled", replacementScheduled);
+            result.put("replacementNextAt", replacementNextAt);
             result.put("scheduleMode", mode);
         } catch (Exception error) {
             putQuietly(result, "storageReady", false);
@@ -205,7 +227,7 @@ final class ReminderScheduler {
         if (manager == null) return;
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
-                "Przypomnienia o zastrzykach",
+                "Zastrzyki i wymiana ampułki",
                 NotificationManager.IMPORTANCE_HIGH
         );
         channel.setDescription("Codzienne przypomnienia Dzienniczka Hormonu");
@@ -224,7 +246,7 @@ final class ReminderScheduler {
             profile.remove("nextDate");
             profile.put("scheduleMode", "none");
             if (!notificationAccess || !profile.optBoolean("enabled")) continue;
-            Trigger trigger = nextTrigger(profile, now);
+            ReminderTiming.Trigger trigger = nextTrigger(profile, now);
             profile.put("nextAt", trigger.atMillis);
             profile.put("nextDate", trigger.date);
             profile.put("scheduleMode", canScheduleExact(context) ? "exact" : "inexact");
@@ -236,11 +258,11 @@ final class ReminderScheduler {
         for (int index = 0; index < profiles.length(); index += 1) {
             JSONObject profile = profiles.optJSONObject(index);
             if (profile == null || profile.optLong("nextAt", 0L) <= 0L) continue;
-            Trigger trigger = new Trigger(
+            ReminderTiming.Trigger trigger = new ReminderTiming.Trigger(
                     profile.optLong("nextAt"),
                     profile.optString("nextDate")
             );
-            String mode = scheduleAlarm(context, profile.optString("profileId"), trigger);
+            String mode = scheduleAlarm(context, profile, trigger);
             if ("none".equals(mode)) {
                 profile.remove("nextAt");
                 profile.remove("nextDate");
@@ -258,42 +280,19 @@ final class ReminderScheduler {
         return scheduled;
     }
 
-    private static Trigger nextTrigger(JSONObject profile, long nowMillis) {
-        Calendar now = Calendar.getInstance();
-        now.setTimeInMillis(nowMillis);
-        String today = localDate(now.getTime());
-        String[] time = profile.optString("time", "21:00").split(":", 2);
-        int hour = Integer.parseInt(time[0]);
-        int minute = Integer.parseInt(time[1]);
-        Calendar target = Calendar.getInstance();
-        target.setTimeInMillis(nowMillis);
-        target.set(Calendar.HOUR_OF_DAY, hour);
-        target.set(Calendar.MINUTE, minute);
-        target.set(Calendar.SECOND, 0);
-        target.set(Calendar.MILLISECOND, 0);
-        boolean todayHasEntry = today.equals(profile.optString("today"))
-                && profile.optBoolean("todayHasEntry");
-        String lastKnown = maxDate(
-                profile.optString("lastReminderDate"),
-                profile.optString("lastDeliveredDate"),
-                profile.optString("lastAttemptDate")
-        );
-        if (todayHasEntry || lastKnown.compareTo(today) >= 0) {
-            target.add(Calendar.DAY_OF_YEAR, 1);
-            return new Trigger(target.getTimeInMillis(), localDate(target.getTime()));
-        }
-        if (target.getTimeInMillis() <= nowMillis) {
-            return new Trigger(nowMillis + LATE_REMINDER_DELAY_MS, today);
-        }
-        return new Trigger(target.getTimeInMillis(), today);
+    private static ReminderTiming.Trigger nextTrigger(JSONObject profile, long nowMillis) {
+        return ReminderTiming.next(profile.optString("time", "21:00"), profile.optString("today"),
+                profile.optBoolean("todayHasEntry"), maxDate(profile.optString("lastReminderDate"),
+                profile.optString("lastDeliveredDate"), profile.optString("lastAttemptDate")),
+                isReplacement(profile), profile.optString("fromDate"), nowMillis);
     }
 
-    private static String scheduleAlarm(Context context, String profileId, Trigger trigger) {
+    private static String scheduleAlarm(Context context, JSONObject profile, ReminderTiming.Trigger trigger) {
         AlarmManager manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (manager == null) return "none";
         PendingIntent operation = alarmPendingIntent(
                 context,
-                profileId,
+                profile,
                 trigger.date,
                 PendingIntent.FLAG_UPDATE_CURRENT
         );
@@ -329,7 +328,7 @@ final class ReminderScheduler {
             if (!validProfileId(profileId)) continue;
             PendingIntent operation = alarmPendingIntent(
                     context,
-                    profileId,
+                    profile,
                     "",
                     PendingIntent.FLAG_NO_CREATE
             );
@@ -342,16 +341,18 @@ final class ReminderScheduler {
 
     private static PendingIntent alarmPendingIntent(
             Context context,
-            String profileId,
+            JSONObject profile,
             String date,
             int behaviorFlag
     ) {
+        String profileId = profile.optString("profileId");
         Intent intent = new Intent(context, ReminderAlarmReceiver.class);
         intent.setAction(ACTION_REMINDER);
         intent.putExtra(EXTRA_PROFILE_ID, profileId);
+        intent.putExtra(EXTRA_KIND, isReplacement(profile) ? "ampoule" : "daily");
         if (!date.isEmpty()) intent.putExtra(EXTRA_DATE, date);
         int flags = behaviorFlag | PendingIntent.FLAG_IMMUTABLE;
-        return PendingIntent.getBroadcast(context, stableId(profileId), intent, flags);
+        return PendingIntent.getBroadcast(context, stableId(scheduleKey(profile)), intent, flags);
     }
 
     private static boolean showNotification(
@@ -366,7 +367,7 @@ final class ReminderScheduler {
         String profileName = profile.optString("profileName", "Profil");
         String title = profile.optString(
                 "customTitle",
-                test ? "Test przypomnienia — " + profileName : "Czas na zastrzyk — " + profileName
+                test ? "Test przypomnienia — " + profileName : (isReplacement(profile) ? "Wymiana ampułki — " : "Czas na zastrzyk — ") + profileName
         );
         String body = profile.optString("body", "Otwórz aplikację i zapisz podanie.");
         Intent openIntent = new Intent(context, MainActivity.class);
@@ -374,10 +375,11 @@ final class ReminderScheduler {
         openIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         openIntent.putExtra(EXTRA_PROFILE_ID, profileId);
         openIntent.putExtra(EXTRA_DATE, date);
+        openIntent.putExtra(EXTRA_KIND, isReplacement(profile) ? "ampoule" : "daily");
         int pendingFlags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
         PendingIntent contentIntent = PendingIntent.getActivity(
                 context,
-                stableId("open:" + profileId),
+                stableId("open:" + scheduleKey(profile)),
                 openIntent,
                 pendingFlags
         );
@@ -398,7 +400,7 @@ final class ReminderScheduler {
         NotificationManager manager =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager == null) return false;
-        manager.notify(test ? stableId("test:" + profileId) : stableId("daily:" + profileId), builder.build());
+        manager.notify(test ? stableId("test:" + profileId) : stableId((isReplacement(profile) ? "ampoule:" : "daily:") + profileId), builder.build());
         return true;
     }
 
@@ -412,7 +414,7 @@ final class ReminderScheduler {
             JSONArray source = state.optJSONArray("profiles");
             JSONArray profiles = new JSONArray();
             if (source == null) return profiles;
-            for (int index = 0; index < source.length() && index < MAX_PROFILES; index += 1) {
+            for (int index = 0; index < source.length() && index < MAX_PROFILES * 2; index += 1) {
                 JSONObject profile = sanitizeProfile(source.optJSONObject(index), true);
                 if (profile != null) profiles.put(profile);
             }
@@ -458,6 +460,8 @@ final class ReminderScheduler {
                             : ""
             );
             if (stored) {
+                profile.put("reminderKind", "ampoule".equals(source.optString("reminderKind")) ? "ampoule" : "daily");
+                copyDate(source, profile, "fromDate");
                 copyDate(source, profile, "lastDeliveredDate");
                 copyDate(source, profile, "lastAttemptDate");
                 long nextAt = source.optLong("nextAt", 0L);
@@ -484,15 +488,16 @@ final class ReminderScheduler {
         Map<String, JSONObject> result = new HashMap<>();
         for (int index = 0; index < profiles.length(); index += 1) {
             JSONObject profile = profiles.optJSONObject(index);
-            if (profile != null) result.put(profile.optString("profileId"), profile);
+            if (profile != null) result.put(scheduleKey(profile), profile);
         }
         return result;
     }
 
-    private static JSONObject findProfile(JSONArray profiles, String profileId) {
+    private static JSONObject findProfile(JSONArray profiles, String profileId, String kind) {
         for (int index = 0; index < profiles.length(); index += 1) {
             JSONObject profile = profiles.optJSONObject(index);
-            if (profile != null && profileId.equals(profile.optString("profileId"))) return profile;
+            if (profile != null && profileId.equals(profile.optString("profileId"))
+                    && isReplacement(profile) == "ampoule".equals(kind)) return profile;
         }
         return null;
     }
@@ -547,13 +552,12 @@ final class ReminderScheduler {
         }
     }
 
-    private static final class Trigger {
-        final long atMillis;
-        final String date;
+    private static boolean isReplacement(JSONObject profile) {
+        return "ampoule".equals(profile.optString("reminderKind"));
+    }
 
-        Trigger(long atMillis, String date) {
-            this.atMillis = atMillis;
-            this.date = date;
-        }
+    private static String scheduleKey(JSONObject profile) {
+        // Keep daily IDs compatible with alarms saved by 2.3.0.
+        return (isReplacement(profile) ? "ampoule:" : "") + profile.optString("profileId");
     }
 }

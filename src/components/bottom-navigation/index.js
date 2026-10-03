@@ -1,6 +1,7 @@
 
 function switchView(view, { updateHash = true, focus = true, smooth = true } = {}) {
   if (!['today', 'calendar', 'history', 'more'].includes(view)) return;
+  resetNativeBackExit();
   const previousView = activeView;
   activeView = view;
   document.querySelectorAll('.view').forEach((section) => {

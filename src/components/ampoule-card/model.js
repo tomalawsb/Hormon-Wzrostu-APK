@@ -98,26 +98,6 @@ function reconcileAmpouleStatuses() {
   });
 }
 
-function ensureActiveAmpouleForDate(date) {
-  const active = getActiveAmpoule();
-  if (active) return active.id;
-  if (getOpenPausedAmpoules().length) return null;
-  const volumeMl = decimalToNumber(data.settings.ampouleVolumeMl);
-  const doseMl = getConfiguredAmpouleDoseMl();
-  if (!volumeMl || !doseMl) return '';
-  const ampoule = createAmpouleRecord({
-    number: data.ampoules.length ? nextAmpouleNumber(true) : data.settings.ampouleStartNumber,
-    startDate: data.ampoules.length ? date : data.settings.ampouleStartDate || date,
-    volumeMl,
-    doseMl,
-    targetDoseCount: data.settings.ampouleDoseCount,
-    status: 'active',
-  });
-  data.ampoules.push(ampoule);
-  data.activeAmpouleId = ampoule.id;
-  return ampoule.id;
-}
-
 function getAmpouleInfo() {
   const today = localDateISO();
   const todayEntry = getEntryForDate(today);
@@ -126,7 +106,7 @@ function getAmpouleInfo() {
   const todayAmpoule = todayEntry?.ampouleId ? getAmpouleById(todayEntry.ampouleId) : null;
   const displayAmpoule =
     todayEntry?.status === 'given' && todayAmpoule
-      ? todayAmpoule
+      ? timeline.activeAmpoule || todayAmpoule
       : timeline.activeAmpoule || todayAmpoule;
   if (!displayAmpoule) {
     return {
@@ -196,7 +176,7 @@ function ampouleSummary(info) {
       level: 'warning',
       short: 'Rozpocznij nową ampułkę',
       title: 'Poprzednia ampułka została zużyta',
-      text: 'Przy następnym zapisanym podaniu aplikacja może rozpocząć kolejną ampułkę albo możesz zrobić to ręcznie w ustawieniach.',
+      text: 'Potwierdź wymianę ampułki / wkładu we wstrzykiwaczu. Nowy licznik rozpocznie się dopiero po potwierdzeniu.',
     };
   }
   if (!info.configured && info.reason === 'start') {
@@ -280,6 +260,11 @@ function buildAmpouleTimeline({ includePlannedToday = false, plannedToday = null
   const rows = [];
   const today = localDateISO();
   const activeAmpoule = getActiveAmpoule();
+  const groupedEntries = new Map();
+  for (const entry of getEntriesAscending()) {
+    if (!groupedEntries.has(entry.ampouleId)) groupedEntries.set(entry.ampouleId, []);
+    groupedEntries.get(entry.ampouleId).push(entry);
+  }
 
   data.ampoules
     .slice()
@@ -290,7 +275,7 @@ function buildAmpouleTimeline({ includePlannedToday = false, plannedToday = null
       const targetDoseCount = normalizeAmpouleDoseCount(ampoule.targetDoseCount);
       let remainingMl = volumeMl;
       let givenCount = 0;
-      const ampouleEntries = getEntriesForAmpoule(ampoule.id);
+      const ampouleEntries = groupedEntries.get(ampoule.id) || [];
       const hasTodayEntry = ampouleEntries.some((entry) => entry.date === today);
       if (includePlannedToday && activeAmpoule?.id === ampoule.id && !hasTodayEntry) {
         ampouleEntries.push(

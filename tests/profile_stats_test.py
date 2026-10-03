@@ -66,7 +66,7 @@ for function_name in (
 require("medical: sanitizeProfileMedical" in schema, "profil nie przechowuje danych medycznych")
 require("measurements: sanitizeProfileMeasurements" in schema, "profil nie przechowuje pomiarów")
 require("doseHistory: sanitizeProfileDoseHistory" in schema, "profil nie przechowuje historii dawki")
-require("const DATA_SCHEMA_VERSION = 14" in config, "schemat danych nie został podniesiony do wersji 14")
+require(int(re.search(r"const DATA_SCHEMA_VERSION = (\d+)", config).group(1)) >= 15, "schemat danych musi obsługiwać profile w wersji 15 lub nowszej")
 require("upsertProfileDoseChange(profile" in forms, "zmiana aktualnej dawki nie trafia do historii")
 require("settings-dose-effective-date" in forms, "zmiana dawki nie ma daty obowiązywania")
 
@@ -81,7 +81,7 @@ require("function buildDoctorReportProfileHtml(config)" in reports,
         "drukowany raport nie zawiera danych profilu")
 require("Historia zmian dawki" in reports and "Ostatnie pomiary" in reports,
         "raport nie zawiera pomiarów lub historii dawki")
-require("buildDocxDoctorProfileSection(config)" in reports,
+require("createReportModel(config)" in reports,
         "eksport Word nie zawiera danych dla lekarza")
 require("getDoctorReportLines(doctorProfile)" in reports,
         "eksport PDF nie zawiera podsumowania medycznego")

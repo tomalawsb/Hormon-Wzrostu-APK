@@ -28,6 +28,7 @@
       'save-reminder-button', 'notification-permission-status', 'request-notification-button',
       'test-notification-button', 'reminder-diagnostics-overall', 'reminder-diagnostic-permission',
       'reminder-diagnostic-channel', 'reminder-diagnostic-exact-alarm', 'reminder-diagnostic-next',
+      'reminder-diagnostic-replacement',
       'reminder-diagnostics-note', 'reminder-diagnostics-checked', 'refresh-reminder-diagnostics-button',
       'open-notification-settings-button', 'request-exact-alarm-button',
       'report-profile-filter', 'report-date-from', 'report-date-to', 'report-include-ampoules', 'report-scope-summary', 'report-preview-button', 'export-report-button', 'backup-panel-button',

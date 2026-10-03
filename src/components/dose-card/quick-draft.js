@@ -20,18 +20,10 @@ function saveQuickDraft() {
 
   const entryId = existingById?.id || createId();
   const undoOperation = captureEntryUndoOperation(entryId, existingById);
-  let ampouleId = existingById?.ampouleId || quickDraft.ampouleId || '';
-  if (!ampouleId && quickDraft.status === 'given') {
-    const resolvedAmpouleId = ensureActiveAmpouleForDate(quickDraft.date);
-    if (resolvedAmpouleId === null) {
-      showToast('Najpierw wybierz odłożoną ampułkę albo rozpocznij nową.', 'error', 6500);
-      openAmpouleSettings();
-      return;
-    }
-    ampouleId = resolvedAmpouleId;
-  } else if (!ampouleId && quickDraft.status === 'skipped') {
-    ampouleId = getActiveAmpoule()?.id || '';
-  }
+  const ampouleId = quickDraft.status === 'given'
+    ? requireAmpouleForEntry(quickDraft, existingById, quickDraft.ampouleId || '')
+    : existingById?.ampouleId || getActiveAmpoule()?.id || '';
+  if (quickDraft.status === 'given' && ampouleId === null) return;
   finalizeEntryUndoOperation(undoOperation, null);
 
   const entry = sanitizeEntry({

@@ -71,6 +71,15 @@ function inspectImportedData(imported) {
       rawProfileIds.add(profileId);
     }
 
+    if (profile.inventory !== undefined) {
+      const stock = profile.inventory;
+      const unopenedCount = stock?.unopenedCount ?? stock?.unopened;
+      if (!stock || typeof stock !== 'object' || typeof stock.enabled !== 'boolean' ||
+          !Number.isInteger(unopenedCount) || unopenedCount < 0 || unopenedCount > 9999 ||
+          !Number.isInteger(stock.lowThreshold) || stock.lowThreshold < 0 || stock.lowThreshold > 9999) {
+        throw new Error(`Profil ${index + 1} zawiera nieprawidłowy zapas ampułek.`);
+      }
+    }
     const ampouleIds = new Set();
     if (profile.ampoules !== undefined) {
       if (!Array.isArray(profile.ampoules))

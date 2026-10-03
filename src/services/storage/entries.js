@@ -166,6 +166,7 @@ function handleAppResume() {
     renderAll();
   }
   refreshDayState();
+  scheduleAmpouleReplacementPrompt();
   checkReminderDue();
 }
 

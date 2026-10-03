@@ -37,7 +37,7 @@ module.exports = [
   },
   {
     ...js.configs.recommended,
-    files: ['service-worker.js'],
+    files: ['service-worker.js', 'report-worker.js'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'script',

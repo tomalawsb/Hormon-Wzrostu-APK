@@ -15,6 +15,7 @@ import android.provider.Settings;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Window;
 import android.webkit.CookieManager;
@@ -42,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
@@ -57,6 +59,7 @@ public class MainActivity extends FragmentActivity {
     private static final int REQ_NOTIFICATIONS = 4102;
     private static final int REQ_FILE = 4103;
     private static final int REQ_SAVE_JSON = 4104;
+    private static final int REQ_SAVE_FILE = 4105;
     private static final String PREFS = "permission_state";
     private static final String APP_ASSET_HOST = "appassets.androidplatform.net";
     private static final String APP_ASSET_PREFIX = "/assets/web/";
@@ -67,6 +70,7 @@ public class MainActivity extends FragmentActivity {
     private static final int MAX_NOTIFICATION_JSON_CHARS = 32 * 1024;
     private static final int MAX_REMINDER_JSON_CHARS = 1024 * 1024;
     private static final int MAX_EXPORT_JSON_CHARS = 20 * 1024 * 1024;
+    private static final int MAX_EXPORT_FILE_BASE64_CHARS = 48 * 1024 * 1024;
     private static final int MAX_VOICE_TRANSCRIPT_CHARS = 2000;
     private static final String APP_CONTENT_SECURITY_POLICY =
             "default-src 'self'; base-uri 'none'; object-src 'none'; "
@@ -83,6 +87,7 @@ public class MainActivity extends FragmentActivity {
                     APP_ASSET_PREFIX + "index.html",
                     APP_ASSET_PREFIX + "app.js",
                     APP_ASSET_PREFIX + "native-bridge.js",
+                    APP_ASSET_PREFIX + "report-worker.js",
                     APP_ASSET_PREFIX + "style.css",
                     APP_ASSET_PREFIX + "manifest.json",
                     APP_ASSET_PREFIX + "app-version.json",
@@ -93,10 +98,17 @@ public class MainActivity extends FragmentActivity {
             ))
     );
 
+    private ReportService reportService;
+    private final java.util.concurrent.ExecutorService fileWriter = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private volatile boolean fileWriteInProgress;
+    private long fallbackBackAt;
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
     private String pendingJsonFilename;
     private String pendingJsonContent;
+    private String pendingFileFilename;
+    private String pendingFileMimeType;
+    private byte[] pendingFileContent;
     private SharedPreferences prefs;
     private SecureDataStore secureDataStore;
     private BiometricPrompt biometricPrompt;
@@ -107,11 +119,26 @@ public class MainActivity extends FragmentActivity {
     private volatile boolean notificationEventsReady = false;
     private String pendingNotificationProfileId = "";
     private String pendingNotificationDate = "";
+    private String pendingNotificationKind = "daily";
 
     @Override
     @SuppressLint("SetJavaScriptEnabled")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        reportService = new ReportService(this, (id, done, success, state) -> runOnUiThread(() -> {
+            if (!bridgeAllowed()) return;
+            webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('nativeReportResult',{detail:{id:"
+                    + JSONObject.quote(id) + ",done:" + done + ",success:" + success + ",state:"
+                    + JSONObject.quote(state) + "}}));", null);
+        }));
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override public void handleOnBackPressed() {
+                if (bridgeAllowed()) {
+                    webView.evaluateJavascript("window.__diaryBackReady ? (window.dispatchEvent(new CustomEvent('nativeBackButton')),true) : false",
+                            value -> { if (!"true".equals(value)) fallbackBack(); });
+                } else fallbackBack();
+            }
+        });
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         secureDataStore = new SecureDataStore(this);
@@ -606,6 +633,7 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == ReportService.SAVE_REPORT) { reportService.saveResult(resultCode, data); return; }
         if (requestCode == REQ_FILE && fileCallback != null) {
             Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
             fileCallback.onReceiveValue(result);
@@ -627,14 +655,50 @@ public class MainActivity extends FragmentActivity {
                 dispatchFileSaveResult(false, "missing_content");
                 return;
             }
-            try (OutputStream output = getContentResolver().openOutputStream(data.getData(), "w")) {
-                if (output == null) throw new IllegalStateException("Brak strumienia zapisu");
-                output.write(content.getBytes(StandardCharsets.UTF_8));
-                output.flush();
-                dispatchFileSaveResult(true, "saved");
-            } catch (Exception error) {
-                dispatchFileSaveResult(false, "write_failed");
+            final Uri destination = data.getData();
+            fileWriteInProgress = true;
+            fileWriter.execute(() -> {
+                boolean saved = false;
+                try (OutputStream output = getContentResolver().openOutputStream(destination, "w")) {
+                    if (output == null) throw new IllegalStateException("Brak strumienia zapisu");
+                    output.write(content.getBytes(StandardCharsets.UTF_8));
+                    output.flush();
+                    saved = true;
+                } catch (Exception error) { saved = false; }
+                finally { fileWriteInProgress = false; }
+                dispatchFileSaveResult(saved, saved ? "saved" : "write_failed");
+            });
+            return;
+        }
+        if (requestCode == REQ_SAVE_FILE) {
+            byte[] content;
+            synchronized (this) {
+                content = pendingFileContent;
+                pendingFileContent = null;
+                pendingFileFilename = null;
+                pendingFileMimeType = null;
             }
+            if (resultCode != RESULT_OK || data == null || data.getData() == null) {
+                dispatchFileSaveResult(false, "cancelled");
+                return;
+            }
+            if (content == null) {
+                dispatchFileSaveResult(false, "missing_content");
+                return;
+            }
+            final Uri destination = data.getData();
+            fileWriteInProgress = true;
+            fileWriter.execute(() -> {
+                boolean saved = false;
+                try (OutputStream output = getContentResolver().openOutputStream(destination, "w")) {
+                    if (output == null) throw new IllegalStateException("Brak strumienia zapisu");
+                    output.write(content);
+                    output.flush();
+                    saved = true;
+                } catch (Exception error) { saved = false; }
+                finally { fileWriteInProgress = false; }
+                dispatchFileSaveResult(saved, saved ? "saved" : "write_failed");
+            });
         }
     }
 
@@ -648,7 +712,7 @@ public class MainActivity extends FragmentActivity {
             safeFilename += ".json";
         }
         synchronized (this) {
-            if (pendingJsonContent != null) return false;
+            if (pendingJsonContent != null || pendingFileContent != null || fileWriteInProgress || reportService.isBusy()) return false;
             pendingJsonFilename = safeFilename;
             pendingJsonContent = content;
         }
@@ -671,6 +735,68 @@ public class MainActivity extends FragmentActivity {
             }
         });
         return true;
+    }
+
+    private boolean requestFileSaveNative(String filename, String mimeType, String base64Content) {
+        if (!bridgeAllowed() || base64Content == null || base64Content.isEmpty()
+                || base64Content.length() > MAX_EXPORT_FILE_BASE64_CHARS) return false;
+
+        String normalizedMime = mimeType == null ? "" : mimeType.trim().toLowerCase(java.util.Locale.ROOT);
+        int separator = normalizedMime.indexOf(';');
+        if (separator >= 0) normalizedMime = normalizedMime.substring(0, separator).trim();
+        Set<String> allowedMimeTypes = new HashSet<>(Arrays.asList(
+                "application/pdf",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "text/csv"
+        ));
+        if (!allowedMimeTypes.contains(normalizedMime)) return false;
+
+        String safeFilename = filename == null ? "dzienniczek-raport" : filename.trim();
+        safeFilename = safeFilename.replace('/', '-').replace('\\', '-');
+        if (safeFilename.isEmpty()) safeFilename = "dzienniczek-raport";
+
+        final byte[] decoded;
+        try {
+            decoded = Base64.decode(base64Content, Base64.DEFAULT);
+        } catch (IllegalArgumentException error) {
+            return false;
+        }
+        if (decoded.length == 0) return false;
+
+        synchronized (this) {
+            if (pendingFileContent != null || pendingJsonContent != null || fileWriteInProgress || reportService.isBusy()) return false;
+            pendingFileFilename = safeFilename;
+            pendingFileMimeType = normalizedMime;
+            pendingFileContent = decoded;
+        }
+
+        runOnUiThread(() -> {
+            if (!bridgeAllowed()) {
+                clearPendingFileSave();
+                dispatchFileSaveResult(false, "bridge_blocked");
+                return;
+            }
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType(pendingFileMimeType);
+            intent.putExtra(Intent.EXTRA_TITLE, pendingFileFilename);
+            intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            try {
+                startActivityForResult(intent, REQ_SAVE_FILE);
+            } catch (Exception error) {
+                clearPendingFileSave();
+                dispatchFileSaveResult(false, "picker_failed");
+            }
+        });
+        return true;
+    }
+
+    private void clearPendingFileSave() {
+        synchronized (this) {
+            pendingFileFilename = null;
+            pendingFileMimeType = null;
+            pendingFileContent = null;
+        }
     }
 
     private void clearPendingJsonSave() {
@@ -794,6 +920,8 @@ public class MainActivity extends FragmentActivity {
                 ? date : "";
         intent.removeExtra(ReminderScheduler.EXTRA_PROFILE_ID);
         intent.removeExtra(ReminderScheduler.EXTRA_DATE);
+        pendingNotificationKind = "ampoule".equals(intent.getStringExtra(ReminderScheduler.EXTRA_KIND)) ? "ampoule" : "daily";
+        intent.removeExtra(ReminderScheduler.EXTRA_KIND);
         intent.setAction(null);
     }
 
@@ -804,6 +932,7 @@ public class MainActivity extends FragmentActivity {
                 || pendingNotificationDate.isEmpty()) return;
         final String profileId = pendingNotificationProfileId;
         final String date = pendingNotificationDate;
+        final String kind = pendingNotificationKind;
         pendingNotificationProfileId = "";
         pendingNotificationDate = "";
         final String safeProfileId = JSONObject.quote(profileId);
@@ -812,7 +941,7 @@ public class MainActivity extends FragmentActivity {
             if (!bridgeAllowed()) return;
             webView.evaluateJavascript(
                     "window.dispatchEvent(new CustomEvent('nativeNotificationAction',{detail:{profileId:"
-                            + safeProfileId + ",date:" + safeDate + "}}));",
+                            + safeProfileId + ",date:" + safeDate + ",kind:" + JSONObject.quote(kind) + "}}));",
                     null
             );
         });
@@ -825,6 +954,14 @@ public class MainActivity extends FragmentActivity {
             return value == null || value.trim().isEmpty() ? "1.0.9" : value.trim();
         } catch (Exception error) {
             return "1.0.9";
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration configuration) {
+        super.onConfigurationChanged(configuration);
+        if (bridgeAllowed()) {
+            webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('nativeThemeChanged'));", null);
         }
     }
 
@@ -848,6 +985,7 @@ public class MainActivity extends FragmentActivity {
 
     @Override
     protected void onPause() {
+        fallbackBackAt = 0;
         if (bridgeAllowed()) {
             webView.evaluateJavascript(
                     "window.dispatchEvent(new CustomEvent('nativeAppBackgrounded'));",
@@ -857,16 +995,21 @@ public class MainActivity extends FragmentActivity {
         super.onPause();
     }
 
-    @Override
-        @SuppressLint("GestureBackNavigation")
-    public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
+    private void fallbackBack() {
+        long now = android.os.SystemClock.elapsedRealtime();
+        if (fallbackBackAt != 0 && now - fallbackBackAt < 2000) finish();
+        else {
+            fallbackBackAt = now;
+            android.widget.Toast.makeText(this, "Naciśnij Wstecz ponownie, aby wyjść", android.widget.Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
     protected void onDestroy() {
         bridgeEnabled = false;
+        reportService.destroy();
+        fileWriter.shutdownNow();
+        clearPendingFileSave();
         notificationEventsReady = false;
         voiceRecognitionInProgress = false;
         if (speechRecognizer != null) {
@@ -997,6 +1140,27 @@ public class MainActivity extends FragmentActivity {
         @JavascriptInterface
         public boolean saveJsonFile(String filename, String content) {
             return bridgeAllowed() && requestJsonSaveNative(filename, content);
+        }
+
+        @JavascriptInterface
+        public String systemTheme() {
+            if (!bridgeAllowed()) return "";
+            return (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                    == Configuration.UI_MODE_NIGHT_YES ? "dark" : "light";
+        }
+
+        @JavascriptInterface
+        public boolean reportPdf(String id, String filename, String json, boolean print) {
+            if (!bridgeAllowed()) return false;
+            synchronized (MainActivity.this) {
+                if (pendingFileContent != null || pendingJsonContent != null || fileWriteInProgress) return false;
+                return reportService.start(id, filename, json, print);
+            }
+        }
+
+        @JavascriptInterface
+        public boolean saveFile(String filename, String mimeType, String base64Content) {
+            return bridgeAllowed() && requestFileSaveNative(filename, mimeType, base64Content);
         }
 
         @JavascriptInterface

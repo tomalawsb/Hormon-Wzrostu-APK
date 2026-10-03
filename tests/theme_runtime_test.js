@@ -85,7 +85,8 @@ const context = vm.createContext({
 });
 
 vm.runInContext(
-  `const ALLOWED_THEME_MODES = new Set(['system', 'light', 'dark', 'elegant', 'amber', 'silver', 'lavender']);
+  `const ALLOWED_SKINS = new Set(['readable', 'elegant', 'family']);
+      const ALLOWED_THEME_MODES = new Set(['system', 'light', 'dark', 'elegant', 'amber', 'silver', 'lavender']);
    const DEFAULT_THEME_MODE = 'system';
    const ALLOWED_FONT_SIZES = new Set(['small', 'standard', 'large', 'xlarge']);
    const DEFAULT_FONT_SIZE = 'standard';
@@ -215,6 +216,40 @@ requireResult(
 requireResult(
   controls.system.checked,
   'panel ustawień nie pokazuje aktywnego trybu automatycznego'
+);
+
+for (const theme of ['light', 'dark', 'elegant', 'amber', 'silver', 'lavender', 'system']) {
+  changeListener({
+    target: {
+      closest() {
+        return { value: theme };
+      },
+    },
+  });
+  requireResult(
+    context.data.appSettings.appearance.theme === theme,
+    `Nie zapisano motywu ${theme}`
+  );
+  requireResult(
+    context.document.documentElement.dataset.theme === (theme === 'system' ? 'dark' : theme),
+    `Nie zastosowano motywu ${theme}`
+  );
+}
+context.persistData = () => false;
+changeListener({
+  target: {
+    closest() {
+      return { value: 'amber' };
+    },
+  },
+});
+requireResult(
+  context.data.appSettings.appearance.theme === 'system',
+  'Nie wycofano motywu po błędzie zapisu'
+);
+requireResult(
+  context.document.documentElement.dataset.theme === 'dark',
+  'Nie wycofano kolorów po błędzie zapisu'
 );
 
 console.log(

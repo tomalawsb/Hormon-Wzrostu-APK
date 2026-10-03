@@ -207,6 +207,7 @@ function setApplicationLocked(locked) {
   if (appShell) appShell.inert = appLocked;
   if (el['security-lock-screen']) el['security-lock-screen'].hidden = !appLocked;
   if (appLocked) {
+    if (pendingAmpouleChange) closeAmpouleReplacement();
     document.documentElement.classList.add('security-private');
     if (el['security-privacy-cover']) el['security-privacy-cover'].hidden = false;
     window.setTimeout(() => el['security-unlock-pin']?.focus(), 40);

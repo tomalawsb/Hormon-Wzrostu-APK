@@ -171,7 +171,7 @@ function getProfileAmpouleDashboard(profile, todayEntry, today = localDateISO())
     : null;
   const displayAmpoule =
     todayEntry?.status === 'given' && todayAmpoule
-      ? todayAmpoule
+      ? activeProfileAmpoule || todayAmpoule
       : activeProfileAmpoule || todayAmpoule;
   const paused = ampoules.filter(
     (ampoule) =>
@@ -181,7 +181,7 @@ function getProfileAmpouleDashboard(profile, todayEntry, today = localDateISO())
   if (!displayAmpoule) {
     return {
       configured: false,
-      label: paused.length ? 'Wybierz odłożoną ampułkę' : 'Ampułka nie jest rozpoczęta',
+      label: getReplacementState(profile).required ? 'Oczekuje na wymianę ampułki' : paused.length ? 'Wybierz odłożoną ampułkę' : 'Ampułka nie jest rozpoczęta',
       number: 0,
       doseNumber: 0,
       completedDoseCount: 0,

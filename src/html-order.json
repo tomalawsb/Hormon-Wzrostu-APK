@@ -73,6 +73,10 @@
       "layer": "screen"
     },
     {
+      "file": "components/dialog/ampoule-replacement.html",
+      "layer": "component"
+    },
+    {
       "file": "shell/end.html",
       "layer": "shell"
     }

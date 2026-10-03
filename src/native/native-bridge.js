@@ -499,6 +499,59 @@ function saveJsonFile(filename, content) {
   });
 }
 
+
+function saveFile(filename, mimeType, base64Content) {
+  if (!hasAndroidWebViewBridge()) {
+    return Promise.resolve({ success: false, state: 'unsupported' });
+  }
+  return new Promise((resolve) => {
+    const eventName = 'nativeFileSaveResult';
+    const timeout = window.setTimeout(() => {
+      window.removeEventListener(eventName, listener);
+      resolve({ success: false, state: 'timeout' });
+    }, 120000);
+    const listener = (event) => {
+      window.clearTimeout(timeout);
+      window.removeEventListener(eventName, listener);
+      resolve({
+        success: Boolean(event.detail?.success),
+        state: String(event.detail?.state || 'unknown')
+      });
+    };
+    window.addEventListener(eventName, listener);
+    const started = Boolean(
+      window.AndroidNative.saveFile?.(
+        String(filename || ''),
+        String(mimeType || 'application/octet-stream'),
+        String(base64Content || '')
+      )
+    );
+    if (!started) {
+      window.clearTimeout(timeout);
+      window.removeEventListener(eventName, listener);
+      resolve({ success: false, state: 'not_started' });
+    }
+  });
+}
+
+function reportPdf(model, filename, print = false) {
+  const id = `report-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return new Promise((resolve) => {
+    const listener = (event) => {
+      if (event.detail?.id !== id || !event.detail?.done) return;
+      window.removeEventListener('nativeReportResult', listener);
+      resolve(event.detail);
+    };
+    window.addEventListener('nativeReportResult', listener);
+    try {
+      if (!window.AndroidNative.reportPdf(id, String(filename), JSON.stringify(model), print)) throw new Error('not_started');
+    } catch {
+      window.removeEventListener('nativeReportResult', listener);
+      resolve({ success: false, state: 'not_started' });
+    }
+  });
+}
+
 async function exitApp() {
   if (hasAndroidWebViewBridge()) {
     window.AndroidNative.exitApp?.();
@@ -510,6 +563,7 @@ async function exitApp() {
 const bridge = {
   isNative: isNative(),
   platform: hasAndroidWebViewBridge() ? 'android' : Capacitor.getPlatform(),
+  systemTheme: () => hasAndroidWebViewBridge() ? String(window.AndroidNative.systemTheme?.() || '') : '',
   initialize,
   microphonePermission,
   requestMicrophonePermission,
@@ -535,6 +589,8 @@ const bridge = {
   biometricStatus,
   requestBiometricUnlock,
   saveJsonFile,
+  saveFile,
+  reportPdf: hasAndroidWebViewBridge() && window.AndroidNative.reportPdf ? reportPdf : null,
   exitApp
 };
 

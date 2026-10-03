@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 
 
@@ -72,6 +73,8 @@ def build(root: Path, check_only: bool = False, target: str = "all") -> int:
     valid = True
     for current_target in selected:
         valid = build_target(root, current_target, check_only) and valid
+    if target == "all" and not check_only:
+        (root / "report-worker.js").write_bytes((root / "src/screens/reports/docx-worker.js").read_bytes())
     return 0 if valid else 1
 
 
@@ -89,6 +92,8 @@ def main() -> None:
     )
     args = parser.parse_args()
     root = Path(args.root).resolve() if args.root else Path(__file__).resolve().parents[1]
+    if not args.check and os.environ.get("DH_BUILD_WORKSPACE") != "1":
+        raise SystemExit("Uruchom BUDUJ.cmd: pliki wynikowe powstają w zewnętrznej kopii roboczej.")
     raise SystemExit(build(root, args.check, args.target))
 
 

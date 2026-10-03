@@ -25,7 +25,11 @@ async function exportBackupScope(scope = 'all') {
       scope === 'profile'
         ? `dzienniczek-profil-${safeFilenamePart(activeProfile.name)}-${localDateISO()}.${extension}`
         : `dzienniczek-kopia-${localDateISO()}.${extension}`;
-    await downloadFile(filename, JSON.stringify(exportedPayload, null, 2), 'application/json');
+    const saved = await downloadFile(filename, JSON.stringify(exportedPayload, null, 2), 'application/json');
+    if (!saved) {
+      showToast('Anulowano zapis kopii zapasowej.');
+      return false;
+    }
     await flushSecureStorageWrites();
     try {
       localStorage.setItem(BACKUP_REMINDER_KEY, String(Date.now()));

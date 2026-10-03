@@ -110,6 +110,7 @@ expected_assets = {
     "index.html",
     "app.js",
     "native-bridge.js",
+    "report-worker.js",
     "style.css",
     "manifest.json",
     "app-version.json",
@@ -145,6 +146,9 @@ expected_methods = {
     "openNotificationSettings",
     "notificationEventsReady",
     "saveJsonFile",
+    "saveFile",
+    "reportPdf",
+    "systemTheme",
     "secureStorageRead",
     "secureStorageWrite",
     "secureStorageRemove",
@@ -186,6 +190,8 @@ require("indexedDB" not in bootstrap and "localStorage" not in bootstrap,
 require("MAX_NOTIFICATION_JSON_CHARS" in main, "brak limitu danych powiadomienia")
 require("MAX_REMINDER_JSON_CHARS" in main, "brak limitu danych przypomnień")
 require("MAX_EXPORT_JSON_CHARS" in main, "brak limitu natywnego eksportu JSON")
+require("MAX_EXPORT_FILE_BASE64_CHARS" in main and "allowedMimeTypes.contains(normalizedMime)" in main,
+        "eksport raportów musi ograniczać wielkość i typ danych")
 require("Intent.ACTION_CREATE_DOCUMENT" in main, "eksport JSON nie używa systemowego okna zapisu")
 require("nativeFileSaveResult" in main, "Android nie zwraca wyniku natywnego zapisu JSON")
 require("saveJsonFile" in read("src/native/native-bridge.js"), "most web nie obsługuje natywnego zapisu JSON")

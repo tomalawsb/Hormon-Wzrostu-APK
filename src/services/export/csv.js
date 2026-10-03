@@ -1,5 +1,5 @@
 
-function exportCsv() {
+async function exportCsv() {
   const config = getReportConfiguration();
   if (!config) return false;
   const columns = getReportColumns(config);
@@ -8,11 +8,21 @@ function exportCsv() {
     columns.map((column) => getReportRecordValue(record, column.key))
   );
   const csv = '\uFEFF' + [header, ...rows].map((row) => row.map(csvCell).join(';')).join('\r\n');
-  downloadFile(
-    `dzienniczek-historia-${getReportFilenameScope(config)}-${localDateISO()}.csv`,
-    csv,
-    'text/csv;charset=utf-8'
-  );
-  showToast('Pobrano historię CSV.', 'success');
-  return true;
+  try {
+    const saved = await downloadFile(
+      `dzienniczek-historia-${getReportFilenameScope(config)}-${localDateISO()}.csv`,
+      csv,
+      'text/csv;charset=utf-8'
+    );
+    if (!saved) {
+      showToast('Anulowano zapis historii CSV.');
+      return false;
+    }
+    showToast(isNativeAndroidApp() ? 'Zapisano historię CSV.' : 'Pobrano historię CSV.', 'success');
+    return true;
+  } catch (error) {
+    console.error('Nie udało się zapisać CSV:', error);
+    showToast('Nie udało się zapisać historii CSV.', 'error');
+    return false;
+  }
 }

@@ -1,7 +1,6 @@
 
 function renderSettings() {
   const activeProfile = getActiveProfile();
-  const activeAmpoule = getActiveAmpoule();
   el['settings-profile-avatar'].textContent = activeProfile.icon;
   el['settings-profile-avatar'].dataset.profileColor = activeProfile.color;
   el['settings-profile-name'].textContent = activeProfile.name;
@@ -11,10 +10,10 @@ function renderSettings() {
   el['settings-dose'].value = data.settings.defaultDose;
   el['settings-unit'].value = data.settings.unit;
   el['settings-time'].value = data.settings.defaultTime;
-  el['ampoule-start-date'].value = activeAmpoule?.startDate || data.settings.ampouleStartDate || '';
-  el['ampoule-start-number'].value = activeAmpoule?.number || data.settings.ampouleStartNumber || 1;
+  el['ampoule-start-date'].value = data.settings.ampouleStartDate || '';
+  el['ampoule-start-number'].value = data.settings.ampouleStartNumber || 1;
   el['ampoule-volume'].value =
-    activeAmpoule?.volumeMl || data.settings.ampouleVolumeMl || DEFAULT_AMPOULE_VOLUME_ML;
+    data.settings.ampouleVolumeMl || DEFAULT_AMPOULE_VOLUME_ML;
   el['ampoule-dose-ml'].value = data.settings.ampouleDoseMl || '';
   el['ampoule-dose-count'].value = data.settings.ampouleDoseCount || 10;
   el['ampoule-max-open-days'].value = data.settings.ampouleMaxOpenDays || '';

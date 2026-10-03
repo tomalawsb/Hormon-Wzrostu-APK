@@ -82,14 +82,16 @@
     return Number.isFinite(number) && number > 0 ? number : 0;
   }
 
+  let reportShortDateFormatter;
+  let reportLongDateFormatter;
   function formatDateShort(iso) {
     const date = parseISODate(iso);
-    return new Intl.DateTimeFormat('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
+    return (reportShortDateFormatter ||= new Intl.DateTimeFormat('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })).format(date);
   }
 
   function formatDateLong(iso) {
     const date = parseISODate(iso);
-    return new Intl.DateTimeFormat('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+    return (reportLongDateFormatter ||= new Intl.DateTimeFormat('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })).format(date);
   }
 
   function formatDateTimeShort(value) {
@@ -201,14 +203,45 @@
     ) {
       const result = await window.NativeBridge.saveJsonFile(filename, content);
       if (result?.success) return true;
-      if (result?.state === 'cancelled') throw new Error('Anulowano zapis pliku JSON.');
+      if (result?.state === 'cancelled') return false;
       throw new Error('Android nie zapisał pliku JSON. Spróbuj ponownie.');
     }
-    downloadBlob(filename, new Blob([content], { type }));
-    return true;
+    return downloadBlob(filename, new Blob([content], { type }));
   }
 
-  function downloadBlob(filename, blob) {
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Nie udało się przygotować pliku do zapisu.'));
+      reader.onload = () => {
+        const value = String(reader.result || '');
+        const separator = value.indexOf(',');
+        if (separator < 0) {
+          reject(new Error('Nie udało się zakodować pliku do zapisu.'));
+          return;
+        }
+        resolve(value.slice(separator + 1));
+      };
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function downloadBlob(filename, blob) {
+    if (
+      window.NativeBridge?.isNative &&
+      typeof window.NativeBridge.saveFile === 'function'
+    ) {
+      const base64Content = await blobToBase64(blob);
+      const result = await window.NativeBridge.saveFile(
+        filename,
+        blob.type || 'application/octet-stream',
+        base64Content
+      );
+      if (result?.success) return true;
+      if (result?.state === 'cancelled') return false;
+      throw new Error('Android nie zapisał pliku. Spróbuj ponownie.');
+    }
+
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -217,4 +250,5 @@
     link.click();
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return true;
   }

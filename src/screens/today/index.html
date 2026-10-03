@@ -15,6 +15,10 @@
           </section>
 
           <div id="single-profile-dashboard" class="today-dashboard-v2">
+            <section id="replacement-banner" class="replacement-banner" aria-label="Wymiana ampułki" hidden>
+              <div><span class="eyebrow">Oczekuje na wymianę</span><p id="replacement-banner-text"></p></div>
+              <button id="replacement-open" class="button button--primary" type="button">Potwierdź wymianę</button>
+            </section>
             <article class="card today-primary-card" aria-labelledby="main-action-heading">
               <div class="today-profile-compat" hidden aria-hidden="true">
                 <span id="today-profile-avatar" data-profile-color="teal">🙂</span>
@@ -120,6 +124,12 @@
                 </div>
               </article>
 
+              <article id="inventory-today" class="card inventory-card" hidden>
+                <div class="section-heading-row"><span class="eyebrow">Twój zapas</span><svg class="app-icon" aria-hidden="true"><use href="#icon-ampoule"></use></svg></div>
+                <strong id="inventory-count-label" class="inventory-count-label"></strong>
+                <p id="inventory-status" class="muted"></p>
+                <button class="button button--secondary button--small" type="button" data-inventory-settings>Uzupełnij zapas</button>
+              </article>
               <article class="card today-support-card today-voice-card" aria-labelledby="today-voice-title">
                 <div class="today-support-card__heading">
                   <span class="today-support-card__icon" aria-hidden="true">

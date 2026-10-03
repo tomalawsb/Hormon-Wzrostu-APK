@@ -45,7 +45,13 @@ if (process.platform !== 'win32') {
   }
 }
 
-const gradleArgs = ['--no-daemon', 'lintDebug', 'assembleDebug', '--stacktrace'];
+const gradleArgs = [
+  '--no-daemon',
+  '-Pandroid.overridePathCheck=true',
+  'lintDebug',
+  'assembleDebug',
+  '--stacktrace',
+];
 const windows = process.platform === 'win32';
 const executable = windows ? `"${wrapper}"` : wrapper;
 const result = spawnSync(executable, gradleArgs, {

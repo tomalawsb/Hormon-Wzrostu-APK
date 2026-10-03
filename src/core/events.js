@@ -172,8 +172,8 @@
     el['export-pdf-button'].addEventListener('click', async () => {
       if (await exportPdf()) closeDataDialog(el['export-report-dialog']);
     });
-    el['export-word-button'].addEventListener('click', () => {
-      if (exportWord()) closeDataDialog(el['export-report-dialog']);
+    el['export-word-button'].addEventListener('click', async () => {
+      if (await exportWord()) closeDataDialog(el['export-report-dialog']);
     });
     el['export-json-button'].addEventListener('click', exportJson);
     el['export-profile-json-button'].addEventListener('click', exportActiveProfileJson);
@@ -248,6 +248,7 @@
     document.addEventListener('keydown', handleGlobalKeyboard);
     window.addEventListener('focus', handleAppResume);
     document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') dismissedAmpoulePrompts.clear();
       if (document.visibilityState === 'visible') handleAppResume();
     });
     window.addEventListener('hashchange', () => switchView(viewFromHash(), { updateHash: false, focus: false, smooth: false }));

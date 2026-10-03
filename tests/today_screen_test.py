@@ -104,8 +104,8 @@ require("el['recommended-save-button'].classList.add('is-hidden')" in render,
         "po zapisaniu podania duży przycisk edycji nadal zasłania ekran")
 require("openSettingsSection('ampoules')" in events,
         "przycisk zarządzania ampułką nie otwiera bezpośrednio sekcji Ampułki")
-require("if (forceNew) openSettingsSection('ampoules'" in ampoule_actions,
-        "odłożenie ampułki nie prowadzi do sekcji Ampułki")
+require("requestAmpouleChange({ values, returnDialog:" in ampoule_actions,
+        "rozpoczęcie nowej ampułki omija potwierdzenie wymiany")
 require("function pauseAmpoule(ampouleId)" in ampoule_actions,
         "brakuje odkładania ampułki poleceniem głosowym")
 require("function parseVoiceAmpouleCommand(normalized)" in voice,

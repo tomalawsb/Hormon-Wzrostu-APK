@@ -34,7 +34,8 @@
   const ALLOWED_FONT_STYLES = new Set(['system', 'readable', 'classic']);
   const DEFAULT_FONT_STYLE = 'system';
   const DEFAULT_AMPOULE_VOLUME_ML = '10';
-  const DATA_SCHEMA_VERSION = 14;
+  const DATA_SCHEMA_VERSION = 16;
+  const ALLOWED_SKINS = new Set(['readable', 'elegant', 'family']);
   const DEFAULT_PROFILE_ID = 'profile-1';
   const DEFAULT_PROFILE_NAME = 'Profil 1';
   const DEFAULT_PROFILE_COLOR = 'teal';

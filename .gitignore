@@ -35,3 +35,13 @@ android/signing/signing.properties
 
 GITHUB_SECRETS_DO_WKLEJENIA.txt
 android/app/src/main/assets/web/
+
+# Generowane wyłącznie w zewnętrznej kopii roboczej.
+/app.js
+/index.html
+/style.css
+/native-bridge.js
+*.log
+*.tmp
+
+/report-worker.js

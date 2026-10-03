@@ -38,6 +38,7 @@ let themeMediaListenerBound = false;
 
 function defaultAppearanceSettings() {
   return {
+    skin: 'readable',
     theme: DEFAULT_THEME_MODE,
     fontSize: DEFAULT_FONT_SIZE,
     fontStyle: DEFAULT_FONT_STYLE,
@@ -49,6 +50,7 @@ function sanitizeAppearanceSettings(settings = {}) {
   const requestedFontSize = typeof settings?.fontSize === 'string' ? settings.fontSize : '';
   const requestedFontStyle = typeof settings?.fontStyle === 'string' ? settings.fontStyle : '';
   return {
+    skin: ALLOWED_SKINS.has(settings?.skin) ? settings.skin : 'readable',
     theme: ALLOWED_THEME_MODES.has(requestedTheme) ? requestedTheme : DEFAULT_THEME_MODE,
     fontSize: ALLOWED_FONT_SIZES.has(requestedFontSize) ? requestedFontSize : DEFAULT_FONT_SIZE,
     fontStyle: ALLOWED_FONT_STYLES.has(requestedFontStyle)
@@ -66,6 +68,8 @@ function getAppearanceSettings(container = data) {
 }
 
 function systemPrefersDark() {
+  const nativeTheme = window.NativeBridge?.systemTheme?.();
+  if (nativeTheme === 'dark' || nativeTheme === 'light') return nativeTheme === 'dark';
   return Boolean(window.matchMedia?.('(prefers-color-scheme: dark)').matches);
 }
 
@@ -90,6 +94,7 @@ function applyThemePreference(mode = getAppearanceSettings().theme) {
   document.documentElement.dataset.themeMode = safeMode;
   document.documentElement.dataset.theme = resolved;
   document.documentElement.style.colorScheme = themeColorScheme(resolved);
+  document.documentElement.dataset.skin = getAppearanceSettings().skin;
   applyTypographyPreference();
   const themeMeta = document.querySelector('meta[name="theme-color"]');
   if (themeMeta) {
@@ -148,6 +153,21 @@ function ensureTypographyControls() {
 }
 
 function bindThemePreferences() {
+  window.addEventListener?.('nativeThemeChanged', () => {
+    if (getAppearanceSettings().theme !== 'system') return;
+    applyThemePreference('system');
+    renderAppearanceSettings();
+  });
+  document.getElementById?.('skin-control')?.addEventListener('change', (event) => {
+    const value = event.target.value;
+    if (!ALLOWED_SKINS.has(value)) return;
+    const settings = getAppearanceSettings();
+    const previous = settings.skin;
+    settings.skin = value;
+    if (!persistData()) settings.skin = previous;
+    applyThemePreference();
+    renderAppearanceSettings();
+  });
   ensureTypographyControls();
   el['theme-mode-control']?.addEventListener('change', handleThemeModeChange);
   document.getElementById?.('font-size-control')?.addEventListener(
@@ -176,9 +196,16 @@ function bindThemePreferences() {
 function handleThemeModeChange(event) {
   const input = event.target.closest('input[name="theme-mode"]');
   if (!input || !ALLOWED_THEME_MODES.has(input.value)) return;
-  getAppearanceSettings().theme = input.value;
+  const settings = getAppearanceSettings();
+  const previousTheme = settings.theme;
+  settings.theme = input.value;
   applyThemePreference(input.value);
-  if (!persistData()) return;
+  if (!persistData()) {
+    getAppearanceSettings().theme = previousTheme;
+    applyThemePreference(previousTheme);
+    renderAppearanceSettings();
+    return;
+  }
   renderAppearanceSettings();
   showToast('Wygląd aplikacji został zmieniony.', 'success');
 }
@@ -212,6 +239,8 @@ function renderAppearanceSettings() {
   ensureTypographyControls();
   if (!el['theme-mode-control']) return;
   const settings = getAppearanceSettings();
+  const skinInput = document.getElementById?.(`skin-${settings.skin}`);
+  if (skinInput) skinInput.checked = true;
   const mode = settings.theme;
   const control = el[`theme-${mode}`];
   if (control) control.checked = true;

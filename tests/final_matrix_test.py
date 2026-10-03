@@ -113,7 +113,7 @@ for token in (
     require(token in worker, f"brak końcowej obsługi PWA: {token}")
 
 workflow = read(".github/workflows/android-ci.yml")
-for token in ("ANDROID_CHECK_REQUIRED", "assembleRelease", "bundleRelease", "run: npm test"):
+for token in ("ANDROID_CHECK_REQUIRED", "assembleRelease", "bundleRelease", "npm test"):
     require(token in workflow, f"automatyczna kontrola po wysłaniu projektu pomija: {token}")
 
 package = json.loads(read("package.json"))

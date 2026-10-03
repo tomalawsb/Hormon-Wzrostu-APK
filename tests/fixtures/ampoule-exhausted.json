@@ -1,0 +1,295 @@
+{
+  "version": 15,
+  "appSettings": {
+    "security": {
+      "pinEnabled": false,
+      "pinSalt": "",
+      "pinHash": "",
+      "biometricEnabled": false,
+      "autoLockMinutes": 5
+    },
+    "appearance": {
+      "skin": "readable",
+      "theme": "light",
+      "fontSize": "standard",
+      "fontStyle": "system"
+    }
+  },
+  "appMeta": {
+    "setupCompleted": true,
+    "onboardingCompleted": true
+  },
+  "activeProfileId": "profile-1",
+  "profiles": [
+    {
+      "id": "profile-1",
+      "name": "Profil przykładowy",
+      "icon": "🙂",
+      "color": "teal",
+      "archivedAt": "",
+      "createdAt": "2026-09-23T13:38:28.603Z",
+      "updatedAt": "",
+      "settings": {
+        "defaultDose": "1,0",
+        "unit": "mg",
+        "defaultTime": "20:00",
+        "voiceFeedback": false,
+        "voiceConfirm": true,
+        "reminderEnabled": false,
+        "reminderTime": "21:00",
+        "ampouleStartDate": "2026-09-11",
+        "ampouleStartNumber": 1,
+        "ampouleVolumeMl": "10",
+        "ampouleDoseMl": "1",
+        "ampouleDoseCount": 10,
+        "ampouleMaxOpenDays": ""
+      },
+      "inventory": {
+        "enabled": true,
+        "unopenedCount": 3,
+        "lowThreshold": 2
+      },
+      "meta": {
+        "lastReminderDate": ""
+      },
+      "medical": {
+        "birthDate": "",
+        "doctorName": "",
+        "clinicName": "",
+        "medicationName": "",
+        "diagnosis": "",
+        "notes": ""
+      },
+      "measurements": [],
+      "doseHistory": [],
+      "injectionOrder": [
+        {
+          "id": "rotation-1",
+          "side": "lewa",
+          "site": "brzuch",
+          "enabled": true
+        },
+        {
+          "id": "rotation-2",
+          "side": "prawa",
+          "site": "brzuch",
+          "enabled": true
+        },
+        {
+          "id": "rotation-3",
+          "side": "lewa",
+          "site": "udo",
+          "enabled": true
+        },
+        {
+          "id": "rotation-4",
+          "side": "prawa",
+          "site": "udo",
+          "enabled": true
+        },
+        {
+          "id": "rotation-5",
+          "side": "lewa",
+          "site": "pośladek",
+          "enabled": true
+        },
+        {
+          "id": "rotation-6",
+          "side": "prawa",
+          "site": "pośladek",
+          "enabled": true
+        },
+        {
+          "id": "rotation-7",
+          "side": "lewa",
+          "site": "ramię",
+          "enabled": true
+        },
+        {
+          "id": "rotation-8",
+          "side": "prawa",
+          "site": "ramię",
+          "enabled": true
+        },
+        {
+          "id": "rotation-9",
+          "side": "lewa",
+          "site": "łopatka",
+          "enabled": true
+        },
+        {
+          "id": "rotation-10",
+          "side": "prawa",
+          "site": "łopatka",
+          "enabled": true
+        }
+      ],
+      "ampoules": [
+        {
+          "id": "ampoule-mue5f33v-v887q1",
+          "number": 4,
+          "startDate": "2026-09-11",
+          "volumeMl": "10",
+          "doseMl": "1",
+          "targetDoseCount": 10,
+          "status": "finished",
+          "createdAt": "2026-09-23T13:38:28.603Z",
+          "updatedAt": ""
+        }
+      ],
+      "activeAmpouleId": "",
+      "entries": [
+        {
+          "id": "example-0",
+          "date": "2026-09-13",
+          "time": "20:00",
+          "dose": "1",
+          "unit": "mg",
+          "side": "lewa",
+          "site": "udo",
+          "status": "given",
+          "note": "Dane przykładowe",
+          "ampouleId": "ampoule-mue5f33v-v887q1",
+          "ampouleDoseMl": "1",
+          "createdAt": "2026-09-23T13:38:28.603Z",
+          "updatedAt": ""
+        },
+        {
+          "id": "example-1",
+          "date": "2026-09-14",
+          "time": "20:00",
+          "dose": "1",
+          "unit": "mg",
+          "side": "prawa",
+          "site": "udo",
+          "status": "given",
+          "note": "Dane przykładowe",
+          "ampouleId": "ampoule-mue5f33v-v887q1",
+          "ampouleDoseMl": "1",
+          "createdAt": "2026-09-23T13:38:28.603Z",
+          "updatedAt": ""
+        },
+        {
+          "id": "example-2",
+          "date": "2026-09-15",
+          "time": "20:00",
+          "dose": "1",
+          "unit": "mg",
+          "side": "lewa",
+          "site": "udo",
+          "status": "given",
+          "note": "Dane przykładowe",
+          "ampouleId": "ampoule-mue5f33v-v887q1",
+          "ampouleDoseMl": "1",
+          "createdAt": "2026-09-23T13:38:28.603Z",
+          "updatedAt": ""
+        },
+        {
+          "id": "example-3",
+          "date": "2026-09-16",
+          "time": "20:00",
+          "dose": "1",
+          "unit": "mg",
+          "side": "prawa",
+          "site": "udo",
+          "status": "given",
+          "note": "Dane przykładowe",
+          "ampouleId": "ampoule-mue5f33v-v887q1",
+          "ampouleDoseMl": "1",
+          "createdAt": "2026-09-23T13:38:28.603Z",
+          "updatedAt": ""
+        },
+        {
+          "id": "example-4",
+          "date": "2026-09-17",
+          "time": "20:00",
+          "dose": "1",
+          "unit": "mg",
+          "side": "lewa",
+          "site": "udo",
+          "status": "given",
+          "note": "Dane przykładowe",
+          "ampouleId": "ampoule-mue5f33v-v887q1",
+          "ampouleDoseMl": "1",
+          "createdAt": "2026-09-23T13:38:28.603Z",
+          "updatedAt": ""
+        },
+        {
+          "id": "example-5",
+          "date": "2026-09-18",
+          "time": "20:00",
+          "dose": "1",
+          "unit": "mg",
+          "side": "prawa",
+          "site": "udo",
+          "status": "given",
+          "note": "Dane przykładowe",
+          "ampouleId": "ampoule-mue5f33v-v887q1",
+          "ampouleDoseMl": "1",
+          "createdAt": "2026-09-23T13:38:28.603Z",
+          "updatedAt": ""
+        },
+        {
+          "id": "example-6",
+          "date": "2026-09-19",
+          "time": "20:00",
+          "dose": "1",
+          "unit": "mg",
+          "side": "lewa",
+          "site": "udo",
+          "status": "given",
+          "note": "Dane przykładowe",
+          "ampouleId": "ampoule-mue5f33v-v887q1",
+          "ampouleDoseMl": "1",
+          "createdAt": "2026-09-23T13:38:28.603Z",
+          "updatedAt": ""
+        },
+        {
+          "id": "example-7",
+          "date": "2026-09-20",
+          "time": "20:00",
+          "dose": "1",
+          "unit": "mg",
+          "side": "prawa",
+          "site": "udo",
+          "status": "given",
+          "note": "Dane przykładowe",
+          "ampouleId": "ampoule-mue5f33v-v887q1",
+          "ampouleDoseMl": "1",
+          "createdAt": "2026-09-23T13:38:28.603Z",
+          "updatedAt": ""
+        },
+        {
+          "id": "example-8",
+          "date": "2026-09-21",
+          "time": "20:00",
+          "dose": "1",
+          "unit": "mg",
+          "side": "lewa",
+          "site": "udo",
+          "status": "given",
+          "note": "Dane przykładowe",
+          "ampouleId": "ampoule-mue5f33v-v887q1",
+          "ampouleDoseMl": "1",
+          "createdAt": "2026-09-23T13:38:28.603Z",
+          "updatedAt": ""
+        },
+        {
+          "id": "example-9",
+          "date": "2026-09-22",
+          "time": "20:00",
+          "dose": "1",
+          "unit": "mg",
+          "side": "prawa",
+          "site": "udo",
+          "status": "given",
+          "note": "Dane przykładowe",
+          "ampouleId": "ampoule-mue5f33v-v887q1",
+          "ampouleDoseMl": "1",
+          "createdAt": "2026-09-23T13:38:28.603Z",
+          "updatedAt": ""
+        }
+      ]
+    }
+  ]
+}

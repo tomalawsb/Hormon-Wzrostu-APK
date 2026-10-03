@@ -32,6 +32,7 @@ function openEntryDialog(entryId = null, draftOverride = null, focusId = null) {
   el['entry-status'].value = source.status || 'given';
   el['entry-note'].value = source.note || '';
   el['delete-entry-button'].classList.toggle('is-hidden', !entry);
+  refreshEntryAmpouleOptions(source.ampouleId || '');
   updateEntryRequirements();
   el['entry-dialog'].showModal();
   window.setTimeout(() => document.getElementById(focusId || 'entry-date')?.focus(), 50);

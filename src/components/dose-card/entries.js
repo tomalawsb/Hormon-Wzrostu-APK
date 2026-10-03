@@ -38,19 +38,10 @@ function handleEntrySubmit(event) {
   }
 
   const undoOperation = captureEntryUndoOperation(entry.id, existingById);
-  let ampouleId = existingById?.ampouleId || '';
-  if (!ampouleId && status === 'given') {
-    const resolvedAmpouleId = ensureActiveAmpouleForDate(entry.date);
-    if (resolvedAmpouleId === null) {
-      showToast('Najpierw wybierz odłożoną ampułkę albo rozpocznij nową.', 'error', 6500);
-      closeEntryDialog();
-      openAmpouleSettings();
-      return;
-    }
-    ampouleId = resolvedAmpouleId;
-  } else if (!ampouleId && status === 'skipped') {
-    ampouleId = getActiveAmpoule()?.id || '';
-  }
+  const ampouleId = status === 'given'
+    ? requireAmpouleForEntry(entry, existingById, document.getElementById('entry-ampoule')?.value || '')
+    : existingById?.ampouleId || getActiveAmpoule()?.id || '';
+  if (status === 'given' && ampouleId === null) return;
   entry.ampouleId = ampouleId;
   entry.ampouleDoseMl = getEntryAmpouleDoseSnapshot(entry, ampouleId, existingById);
   finalizeEntryUndoOperation(undoOperation, null);
@@ -118,19 +109,9 @@ function finalizeEntryUndoOperation(operation, entry) {
   return operation;
 }
 
-function getUndoProfileAmpouleRemainingMl(profile, ampouleId) {
-  const ampoule = profile.ampoules.find((item) => item.id === ampouleId);
-  if (!ampoule) return 0;
-  const fallbackDoseMl = decimalToNumber(ampoule.doseMl);
-  const used = profile.entries
-    .filter((entry) => entry.status === 'given' && entry.ampouleId === ampouleId)
-    .reduce((sum, entry) => sum + getEntryAmpouleDoseMl(entry, fallbackDoseMl), 0);
-  return Math.max(0, decimalToNumber(ampoule.volumeMl) - used);
-}
-
 function reconcileUndoProfileAmpouleStatuses(profile) {
   profile.ampoules.forEach((ampoule) => {
-    if (getUndoProfileAmpouleRemainingMl(profile, ampoule.id) <= 0.000001) {
+    if (getProfileAmpouleRemainingDoseCount(profile, ampoule) <= 0) {
       ampoule.status = 'finished';
       if (profile.activeAmpouleId === ampoule.id) profile.activeAmpouleId = '';
     } else if (profile.activeAmpouleId === ampoule.id) {
@@ -206,7 +187,7 @@ function applyEntryUndoOperation(
     const previous = profile.ampoules.find(
       (ampoule) => ampoule.id === operation.previousActiveAmpouleId
     );
-    if (previous && getUndoProfileAmpouleRemainingMl(profile, previous.id) > 0.000001) {
+    if (previous && getProfileAmpouleRemainingDoseCount(profile, previous) > 0) {
       profile.activeAmpouleId = previous.id;
     } else if (removedIds.has(profile.activeAmpouleId)) {
       profile.activeAmpouleId = '';
@@ -226,11 +207,21 @@ function applyEntryUndoOperation(
   return true;
 }
 
-function showEntryUndo(message, operation) {
+function showEntryUndo(message, operation, { quickConfirmation = false } = {}) {
   dismissEntryUndoToasts();
   lastEntryUndoOperation = operation;
   renderTodayUndoAction();
-  showActionToast(message, 'Cofnij', () => applyEntryUndoOperation(operation), 'success', 9000);
+  if (quickConfirmation) {
+    showActionsToast(message, [
+      { label: 'Cofnij', action: () => applyEntryUndoOperation(operation) },
+      { label: 'Edytuj', action: () => {
+        if (appLocked || data.activeProfileId !== operation.profileId) return;
+        if (data.entries.some((entry) => entry.id === operation.entryId)) openEntryDialog(operation.entryId);
+      } },
+    ], 'success', 3000);
+  } else {
+    showActionToast(message, 'Cofnij', () => applyEntryUndoOperation(operation), 'success', 9000);
+  }
 }
 
 function dismissEntryUndoToasts() {
@@ -295,17 +286,18 @@ function getAmpouleCapacityForEntry(entryLike, ampouleId, existingEntry = null) 
     ampoule,
     requiredMl,
     availableMl,
-    sufficient: requiredMl <= availableMl + 0.000001,
+    sufficient: getAmpouleRemainingDoseCount(ampoule.id) > 0 ||
+      (existingEntry?.status === 'given' && existingEntry.ampouleId === ampoule.id),
   };
 }
 
 function showInsufficientAmpouleError(capacity, existingEntry = null) {
   const ampouleNumber = capacity.ampoule?.number || '?';
   const action = existingEntry
-    ? 'Zmniejsz zużycie tej dawki albo popraw dane przypisanej ampułki.'
-    : 'Odłóż obecną ampułkę i rozpocznij nową przed zapisaniem zastrzyku.';
+    ? 'Sprawdź poprawność wpisu oraz danych przypisanej ampułki. Nie zmieniaj zaleconej dawki na podstawie licznika.'
+    : 'Sprawdź wpis i ustawienia ampułki. Jeżeli wymieniono wkład, potwierdź zmianę ampułki.';
   showToast(
-    `Ampułka ${ampouleNumber} ma tylko ${formatMl(capacity.availableMl)} ml, a podanie wymaga ${formatMl(capacity.requiredMl)} ml. ${action}`,
+    `Ampułka ${ampouleNumber} ma już zapisaną docelową liczbę podań. ${action}`,
     'error',
     9000
   );
@@ -340,17 +332,8 @@ function confirmRecommendedInjection() {
 
   const entryId = createId();
   const undoOperation = captureEntryUndoOperation(entryId, null);
-  const ampouleId = ensureActiveAmpouleForDate(today);
-  if (ampouleId === null) {
-    showToast('Wybierz odłożoną ampułkę albo rozpocznij nową.', 'error', 6500);
-    openAmpouleSettings();
-    return;
-  }
-  if (!ampouleId) {
-    showToast('Ustaw pojemność i zużycie ampułki w ml, aby potwierdzić podanie.', 'error', 6500);
-    openAmpouleSettings();
-    return;
-  }
+  const ampouleId = requireAmpouleForEntry({ ...preparedDraft, date: today });
+  if (!ampouleId) return;
   finalizeEntryUndoOperation(undoOperation, null);
 
   const entry = sanitizeEntry({
@@ -411,7 +394,7 @@ function confirmRecommendedInjection() {
   resetQuickDraftForToday();
   renderAll();
   const message = `Podano: ${formatPlace(entry.side, entry.site)}, ${formatDose(entry.dose)} ${entry.unit}.`;
-  showEntryUndo(message, undoOperation);
+  showEntryUndo(message, undoOperation, { quickConfirmation: true });
   speakIfEnabled(message);
 }
 

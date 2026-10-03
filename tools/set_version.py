@@ -41,8 +41,8 @@ def main() -> int:
     version_code_raw = sys.argv[2].strip()
     if not VERSION_RE.fullmatch(version_name):
         fail("wersja musi mieć format X.Y.Z albo X.Y-DDMMRRHHMM, np. 2.0-1907262007")
-    if not version_code_raw.isdigit() or int(version_code_raw) < 1:
-        fail("versionCode musi być dodatnią liczbą całkowitą")
+    if not version_code_raw.isdigit() or not 1 <= int(version_code_raw) <= 2100000000:
+        fail("versionCode musi być liczbą całkowitą od 1 do 2100000000")
     version_code = int(version_code_raw)
 
     version_file = ROOT / "android" / "version.properties"
@@ -111,27 +111,28 @@ def main() -> int:
     )
     settings_html_path.write_text(settings_html, encoding="utf-8")
 
-    index_path = ROOT / "index.html"
-    index = index_path.read_text(encoding="utf-8")
-    index = replace_required(
-        index,
-        r"<title>Dzienniczek Hormonu v[^<]+</title>",
-        f"<title>Dzienniczek Hormonu v{version_name}</title>",
-        "tytuł wygenerowanej strony",
-    )
-    index = replace_required(
-        index,
-        r'(<span class="brand-version">)v[^<]+(</span>)',
-        rf"\1v{version_name}\2",
-        "etykieta wersji wygenerowanej strony",
-    )
-    index = replace_required(
-        index,
-        r'(<strong id="settings-version-label">)v[^<]+(</strong>)',
-        rf"\1v{version_name}\2",
-        "wersja w wygenerowanych ustawieniach",
-    )
-    index_path.write_text(index, encoding="utf-8")
+    if (ROOT / "index.html").is_file():
+        index_path = ROOT / "index.html"
+        index = index_path.read_text(encoding="utf-8")
+        index = replace_required(
+            index,
+            r"<title>Dzienniczek Hormonu v[^<]+</title>",
+            f"<title>Dzienniczek Hormonu v{version_name}</title>",
+            "tytuł wygenerowanej strony",
+        )
+        index = replace_required(
+            index,
+            r'(<span class="brand-version">)v[^<]+(</span>)',
+            rf"\1v{version_name}\2",
+            "etykieta wersji wygenerowanej strony",
+        )
+        index = replace_required(
+            index,
+            r'(<strong id="settings-version-label">)v[^<]+(</strong>)',
+            rf"\1v{version_name}\2",
+            "wersja w wygenerowanych ustawieniach",
+        )
+        index_path.write_text(index, encoding="utf-8")
 
     manifest_path = ROOT / "manifest.json"
     manifest = load_json(manifest_path)
@@ -168,8 +169,8 @@ def main() -> int:
 
     action = "Zsynchronizowano" if sync_existing else "Ustawiono"
     print(f"{action} wersję {version_name}, versionCode {version_code}.")
-    print("Uruchom npm run prepare:web oraz npm test przed budowaniem.")
-    print(f"Po wysłaniu na main GitHub automatycznie utworzy wydanie v{version_name}.")
+    print("Uruchom BUDUJ.cmd, aby przetestować i zbudować wydanie poza projektem.")
+    print("GitHub Actions sprawdza projekt i zapisuje artefakty; publikacja w Play Console jest osobnym krokiem.")
     return 0
 
 

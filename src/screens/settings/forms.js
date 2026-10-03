@@ -60,6 +60,7 @@ function saveSettings() {
 }
 
 function saveAmpouleSettings() {
+  const previousProfile = structuredCloneSafe(getActiveProfile());
   const ampouleStartNumber = normalizeAmpouleNumber(el['ampoule-start-number'].value);
   const ampouleVolume =
     normalizePositiveDecimal(el['ampoule-volume'].value) || DEFAULT_AMPOULE_VOLUME_ML;
@@ -87,31 +88,9 @@ function saveAmpouleSettings() {
   data.settings.ampouleDoseCount = ampouleDoseCount;
   data.settings.ampouleMaxOpenDays = ampouleMaxOpenDays;
 
-  const configuredDoseMl = getConfiguredAmpouleDoseMl();
-  const active = getActiveAmpoule();
-  if (active && configuredDoseMl) {
-    active.number = ampouleStartNumber;
-    active.startDate = ampouleStartDate || active.startDate;
-    active.volumeMl = ampouleVolume;
-    active.doseMl = normalizePositiveDecimal(configuredDoseMl);
-    active.targetDoseCount = ampouleDoseCount;
-    active.updatedAt = new Date().toISOString();
-  } else if (!data.ampoules.length && ampouleStartDate && configuredDoseMl) {
-    const ampoule = createAmpouleRecord({
-      number: ampouleStartNumber,
-      startDate: ampouleStartDate,
-      volumeMl: ampouleVolume,
-      doseMl: configuredDoseMl,
-      targetDoseCount: ampouleDoseCount,
-      status: 'active',
-    });
-    data.ampoules.push(ampoule);
-    data.activeAmpouleId = ampoule.id;
-  }
-  reconcileAmpouleStatuses();
-  if (!persistData()) return;
+  if (!persistData()) { Object.assign(getActiveProfile(), previousProfile); return; }
   renderAll();
-  showToast('Ustawienia ampułki zostały zapisane.', 'success');
+  showToast('Zapisano ustawienia dla kolejnych ampułek. Bieżącą poprawisz w jej szczegółach.', 'success');
 }
 
 function saveVoiceSettings() {

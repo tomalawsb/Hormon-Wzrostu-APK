@@ -19,9 +19,10 @@ public final class ReminderAlarmReceiver extends BroadcastReceiver {
         final Context appContext = context.getApplicationContext();
         final String profileId = intent.getStringExtra(ReminderScheduler.EXTRA_PROFILE_ID);
         final String date = intent.getStringExtra(ReminderScheduler.EXTRA_DATE);
+        final String kind = intent.getStringExtra(ReminderScheduler.EXTRA_KIND);
         EXECUTOR.execute(() -> {
             try {
-                ReminderScheduler.handleAlarm(appContext, profileId, date);
+                ReminderScheduler.handleAlarm(appContext, profileId, date, kind);
             } finally {
                 pendingResult.finish();
             }

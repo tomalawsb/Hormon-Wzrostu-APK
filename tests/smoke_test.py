@@ -157,8 +157,9 @@ for required in (
     "bundleRelease",
     "ANDROID_KEYSTORE_BASE64",
     "ANDROID_CHECK_REQUIRED",
-    "run: npm test",
-    "gh release create",
+    "npm test",
+    "contents: read",
+    "$RUNNER_TEMP/dzienniczek/work",
 ):
     require(required in workflow, f"workflow nie zawiera: {required}")
 
@@ -178,7 +179,8 @@ for obsolete in (
 
 ignore = read(".gitignore")
 require("android/signing/*" in ignore, "katalog podpisu nie jest ignorowany")
-require("/app.js" not in ignore and "/native-bridge.js" not in ignore, "pliki PWA są ignorowane i GitHub Pages nie zadziała")
+require("/app.js" in ignore and "/native-bridge.js" in ignore, "wygenerowane zasoby muszą pozostać poza źródłami")
+require("/www/" in workflow, "workflow nie udostępnia gotowej paczki PWA")
 
 secret_suffixes = {".p12", ".jks", ".keystore", ".pem"}
 secret_files = [

@@ -14,7 +14,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
-import java.security.SecureRandom;
 import java.util.Arrays;
 
 import javax.crypto.Cipher;
@@ -38,7 +37,6 @@ final class SecureDataStore {
 
     private final SharedPreferences preferences;
     private final File autoImportBackupFile;
-    private final SecureRandom random = new SecureRandom();
 
     SecureDataStore(Context context) {
         preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -170,9 +168,12 @@ final class SecureDataStore {
 
     private String encrypt(String slot, String plaintext) throws Exception {
         Cipher cipher = Cipher.getInstance(CIPHER);
-        byte[] iv = new byte[IV_BYTES];
-        random.nextBytes(iv);
-        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey(), new GCMParameterSpec(TAG_BITS, iv));
+        // AndroidKeyStore requires a provider-generated IV when randomized encryption is enabled.
+        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey());
+        byte[] iv = cipher.getIV();
+        if (iv == null || iv.length != IV_BYTES) {
+            throw new IllegalStateException("Invalid provider IV");
+        }
         cipher.updateAAD(aad(slot));
         byte[] ciphertext = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
         JSONObject envelope = new JSONObject();

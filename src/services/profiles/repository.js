@@ -28,6 +28,7 @@ function setActiveProfileId(profileId, { refresh = false } = {}) {
 
   const previousProfileId = data.activeProfileId;
   if (previousProfileId !== normalizedId) {
+    if (pendingAmpouleChange) closeAmpouleReplacement({ restoreDialog: false });
     data.activeProfileId = normalizedId;
     if (!persistData()) {
       data.activeProfileId = previousProfileId;

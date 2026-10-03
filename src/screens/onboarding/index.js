@@ -161,6 +161,7 @@ function finishSetupWizard(event) {
     status: 'active',
   });
   profile.ampoules = [ampoule];
+  ampoule.replacementConfirmedAt = new Date().toISOString();
   profile.activeAmpouleId = ampoule.id;
   data.appSettings.appearance.theme = 'elegant';
   data.meta.setupCompleted = true;

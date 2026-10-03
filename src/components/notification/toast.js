@@ -37,25 +37,32 @@
   }
 
   function showActionToast(message, actionLabel, action, type = 'success', duration = 8000) {
+    return showActionsToast(message, [{ label: actionLabel, action }], type, duration);
+  }
+
+  function showActionsToast(message, actions, type = 'success', duration = 3000) {
     const region = prepareToastRegion(type);
     if (!region) return;
     const toast = document.createElement('div');
     toast.className = `toast toast--action${type ? ` toast--${type}` : ''}`;
     const text = document.createElement('span');
     text.textContent = message;
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'toast__action';
-    button.textContent = actionLabel;
     let completed = false;
     const remove = () => { if (toast.isConnected) toast.remove(); };
-    button.addEventListener('click', () => {
-      if (completed) return;
-      completed = true;
-      remove();
-      action();
+    toast.appendChild(text);
+    actions.forEach(({ label, action }) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'toast__action';
+      button.textContent = label;
+      button.addEventListener('click', () => {
+        if (completed) return;
+        completed = true;
+        remove();
+        action();
+      });
+      toast.appendChild(button);
     });
-    toast.append(text, button);
     region.appendChild(toast);
     window.setTimeout(remove, duration);
   }

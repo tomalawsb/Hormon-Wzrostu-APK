@@ -65,7 +65,8 @@ const injectedCheck = String.raw`
     globalThis.__stage12AmpouleResult = {
       fullRemaining,
       halfRemaining,
-      insufficientRejected: !capacity.sufficient,
+      legacyMlDoesNotOverrideCount: capacity.sufficient,
+      exhaustedRejected: !getAmpouleCapacityForEntry(tooLarge, ampoule.id).sufficient,
       emptyRemaining,
       finished: ampoule.status === 'finished',
       activeCleared: profile.activeAmpouleId === ''
@@ -127,11 +128,12 @@ const result = sandbox.__stage12AmpouleResult;
 assert.ok(result, 'Test stanów ampułki nie zwrócił wyniku.');
 assert.equal(result.fullRemaining, 1);
 assert.equal(result.halfRemaining, 0.5);
-assert.equal(result.insufficientRejected, true);
+assert.equal(result.legacyMlDoesNotOverrideCount, true);
+assert.equal(result.exhaustedRejected, true);
 assert.equal(result.emptyRemaining, 0);
 assert.equal(result.finished, true);
 assert.equal(result.activeCleared, true);
 
 console.log(
-  'Test stanów końcowych: OK — pełna, częściowo zużyta i pusta ampułka oraz blokada zbyt dużej dawki.'
+  'Test stanów końcowych: OK — pełna, częściowo zużyta i pusta ampułka oraz blokada przekroczenia liczby podań.'
 );

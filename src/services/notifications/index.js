@@ -14,32 +14,14 @@ function getProfileAmpouleReminderText(profile) {
   const ampoule = profile.ampoules.find(
     (item) => item.id === profile.activeAmpouleId && item.status !== 'finished'
   );
-  if (!ampoule) return '';
-  const fallbackDoseMl = decimalToNumber(ampoule.doseMl);
-  const usedMl = (profile.entries || [])
-    .filter((entry) => entry.status === 'given' && entry.ampouleId === ampoule.id)
-    .reduce((sum, entry) => sum + getEntryAmpouleDoseMl(entry, fallbackDoseMl), 0);
-  const remainingBefore = Math.max(0, decimalToNumber(ampoule.volumeMl) - usedMl);
-  const plannedDoseMl =
-    profile.settings.unit === 'ml'
-      ? decimalToNumber(profile.settings.defaultDose)
-      : decimalToNumber(profile.settings.ampouleDoseMl) || fallbackDoseMl;
-  if (!plannedDoseMl) return '';
-  const remainingAfter = Math.max(0, remainingBefore - plannedDoseMl);
-  const maxOpenDays = Number(profile.settings.ampouleMaxOpenDays) || 0;
-  const startDate = isValidIsoDate(ampoule.startDate) ? parseISODate(ampoule.startDate) : null;
-  const today = parseISODate(localDateISO());
-  const openDays = startDate
-    ? Math.max(1, Math.floor((today.getTime() - startDate.getTime()) / 86400000) + 1)
-    : 0;
-  if (maxOpenDays && openDays > maxOpenDays) {
-    return `Ampułka ${ampoule.number} jest otwarta ${openDays} dni i przekroczyła ustawiony limit ${maxOpenDays} dni.`;
-  }
-  if (remainingBefore + 0.000001 < plannedDoseMl) {
-    return `W ampułce ${ampoule.number} zostało około ${formatMl(remainingBefore)} ml — za mało na pełną dawkę.`;
-  }
-  const dosesLeft = Math.floor((remainingAfter + 0.000001) / plannedDoseMl);
-  return `Po dawce zostanie około ${formatMl(remainingAfter)} ml w ampułce ${ampoule.number}, czyli około ${dosesLeft} ${plural(dosesLeft, 'pełna dawka', 'pełne dawki', 'pełnych dawek')}.`;
+  if (!ampoule) return profile.ampoules.length ? 'Potwierdź wymianę ampułki w aplikacji przed kolejnym podaniem.' : '';
+  const remaining = getProfileAmpouleRemainingDoseCount(profile, ampoule);
+  const limit = Number(profile.settings.ampouleMaxOpenDays) || 0;
+  const days = isValidIsoDate(ampoule.startDate)
+    ? Math.max(1, Math.floor((parseISODate(localDateISO()) - parseISODate(ampoule.startDate)) / 86400000) + 1) : 0;
+  if (limit && days > limit) return `Ampułka ${ampoule.number}: przekroczono ustawiony limit otwarcia ${limit} dni. Sprawdź zalecenia producenta.`;
+  return `Ampułka ${ampoule.number}: pozostało ${remaining} ${plural(remaining, 'podanie', 'podania', 'podań')}.`;
+
 }
 
 function reminderBody(profile = getActiveProfile()) {
@@ -54,6 +36,9 @@ function reminderBody(profile = getActiveProfile()) {
 
 function buildReminderState(profile, today = localDateISO()) {
   const suggestion = getSuggestedPlaceForProfile(profile);
+  const replacement = getReplacementState(profile);
+  const replacementDate = replacement.required ? parseISODate(replacement.lastDate) : null;
+  if (replacementDate) replacementDate.setDate(replacementDate.getDate() + 1);
   return {
     profileId: profile.id,
     profileName: profile.name,
@@ -62,6 +47,11 @@ function buildReminderState(profile, today = localDateISO()) {
     lastReminderDate: profile.meta.lastReminderDate || '',
     today,
     todayHasEntry: todayHasEntry(profile, today),
+    replacementNeeded: replacement.required,
+    replacementFromDate: replacementDate ? localDateISO(replacementDate) : '',
+    replacementBody: replacement.required
+      ? `${profile.name}: przed kolejnym podaniem sprawdź wymianę ampułki / wkładu we wstrzykiwaczu i potwierdź ją w aplikacji. Przypomnienie o zastrzyku: ${profile.settings.reminderTime || '21:00'}.`
+      : '',
     body: reminderBody(profile),
     url: './#today',
     suggestion:
@@ -192,6 +182,7 @@ async function readReminderDiagnostics() {
       nextTriggerAt: Number(native?.nextTriggerAt) || 0,
       scheduleMode: String(native?.scheduleMode || 'none'),
       androidApi: Number(native?.androidApi) || 0,
+      replacementNextAt: Number(native?.replacementNextAt) || 0,
     };
   }
 
@@ -269,6 +260,13 @@ async function refreshReminderDiagnostics({ announce = false, resync = false } =
     );
 
     let overallState = 'ready';
+    setReminderDiagnostic(
+      el['reminder-diagnostic-replacement'],
+      diagnostics.platform !== 'android' ? 'Osobny alarm dostępny na Androidzie'
+        : diagnostics.replacementNextAt ? formatReminderDiagnosticDate(diagnostics.replacementNextAt)
+          : 'Brak zaplanowanej wymiany',
+      diagnostics.replacementNextAt ? 'ready' : 'neutral'
+    );
     let overallText = 'Działa';
     let note = 'Powiadomienia są włączone, a następny alarm został zapisany.';
     if (!hasConfiguredReminder) {

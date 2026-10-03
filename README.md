@@ -1,74 +1,49 @@
-# Dzienniczek Hormonu — Android APK
+# Dzienniczek Hormonu
 
-**Wersja: v2.0-1008262049**
+**Wersja: v2.3.2**
 
-Wersja 2.1.0 wprowadza kreator pierwszego uruchomienia z importem dotychczasowych
-plików JSON, neutralne profile dla dzieci i dorosłych, licznik podań z ampułki,
-animowany postęp, szybkie okno zmiany ampułki oraz responsywny podgląd raportu.
+Lokalny dzienniczek dla dorosłego pacjenta lub opiekuna: historia podań, profile, pomiary, przypomnienia, ampułki, zapas i kopie danych. Aplikacja nie dobiera dawki i nie zastępuje porady lekarza.
 
-Dotychczasowe dane i historia są automatycznie migrowane do schematu wersji 14.
+## Uruchomienie i budowanie
 
-## Kontrola projektu od zera
+Na Windows uruchom `BUDUJ.cmd`. Skrypt zawsze używa folderu, w którym się znajduje, bez względu na katalog otwartego terminala. Testuje źródła, buduje podpisany APK i Android App Bundle, weryfikuje podpisy i kopiuje gotowe wyniki obok siebie:
 
-```text
-npm ci
-npm test
+- `Dzienniczek-Hormonu-v2.3.2.apk` — instalacja na telefonie.
+- `Dzienniczek-Hormonu-v2.3.2.aab` — przesłanie do Play Console.
+- `Dzienniczek-Hormonu-v2.3.2-projekt.zip` — źródła bez dodatkowego folderu wewnątrz.
+- `Dzienniczek-Hormonu-v2.3.2.sha256` — sumy kontrolne.
+
+Narzędzia, pobrane instalatory, zależności, pliki pośrednie, logi i kopia robocza znajdują się domyślnie w `D:\Users\Admin\Środowiska`. NodeJS, Python, JDK_17, Android_SDK, Gradle i npm-cache są współdzielone z kolejnymi projektami. Zależności konkretnej aplikacji znajdują się w `DzienniczekHormonu/<identyfikator ścieżki>/work`, co zapobiega kolizjom między projektami. Ponowne budowanie wykorzystuje istniejące środowiska i cache. Pierwsze pobranie wymaga internetu oraz akceptacji licencji SDK, jeżeli nie zostały wcześniej przyjęte.
+
+Nie instaluj `node_modules`, SDK ani środowiska w źródłach. Nie uruchamiaj bezpośrednio `npm install` ani Gradle w tym katalogu. Do codziennej pracy służy `BUDUJ.cmd`; wewnętrzne polecenia npm są dla kopii roboczej i CI. Generowanie źródeł z pominięciem buildera jest blokowane.
+
+Dodatkowe tryby PowerShell:
+
+```powershell
+.\BUDUJ.ps1 -PrepareOnly   # tylko zewnętrzna kopia i zasoby web
+.\BUDUJ.ps1 -WebOnly       # przygotowanie i testy web
+.\BUDUJ.ps1 -CheckOnly     # testy web, Android Lint i APK debug
+.\BUDUJ.ps1 -EnvironmentRoot 'D:\Users\Admin\Środowiska'
 ```
 
-`npm test` przygotowuje zasoby webowe, uruchamia ESLint, Prettier, testy PWA,
-test eksportu/importu oraz kontrolę Android Lint i APK debug. Bez lokalnego
-Android SDK część androidowa jest pomijana; w workflow CI jest obowiązkowa.
+Builder wypisuje dokładną ścieżkę kopii roboczej i dziennika. Podgląd PWA można uruchomić serwerem HTTP z jej folderu `www`; oryginalny katalog źródeł nie zawiera wygenerowanej strony.
 
-## Bezpieczeństwo danych
+## Podpis i wersjonowanie
 
-Dane medyczne są szyfrowane lokalnie. APK używa Android Keystore, a PWA
-Web Crypto i IndexedDB. Kopię można zapisać jako zwykły plik `.json` albo opcjonalnie zabezpieczyć hasłem jako `.ghbackup`. Oba formaty można później przywrócić.
-Opis wdrożenia i lista kontroli: [ETAP_2_BEZPIECZENSTWO.md](ETAP_2_BEZPIECZENSTWO.md).
+Zachowaj dotychczasowy klucz aplikacji. `KONFIGURUJ_PODPIS.cmd` zapisuje konfigurację poza projektem w `%LOCALAPPDATA%/DzienniczekHormonu/signing`. Nie twórz nowego klucza dla aktualizacji już rozpowszechnianej aplikacji. Nigdy nie dodawaj haseł ani klucza do ZIP lub Git.
 
-## Bezpieczeństwo WebView
+Zmieniaj wersję przez `USTAW_WERSJE.cmd` albo `BUDUJ.ps1 -SetVersion 2.3.3 -VersionCode 2009002304`. Każde wydanie w Google Play wymaga większego versionCode; limit wynosi 2100000000. Obecnie: `2009002303`. Zachowano identyfikator `pl.tomaszwolak.dzienniczekhormonuwzrostu`, minSdk 24, targetSdk 36.
 
-APK używa `WebViewAssetLoader`, zamkniętej listy lokalnych zasobów, blokady obcej
-nawigacji i ograniczonego mostu JavaScript–Android. PWA i dokument APK mają CSP.
-Opis wdrożenia: [ETAP_3_WEBVIEW.md](ETAP_3_WEBVIEW.md).
+## Wersja 2.3.2
 
-## Architektura interfejsu
+Szybsze raporty PDF i DOCX, systemowe drukowanie Androida oraz Wstecz: powrót do Dzisiaj, a wyjście dopiero po dwóch naciśnięciach w ciągu 2 sekund. Szczegóły i pomiary: [ZMIANY-2.3.2.md](ZMIANY-2.3.2.md).
 
-Kod, HTML i CSS są składane z części przypisanych do ekranów, komponentów oraz
-usług. Zmiany wykonuje się w `src/`, a `app.js`, `index.html` i `style.css` są
-plikami wynikowymi. Opis struktury: [ETAP_4_ARCHITEKTURA.md](ETAP_4_ARCHITEKTURA.md).
+## Dokumentacja
 
-## System wizualny
+- [WDROZENIE.md](WDROZENIE.md) — etapy zmian, zachowanie i wyniki sprawdzeń.
+- [GOOGLE_PLAY.md](GOOGLE_PLAY.md) — konkretne kroki wydania oraz dane, które musi uzupełnić wydawca.
+- [store/listing-pl.md](store/listing-pl.md) — tekst oferty i informacje o wydaniu.
+- [GITHUB_ACTIONS_INSTRUKCJA.md](GITHUB_ACTIONS_INSTRUKCJA.md) — automatyczne testy i artefakty.
+- [privacy.html](privacy.html) — polityka prywatności do uzupełnienia i opublikowania pod publicznym adresem.
 
-Interfejs korzysta ze wspólnych tokenów kolorów, odstępów, typografii i stanów
-komponentów. Dostępnych jest siedem motywów: automatyczny, jasny, ciemny, Elegancki, Bursztynowy, Srebrny i Lawendowy.
-Ikony interfejsu pochodzą z jednego sprite'a SVG. Opis wdrożenia:
-[ETAP_5_SYSTEM_WIZUALNY.md](ETAP_5_SYSTEM_WIZUALNY.md).
-
-## Najprostsza aktualizacja
-
-Po wprowadzeniu zmian uruchom `AKTUALIZUJ_I_WYSLIJ.cmd`. Skrypt sam:
-
-- dobierze kolejny numer wersji, jeśli obecna wersja jest już wydana,
-- zbuduje kompletne pliki PWA,
-- uruchomi testy,
-- wyśle projekt na GitHub.
-
-GitHub Actions następnie zbuduje podpisane APK/AAB i utworzy wydanie.
-
-Repozytorium źródłowe aplikacji Android i PWA. Po wysłaniu nowej wersji na gałąź `main` GitHub Actions:
-
-1. buduje pliki webowe,
-2. uruchamia testy,
-3. buduje APK debug,
-4. buduje podpisany APK i AAB,
-5. automatycznie tworzy GitHub Release `vX.Y.Z`.
-
-Aplikacja sprawdza najnowsze wydanie w:
-
-`https://github.com/tomalawsb/Hormon-Wzrostu-APK/releases/latest`
-
-## Pierwsza konfiguracja
-
-1. Uruchom `KONFIGURUJ_PODPIS.cmd` i utwórz nowy klucz.
-
-Skrypt `AKTUALIZUJ_I_WYSLIJ.cmd` przed testami automatycznie poprawia formatowanie plików zmienianych przez numer wersji.
+Aplikacja jest przygotowana technicznie do testów wydania. Nie została opublikowana w Google Play. Publiczna polityka, dane wydawcy, deklaracje i zatwierdzenie Google pozostają wymaganymi krokami przed publikacją.

@@ -11,6 +11,7 @@ ASSETS = (
     "index.html",
     "app.js",
     "native-bridge.js",
+    "report-worker.js",
     "style.css",
     "manifest.json",
     "app-version.json",

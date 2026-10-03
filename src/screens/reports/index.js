@@ -1,3 +1,29 @@
+let reportJobBusy = false;
+function setReportJobBusy(busy) {
+  reportJobBusy = busy;
+  ['export-pdf-button', 'export-word-button', 'report-print-button'].forEach(id => {
+    if (el[id]) el[id].disabled = busy;
+  });
+}
+
+function createReportModel(config) {
+  if (config.model) return config.model;
+  const profile = getDoctorReportProfile(config);
+  const fourth = getReportFourthSummary(config);
+  config.fourth = fourth;
+  const generated = new Intl.DateTimeFormat('pl-PL', { dateStyle: 'long', timeStyle: 'short' }).format(new Date());
+  const lines = [`Raport dla: ${config.scopeLabel}`, `Raport wygenerowano: ${generated}`, `Zakres wpisów: ${config.periodText}`];
+  if (profile) {
+    lines.push('Dane profilu i leczenia', ...getDoctorReportLines(profile), 'Ostatnie pomiary');
+    lines.push(...(profile.measurements.length ? profile.measurements.slice(0, 10).map(m => `${formatDateShort(m.date)} — ${m.heightCm ? formatDose(m.heightCm) + ' cm' : 'wzrost —'}, ${m.weightKg ? formatDose(m.weightKg) + ' kg' : 'masa —'}${m.note ? ' — ' + m.note : ''}`) : ['Brak pomiarów.']));
+    lines.push('Historia zmian dawki');
+    lines.push(...(profile.doseHistory.length ? profile.doseHistory.slice(0, 10).map(d => `${formatDateShort(d.date)} — ${formatDose(d.dose)} ${d.unit}${d.note ? ' — ' + d.note : ''}`) : ['Brak zapisanych zmian dawki.']));
+  }
+  lines.push(`Liczba wpisów: ${config.records.length}. Podano: ${config.records.filter(r => r.entry.status === 'given').length}. Pominięto: ${config.records.filter(r => r.entry.status === 'skipped').length}.`, `${fourth.number} — ${fourth.text}`);
+  config.model = { scopeLabel: config.scopeLabel, periodText: config.periodText, columns: getReportColumns(config), rows: getReportRowsForCanvas(config), lines, footer: 'Aplikacja nie dobiera dawki i nie zastępuje zaleceń lekarza.' };
+  return config.model;
+}
+
 function withProfileContext(profileId, callback) {
   const previousProfileId = data.activeProfileId;
   data.activeProfileId = profileId;
@@ -82,7 +108,7 @@ function handleReportConfigurationChange() {
 }
 
 function renderReportConfigurationSummary() {
-  const config = getReportConfiguration({ notify: false });
+  const config = getReportConfiguration({ notify: false, summaryOnly: true });
   if (!config) {
     el['report-scope-summary'].textContent = 'Nieprawidłowy zakres dat';
     return;
@@ -92,7 +118,7 @@ function renderReportConfigurationSummary() {
     `${config.scopeLabel} · ${config.periodText} · ${ampoules}`;
 }
 
-function getReportConfiguration({ notify = true } = {}) {
+function getReportConfiguration({ notify = true, summaryOnly = false } = {}) {
   const scope = normalizeProfileScope(
     el['report-profile-filter']?.value || reportProfileScope || data.activeProfileId
   );
@@ -106,12 +132,12 @@ function getReportConfiguration({ notify = true } = {}) {
   const includeAmpoules = el['report-include-ampoules']
     ? Boolean(el['report-include-ampoules'].checked)
     : true;
-  const records = getScopedEntryRecords(scope, { from, to }).map(({ profile, entry }) => ({
+  const records = summaryOnly ? [] : getScopedEntryRecords(scope, { from, to }).map(({ profile, entry }) => ({
     profile,
     entry,
     ampouleRow: null,
   }));
-  if (includeAmpoules) {
+  if (includeAmpoules && !summaryOnly) {
     const rowsByProfile = new Map(
       profiles.map((profile) => [profile.id, getAmpouleRowsByEntryId(profile.id).rowsById])
     );
@@ -124,14 +150,15 @@ function getReportConfiguration({ notify = true } = {}) {
   const periodText =
     from || to
       ? `${from ? formatDateShort(from) : 'początek'} – ${to ? formatDateShort(to) : 'dzisiaj'}`
-      : getReportPeriodText(records.map((record) => record.entry));
+      : getReportPeriodText(summaryOnly ? profiles.flatMap(profile => profile.entries) : records.map(record => record.entry));
   return { scope, profiles, records, includeAmpoules, from, to, scopeLabel, periodText };
 }
 
 function getReportPeriodText(entries) {
   if (!entries.length) return 'brak wpisów';
-  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
-  return `${formatDateShort(sorted[0].date)} – ${formatDateShort(sorted[sorted.length - 1].date)}`;
+  let first = entries[0].date, last = first;
+  for (const entry of entries) { if (entry.date < first) first = entry.date; if (entry.date > last) last = entry.date; }
+  return `${formatDateShort(first)} – ${formatDateShort(last)}`;
 }
 
 function getReportColumns(config) {
@@ -154,6 +181,7 @@ function getReportColumns(config) {
 }
 
 function getReportRecordValue(record, key) {
+  if (record.reportValues) return record.reportValues[key] ?? '—';
   const { profile, entry, ampouleRow } = record;
   const values = {
     profile: profile.name,
@@ -166,6 +194,7 @@ function getReportRecordValue(record, key) {
     remaining: formatReportRemainingCell(ampouleRow),
     note: entry.note || '—',
   };
+  record.reportValues = values;
   return values[key] ?? '—';
 }
 
@@ -174,6 +203,7 @@ function getReportFilenameScope(config) {
 }
 
 function getReportFourthSummary(config) {
+  if (config.fourth) return config.fourth;
   if (config.profiles.length > 1)
     return { number: String(config.profiles.length), text: 'profile w raporcie' };
   if (!config.includeAmpoules)
@@ -266,7 +296,12 @@ function buildReportTableRows(config) {
   return config.records
     .map(
       (record) =>
-        `<tr>${columns.map((column) => `<td>${escapeHtml(getReportRecordValue(record, column.key))}</td>`).join('')}</tr>`
+        `<tr>${columns
+          .map(
+            (column) =>
+              `<td data-label="${escapeHtml(column.label)}">${escapeHtml(getReportRecordValue(record, column.key))}</td>`
+          )
+          .join('')}</tr>`
     )
     .join('');
 }
@@ -289,14 +324,14 @@ function buildReportBodyForConfig(config) {
         <div><strong>${skipped}</strong><span>pominiętych</span></div>
         <div><strong>${escapeHtml(fourth.number)}</strong><span>${escapeHtml(fourth.text)}</span></div>
       </div>
-      <table>
+      <table class="report-history-table">
         <thead><tr>${columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join('')}</tr></thead>
-        <tbody>${buildReportTableRows(config) || `<tr><td colspan="${columns.length}">Brak wpisów.</td></tr>`}</tbody>
+        <tbody>${buildReportTableRows(config) || `<tr><td class="report-empty-cell" colspan="${columns.length}">Brak wpisów.</td></tr>`}</tbody>
       </table>
       <p class="footer">Aplikacja nie dobiera dawki i nie zastępuje zaleceń lekarza.</p>`;
 }
 
-function reportDocumentHtml(config = getReportConfiguration({ notify: false })) {
+function reportDocumentHtml(config = getReportConfiguration({ notify: false, summaryOnly: true })) {
   const title = config?.scopeLabel || 'raport';
   return `<!doctype html><html lang="pl">
       <head><meta charset="utf-8"><title>Raport – ${escapeHtml(title)} – Dzienniczek Hormonu</title>
@@ -338,36 +373,60 @@ function reportDocumentHtml(config = getReportConfiguration({ notify: false })) 
           .doctor-profile-grid, .doctor-detail-columns { grid-template-columns: 1fr; }
           .doctor-profile-grid div { grid-template-columns: 110px minmax(0, 1fr); }
           table { font-size: 9px; }
-          th, td { padding: 5px 4px; }
+          th, td { padding: 5px 4px; overflow-wrap: anywhere; }
+          .report-history-table { display: block; margin-top: 16px; border-collapse: separate; }
+          .report-history-table thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+          .report-history-table tbody { display: grid; gap: 10px; }
+          .report-history-table tr { display: block; width: 100%; overflow: hidden; border: 1px solid #cfdce5; border-radius: 10px; background: #fff; }
+          .report-history-table td { display: grid; grid-template-columns: minmax(92px, 38%) minmax(0, 1fr); gap: 8px; width: 100%; border: 0; border-bottom: 1px solid #e4edf3; padding: 7px 9px; background: #fff; }
+          .report-history-table tr:nth-child(even) td { background: #f8fbfd; }
+          .report-history-table td::before { content: attr(data-label); color: #60768a; font-weight: 700; }
+          .report-history-table td:last-child { border-bottom: 0; }
+          .report-history-table .report-empty-cell { display: block; text-align: center; }
+          .report-history-table .report-empty-cell::before { content: none; }
         }
         @media print { html, body { background: #fff; } body { padding: 0; } .report-sheet { max-width: none; margin: 0; padding: 0; box-shadow: none; } .doctor-detail-columns section { break-inside: avoid; } }
       </style></head><body><main class="report-sheet">${buildReportBodyForConfig(config)}</main></body></html>`;
 }
 
 async function exportPdf() {
-  const config = getReportConfiguration();
-  if (!config) return false;
+  if (reportJobBusy) return false;
+  setReportJobBusy(true);
   try {
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const config = getReportConfiguration();
+    if (!config) return false;
     showToast('Tworzenie raportu PDF…');
+    if (window.NativeBridge?.reportPdf) {
+      const result = await window.NativeBridge.reportPdf(createReportModel(config), `dzienniczek-raport-${getReportFilenameScope(config)}-${localDateISO()}.pdf`, false);
+      if (!result.success && result.state !== 'cancelled') throw new Error(result.state);
+      showToast(result.success ? 'Zapisano raport PDF.' : 'Anulowano zapis raportu PDF.', result.success ? 'success' : undefined);
+      return result.success;
+    }
     const blob = await createReportPdfBlob(config);
-    downloadBlob(
+    const saved = await downloadBlob(
       `dzienniczek-raport-${getReportFilenameScope(config)}-${localDateISO()}.pdf`,
       blob
     );
-    showToast('Pobrano raport PDF.', 'success');
+    if (!saved) {
+      showToast('Anulowano zapis raportu PDF.');
+      return false;
+    }
+    showToast(isNativeAndroidApp() ? 'Zapisano raport PDF.' : 'Pobrano raport PDF.', 'success');
     return true;
   } catch (error) {
     console.error('Nie udało się utworzyć PDF:', error);
     showToast('Nie udało się utworzyć raportu PDF.', 'error');
     return false;
+  } finally {
+    setReportJobBusy(false);
   }
 }
 
 async function createReportPdfBlob(config = getReportConfiguration()) {
   if (!config) throw new Error('Nieprawidłowa konfiguracja raportu.');
-  const pageCanvases = renderReportPdfPages(config);
   const jpegPages = [];
-  for (const canvas of pageCanvases) {
+  await renderReportPdfPages(config, async (canvas) => {
     const blob = await new Promise((resolve, reject) => {
       canvas.toBlob(
         (value) =>
@@ -377,7 +436,9 @@ async function createReportPdfBlob(config = getReportConfiguration()) {
       );
     });
     jpegPages.push(new Uint8Array(await blob.arrayBuffer()));
-  }
+    canvas.width = canvas.height = 0;
+    await new Promise(resolve => setTimeout(resolve, 0));
+  });
   return buildPdfFromJpegPages(jpegPages, 1587, 1123);
 }
 
@@ -388,7 +449,7 @@ function getReportRowsForCanvas(config) {
   );
 }
 
-function renderReportPdfPages(config) {
+async function renderReportPdfPages(config, consumePage) {
   const width = 1587,
     height = 1123,
     margin = 58,
@@ -405,7 +466,7 @@ function renderReportPdfPages(config) {
     dateStyle: 'long',
     timeStyle: 'short',
   }).format(new Date());
-  const pages = [];
+  let pageNumber = 0;
   let page = null,
     ctx = null,
     y = 0;
@@ -451,44 +512,32 @@ function renderReportPdfPages(config) {
       y = margin + 48;
     }
     y = drawPdfTableHeader(ctx, margin, y, columns, headers);
-    pages.push(page);
+    pageNumber++;
   };
 
   createPage(true);
-  if (!rows.length) {
-    drawPdfCellText(
-      ctx,
-      'Brak wpisów.',
-      margin + 10,
-      y + 10,
-      tableWidth - 20,
-      18,
-      '#17324d',
-      false
-    );
-    ctx.strokeStyle = '#cfdce5';
-    ctx.strokeRect(margin, y, tableWidth, 44);
-  } else
-    rows.forEach((row) => {
-      const rowHeight = measurePdfRowHeight(ctx, row, columns);
-      if (y + rowHeight > height - margin - 42) createPage(false);
-      drawPdfTableRow(ctx, margin, y, columns, row, rowHeight);
-      y += rowHeight;
-    });
-  pages.forEach((canvas, index) => {
-    const pageCtx = canvas.getContext('2d');
-    pageCtx.font = '17px Arial, sans-serif';
-    pageCtx.fillStyle = '#60768a';
-    pageCtx.fillText(
-      'Aplikacja nie dobiera dawki i nie zastępuje zaleceń lekarza.',
-      margin,
-      height - margin + 10
-    );
-    pageCtx.textAlign = 'right';
-    pageCtx.fillText(`Strona ${index + 1} z ${pages.length}`, width - margin, height - margin + 10);
-    pageCtx.textAlign = 'left';
-  });
-  return pages;
+  const heights = rows.map(row => measurePdfRowHeight(ctx, row, columns));
+  let totalPages = 1, measuredY = y;
+  for (const h of heights) {
+    if (measuredY + h > height - margin - 42) { totalPages++; measuredY = margin + 48 + 46; }
+    measuredY += h;
+  }
+  const finishPage = async () => {
+    ctx.font = '17px Arial, sans-serif';
+    ctx.fillStyle = '#60768a';
+    ctx.fillText('Aplikacja nie dobiera dawki i nie zastępuje zaleceń lekarza.', margin, height - margin + 10);
+    ctx.textAlign = 'right';
+    ctx.fillText(`Strona ${pageNumber} z ${totalPages}`, width - margin, height - margin + 10);
+    ctx.textAlign = 'left';
+    await consumePage(page);
+  };
+  if (!rows.length) drawPdfCellText(ctx, 'Brak wpisów.', margin + 10, y + 10, tableWidth - 20, 18, '#17324d', false);
+  for (let i = 0; i < rows.length; i++) {
+    if (y + heights[i] > height - margin - 42) { await finishPage(); createPage(false); }
+    drawPdfTableRow(ctx, margin, y, columns, rows[i], heights[i]);
+    y += heights[i];
+  }
+  await finishPage();
 }
 
 function drawPdfSummaryCards(ctx, x, y, width, records, fourth) {
@@ -657,186 +706,51 @@ function buildPdfFromJpegPages(jpegPages, imageWidth, imageHeight) {
   return new Blob(parts, { type: 'application/pdf' });
 }
 
-function exportWord() {
-  const config = getReportConfiguration();
-  if (!config) return false;
+async function exportWord() {
+  if (reportJobBusy) return false;
+  setReportJobBusy(true);
   try {
-    const blob = createDocxBlobForConfig(config);
-    downloadBlob(
+    showToast('Tworzenie dokumentu Word…');
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const config = getReportConfiguration();
+    if (!config) return false;
+    const blob = await createDocxBlobForConfig(config);
+    const saved = await downloadBlob(
       `dzienniczek-raport-${getReportFilenameScope(config)}-${localDateISO()}.docx`,
       blob
     );
-    showToast('Pobrano prawidłowy dokument Word .docx.', 'success');
+    if (!saved) {
+      showToast('Anulowano zapis dokumentu Word.');
+      return false;
+    }
+    showToast(
+      isNativeAndroidApp() ? 'Zapisano dokument Word .docx.' : 'Pobrano prawidłowy dokument Word .docx.',
+      'success'
+    );
     return true;
   } catch (error) {
     console.error('Nie udało się utworzyć DOCX:', error);
     showToast('Nie udało się utworzyć dokumentu Word.', 'error');
     return false;
+  } finally {
+    setReportJobBusy(false);
   }
 }
 
 function createDocxBlobForConfig(config) {
-  const files = [
-    [
-      '[Content_Types].xml',
-      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`,
-    ],
-    [
-      '_rels/.rels',
-      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`,
-    ],
-    [
-      'word/_rels/document.xml.rels',
-      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`,
-    ],
-    [
-      'word/styles.xml',
-      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:sz w:val="20"/><w:lang w:val="pl-PL"/></w:rPr></w:style></w:styles>`,
-    ],
-    ['word/document.xml', buildDocxDocumentXml(config)],
-    [
-      'docProps/core.xml',
-      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>Dzienniczek Hormonu — ${escapeXml(config.scopeLabel)}</dc:title><dc:creator>Dzienniczek Hormonu</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString()}</dcterms:created></cp:coreProperties>`,
-    ],
-    [
-      'docProps/app.xml',
-      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Dzienniczek Hormonu</Application></Properties>`,
-    ],
-  ];
-  return new Blob([buildStoredZip(files)], {
-    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  const model = createReportModel(config);
+  return new Promise((resolve, reject) => {
+    const worker = new Worker('./report-worker.js');
+    const timeout = setTimeout(() => { worker.terminate(); reject(new Error('Przekroczono czas tworzenia DOCX.')); }, 120000);
+    const finish = () => { clearTimeout(timeout); worker.terminate(); };
+    worker.onerror = () => { finish(); reject(new Error('Nie udało się uruchomić eksportu DOCX.')); };
+    worker.onmessage = ({ data: result }) => {
+      finish();
+      if (result.error) reject(new Error(result.error));
+      else resolve(new Blob([result.buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }));
+    };
+    worker.postMessage({ id: 1, model });
   });
-}
-
-function buildDocxDoctorProfileSection(config) {
-  const profile = getDoctorReportProfile(config);
-  if (!profile) return '';
-  const measurementLines = profile.measurements
-    .slice(0, 10)
-    .map(
-      (measurement) =>
-        `${formatDateShort(measurement.date)} — ${measurement.heightCm ? `${formatDose(measurement.heightCm)} cm` : 'wzrost —'}, ${measurement.weightKg ? `${formatDose(measurement.weightKg)} kg` : 'masa —'}${measurement.note ? ` — ${measurement.note}` : ''}`
-    );
-  const doseLines = profile.doseHistory
-    .slice(0, 10)
-    .map(
-      (change) =>
-        `${formatDateShort(change.date)} — ${formatDose(change.dose)} ${change.unit}${change.note ? ` — ${change.note}` : ''}`
-    );
-  return [
-    docxParagraph('Dane profilu i leczenia', true, 26),
-    ...getDoctorReportLines(profile).map((line) => docxParagraph(line, false, 18)),
-    docxParagraph('Ostatnie pomiary', true, 22),
-    ...(measurementLines.length
-      ? measurementLines.map((line) => docxParagraph(line, false, 18))
-      : [docxParagraph('Brak pomiarów.', false, 18)]),
-    docxParagraph('Historia zmian dawki', true, 22),
-    ...(doseLines.length
-      ? doseLines.map((line) => docxParagraph(line, false, 18))
-      : [docxParagraph('Brak zapisanych zmian dawki.', false, 18)]),
-  ].join('');
-}
-
-function buildDocxDocumentXml(config) {
-  const columns = getReportColumns(config);
-  const rows = [
-    columns.map((column) => column.label),
-    ...config.records.map((record) =>
-      columns.map((column) => getReportRecordValue(record, column.key))
-    ),
-  ];
-  const tableRows = config.records.length
-    ? rows
-        .map(
-          (row, rowIndex) =>
-            `<w:tr>${row.map((cell) => docxCell(cell, rowIndex === 0)).join('')}</w:tr>`
-        )
-        .join('')
-    : `<w:tr>${docxCell('Brak wpisów.', false)}</w:tr>`;
-  const generated = new Intl.DateTimeFormat('pl-PL', {
-    dateStyle: 'long',
-    timeStyle: 'short',
-  }).format(new Date());
-  const fourth = getReportFourthSummary(config);
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
-      ${docxParagraph(`Dzienniczek Hormonu — ${config.scopeLabel}`, true, 32)}
-      ${docxParagraph(`Raport dla: ${config.scopeLabel}`, false, 18)}
-      ${docxParagraph(`Raport wygenerowano: ${generated}`, false, 18)}
-      ${docxParagraph(`Zakres wpisów: ${config.periodText}`, false, 18)}
-      ${buildDocxDoctorProfileSection(config)}
-      ${docxParagraph(`Liczba wpisów: ${config.records.length}. Podano: ${config.records.filter(({ entry }) => entry.status === 'given').length}. Pominięto: ${config.records.filter(({ entry }) => entry.status === 'skipped').length}.`, false, 20)}
-      ${docxParagraph(`${fourth.number} — ${fourth.text}`, false, 20)}
-      <w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders><w:top w:val="single" w:sz="4" w:color="B7C9D6"/><w:left w:val="single" w:sz="4" w:color="B7C9D6"/><w:bottom w:val="single" w:sz="4" w:color="B7C9D6"/><w:right w:val="single" w:sz="4" w:color="B7C9D6"/><w:insideH w:val="single" w:sz="4" w:color="D8E3EA"/><w:insideV w:val="single" w:sz="4" w:color="D8E3EA"/></w:tblBorders></w:tblPr>${tableRows}</w:tbl>
-      ${docxParagraph('Aplikacja nie dobiera dawki i nie zastępuje zaleceń lekarza.', false, 18)}
-      <w:sectPr><w:pgSz w:w="15840" w:h="12240" w:orient="landscape"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720"/></w:sectPr>
-      </w:body></w:document>`;
-}
-
-function docxParagraph(text, bold = false, size = 20) {
-  return `<w:p><w:r><w:rPr>${bold ? '<w:b/>' : ''}<w:sz w:val="${size}"/><w:szCs w:val="${size}"/></w:rPr><w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r></w:p>`;
-}
-
-function docxCell(text, bold = false) {
-  return `<w:tc><w:tcPr><w:tcMar><w:top w:w="90" w:type="dxa"/><w:left w:w="90" w:type="dxa"/><w:bottom w:w="90" w:type="dxa"/><w:right w:w="90" w:type="dxa"/></w:tcMar></w:tcPr>${docxParagraph(String(text), bold, 18)}</w:tc>`;
-}
-
-function escapeXml(value) {
-  return String(value ?? '').replace(
-    /[<>&"']/g,
-    (character) =>
-      ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' })[character]
-  );
-}
-
-function buildStoredZip(files) {
-  const encoder = new TextEncoder();
-  const localParts = [];
-  const centralParts = [];
-  let offset = 0;
-
-  files.forEach(([name, content]) => {
-    const nameBytes = encoder.encode(name);
-    const dataBytes = typeof content === 'string' ? encoder.encode(content) : content;
-    const crc = crc32(dataBytes);
-    const localHeader = new Uint8Array(30 + nameBytes.length);
-    const localView = new DataView(localHeader.buffer);
-    localView.setUint32(0, 0x04034b50, true);
-    localView.setUint16(4, 20, true);
-    localView.setUint16(6, 0x0800, true);
-    localView.setUint16(8, 0, true);
-    localView.setUint32(14, crc, true);
-    localView.setUint32(18, dataBytes.length, true);
-    localView.setUint32(22, dataBytes.length, true);
-    localView.setUint16(26, nameBytes.length, true);
-    localHeader.set(nameBytes, 30);
-    localParts.push(localHeader, dataBytes);
-
-    const centralHeader = new Uint8Array(46 + nameBytes.length);
-    const centralView = new DataView(centralHeader.buffer);
-    centralView.setUint32(0, 0x02014b50, true);
-    centralView.setUint16(4, 20, true);
-    centralView.setUint16(6, 20, true);
-    centralView.setUint16(8, 0x0800, true);
-    centralView.setUint16(10, 0, true);
-    centralView.setUint32(16, crc, true);
-    centralView.setUint32(20, dataBytes.length, true);
-    centralView.setUint32(24, dataBytes.length, true);
-    centralView.setUint16(28, nameBytes.length, true);
-    centralView.setUint32(42, offset, true);
-    centralHeader.set(nameBytes, 46);
-    centralParts.push(centralHeader);
-    offset += localHeader.length + dataBytes.length;
-  });
-
-  const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
-  const end = new Uint8Array(22);
-  const endView = new DataView(end.buffer);
-  endView.setUint32(0, 0x06054b50, true);
-  endView.setUint16(8, files.length, true);
-  endView.setUint16(10, files.length, true);
-  endView.setUint32(12, centralSize, true);
-  endView.setUint32(16, offset, true);
-  return concatUint8Arrays([...localParts, ...centralParts, end]);
 }
 
 function concatUint8Arrays(parts) {
@@ -850,11 +764,3 @@ function concatUint8Arrays(parts) {
   return result;
 }
 
-function crc32(bytes) {
-  let crc = 0xffffffff;
-  for (const byte of bytes) {
-    crc ^= byte;
-    for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
-  }
-  return (crc ^ 0xffffffff) >>> 0;
-}

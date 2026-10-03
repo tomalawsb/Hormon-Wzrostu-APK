@@ -59,7 +59,12 @@ else {
     }
 
     if (-not $Keytool) {
-        throw "Nie znaleziono keytool.exe. Zainstaluj JDK 21 i uruchom skrypt ponownie."
+        $SharedJdk = 'D:\Users\Admin\' + [char]0x015A + 'rodowiska\JDK_17'
+        $SharedKeytool = Get-ChildItem -LiteralPath $SharedJdk -Recurse -Filter keytool.exe -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($SharedKeytool) { $Keytool = $SharedKeytool.FullName }
+    }
+    if (-not $Keytool) {
+        throw "Nie znaleziono keytool.exe. Uruchom najpierw BUDUJ.cmd -PrepareOnly, aby przygotowac wspolne JDK 17."
     }
 
     if (Test-Path -LiteralPath $TargetKey) {

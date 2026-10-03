@@ -315,13 +315,24 @@
                   </details>
                 </section>
 
-                <section class="settings-panel" data-settings-panel="ampoules" role="tabpanel" hidden>
+                <section class="settings-panel settings-panel-stack" data-settings-panel="ampoules" role="tabpanel" hidden>
+                  <article class="card settings-card inventory-settings">
+                    <div><p class="eyebrow">Nieotwarte ampułki</p><h2>Zapas leku</h2></div>
+                    <label class="switch-row"><span>Włącz licznik zapasu dla tego profilu</span><input id="inventory-enabled" type="checkbox" role="switch"></label>
+                    <p class="muted">Wpisz liczbę nieotwartych ampułek. Rozpoczęcie nowej po potwierdzeniu odejmuje jedną sztukę.</p>
+                    <div class="form-grid">
+                      <label><span>Aktualny zapas (sztuki)</span><input id="inventory-count" type="number" min="0" max="9999" step="1" inputmode="numeric" value="0"></label>
+                      <label><span>Ostrzegaj przy zapasie do</span><input id="inventory-threshold" type="number" min="0" max="9999" step="1" inputmode="numeric" value="2"></label>
+                    </div>
+                    <button id="inventory-save" class="button button--primary" type="button">Zapisz stan i ustawienia</button>
+                    <div class="inventory-delivery-row"><label><span>Nowa dostawa (sztuki)</span><input id="inventory-delivery" type="number" min="1" max="9999" step="1" inputmode="numeric" placeholder="np. 3"></label><button id="inventory-add" class="button button--secondary" type="button">Dodaj dostawę</button></div>
+                  </article>
                   <article class="card settings-card">
                     <div>
                       <p class="eyebrow">Zapas leku</p>
                       <h2>Ampułki</h2>
                     </div>
-                    <p class="muted">Zarządzaj aktualną i odłożonymi ampułkami. Stan leku jest liczony na podstawie zapisanych podań.</p>
+                    <p class="muted">Ustaw wartości dla kolejnych ampułek. Bieżącą ampułkę poprawisz osobno przyciskiem „Szczegóły bieżącej”. Stan jest liczony na podstawie zapisanych podań.</p>
                     <div class="form-grid form-grid--settings">
                       <label>
                         <span>Data rozpoczęcia ampułki</span>
@@ -351,6 +362,7 @@
                       </label>
                     </div>
                     <div class="button-row-wrap">
+                      <button class="button button--secondary button--small" type="button" data-current-ampoule>Szczegóły bieżącej</button>
                       <button id="ampoule-start-today-button" class="button button--secondary button--small" type="button">Rozpocznij ampułkę dzisiaj</button>
                       <button id="ampoule-new-button" class="button button--secondary button--small" type="button">Odłóż aktywną i rozpocznij nową</button>
                     </div>
@@ -383,7 +395,8 @@
                         <small>Na przykład 21:00.</small>
                       </span>
                       <input id="reminder-time" type="time" value="21:00">
-                    </label>
+                      </label>
+                      <p class="muted">Android przypomni o potrzebnej wymianie ampułki 30 minut przed zastrzykiem. Po potwierdzeniu wymiany to przypomnienie zostanie wyłączone. Wymagana jest zgoda na powiadomienia; dostęp „Alarmy i przypomnienia” zapewnia dokładną godzinę.</p>
                     <div class="permission-summary" aria-live="polite">
                       <span>Powiadomienia:</span>
                       <strong id="notification-permission-status">sprawdzanie…</strong>
@@ -408,7 +421,8 @@
                       <div><span>Powiadomienia</span><strong id="reminder-diagnostic-permission">Sprawdzanie…</strong></div>
                       <div><span>Ustawienia systemu</span><strong id="reminder-diagnostic-channel">Sprawdzanie…</strong></div>
                       <div><span>Sposób działania</span><strong id="reminder-diagnostic-exact-alarm">Sprawdzanie…</strong></div>
-                      <div><span>Następne przypomnienie</span><strong id="reminder-diagnostic-next">Sprawdzanie…</strong></div>
+                        <div><span>Następne przypomnienie</span><strong id="reminder-diagnostic-next">Sprawdzanie…</strong></div>
+                        <div><span>Wymiana ampułki</span><strong id="reminder-diagnostic-replacement">Sprawdzanie…</strong></div>
                     </div>
                     <p id="reminder-diagnostics-note" class="muted reminder-note">Tutaj sprawdzisz, czy przypomnienie jest gotowe.</p>
                     <div class="button-row-wrap">
@@ -466,6 +480,13 @@
                       <span id="theme-status" class="profile-count-badge">Automatyczny</span>
                     </div>
                     <p class="muted">Wybierz stały motyw albo pozwól aplikacji dopasować się do ustawienia telefonu.</p>
+                    <fieldset id="skin-control" class="skin-choice-group">
+                      <legend>Skórka interfejsu</legend>
+                      <label class="skin-choice"><input id="skin-readable" type="radio" name="skin" value="readable" checked><span class="skin-preview skin-preview--readable" aria-hidden="true"><i></i><i></i><i></i></span><strong>Czytelna</strong><small>Przestrzeń i wyraźne karty</small></label>
+                      <label class="skin-choice"><input id="skin-elegant" type="radio" name="skin" value="elegant"><span class="skin-preview skin-preview--elegant" aria-hidden="true"><i></i><i></i><i></i></span><strong>Elegancka</strong><small>Spokój i prostota</small></label>
+                      <label class="skin-choice"><input id="skin-family" type="radio" name="skin" value="family"><span class="skin-preview skin-preview--family" aria-hidden="true"><i></i><i></i><i></i></span><strong>Rodzinna</strong><small>Ciepły, przyjazny wygląd</small></label>
+                    </fieldset>
+                    <h3>Kolorystyka</h3>
                     <fieldset id="theme-mode-control" class="theme-choice-group">
                       <legend class="sr-only">Motyw aplikacji</legend>
                       <label class="theme-choice">
@@ -650,7 +671,7 @@
                     </div>
                     <div class="settings-version-row">
                       <span>Zainstalowana wersja</span>
-                      <strong id="settings-version-label">v2.0-1008262049</strong>
+                      <strong id="settings-version-label">v2.3.2</strong>
                     </div>
                     <p id="update-status" class="muted" role="status" aria-live="polite">Sprawdź, czy jest dostępna nowsza wersja aplikacji.</p>
                     <div class="dialog-actions dialog-actions--start">
@@ -684,7 +705,7 @@
                       <p class="eyebrow">O aplikacji</p>
                       <h2>Informacje</h2>
                     </div>
-                    <p>Aplikacja zapisuje historię leczenia. Nie dobiera dawki i nie zastępuje zaleceń lekarza.</p>
+                    <p>Aplikacja zapisuje historię leczenia. Nie jest wyrobem medycznym. Nie diagnozuje, nie leczy ani nie zapobiega chorobom. Nie dobiera dawki. W sprawach diagnozy i leczenia skonsultuj się z lekarzem.</p>
                     <div id="settings-install-callout" class="settings-install-callout" hidden>
                       <div class="settings-install-callout__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-download"></use></svg></div>
                       <div><strong>Zainstaluj aplikację</strong><span>Dodaj ją do ekranu telefonu lub pulpitu komputera.</span></div>
@@ -698,11 +719,11 @@
                     </summary>
                     <div class="settings-advanced__content privacy-policy-content">
                       <p><strong>Dane pozostają na urządzeniu.</strong> Twórca aplikacji nie otrzymuje historii leczenia i nie prowadzi kont użytkowników.</p>
-                      <p>Profile, podania, pomiary, ampułki i ustawienia służą wyłącznie do historii, raportów, przypomnień i licznika ampułki. Nie są sprzedawane ani używane do reklam.</p>
+                      <p>Profile, podania, pomiary, ampułki i ustawienia służą wyłącznie do historii, raportów, przypomnień i licznika ampułki. Nie są sprzedawane ani używane do reklam. Zapas ampułek również pozostaje lokalny.</p>
                       <p>Kopię zapasową można zapisać bez hasła albo opcjonalnie ją zaszyfrować. Eksport zapisuje plik w wybranym przez użytkownika miejscu, dlatego należy chronić go we własnym zakresie.</p>
-                      <p>Powiadomienia i dostęp do plików są używane tylko po wykonaniu odpowiedniej czynności. Aplikacja nie wysyła historii leczenia do internetu. Na Androidzie dostęp do mikrofonu jest opcjonalny i uruchamiany dopiero po naciśnięciu mikrofonu. Dźwięk obsługuje systemowe rozpoznawanie mowy, a aplikacja otrzymuje tekst polecenia.</p>
+                      <p>Powiadomienia i dostęp do plików są używane tylko po wykonaniu odpowiedniej czynności. Aplikacja nie wysyła historii leczenia do internetu. Na Androidzie dostęp do mikrofonu jest opcjonalny i uruchamiany dopiero po naciśnięciu mikrofonu. Dźwięk obsługuje systemowe rozpoznawanie mowy, a aplikacja otrzymuje tekst polecenia i nie przechowuje nagrań. Dostawca rozpoznawania mowy może przetwarzać dźwięk poza urządzeniem zgodnie z ustawieniami swojej usługi.</p>
                       <p>Dane można usunąć w aplikacji, przez wyczyszczenie jej danych w systemie albo odinstalowanie. Aplikacja nie dobiera dawki i nie zastępuje zaleceń lekarza.</p>
-                      <p class="muted">Pełna polityka prywatności obowiązuje od 9 sierpnia 2026 r. i znajduje się w pliku privacy.html dołączonym do projektu.</p>
+                      <p class="muted">Polityka prywatności: 23 września 2026 r. Wersja przed publikacją w Google Play — dane wydawcy i prywatny kontakt zostaną uzupełnione przed udostępnieniem.</p>
                     </div>
                   </details>
 

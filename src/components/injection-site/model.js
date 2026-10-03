@@ -115,6 +115,9 @@ function sanitizeAmpoule(ampoule) {
       ? ampoule.createdAt
       : new Date(`${startDate}T00:00:00`).toISOString(),
     updatedAt: isValidDateTime(ampoule.updatedAt) ? ampoule.updatedAt : '',
+    replacementConfirmedAt: isValidDateTime(ampoule.replacementConfirmedAt) ? ampoule.replacementConfirmedAt : '',
+    lastResumedAt: isValidDateTime(ampoule.lastResumedAt) ? ampoule.lastResumedAt : '',
+    stockDeducted: ampoule.stockDeducted === true,
   };
 }
 
@@ -132,15 +135,10 @@ function normalizeAmpouleCollection(ampoules, entries, requestedActiveId = '') {
         : '';
     return { ...entry, ampouleId, ampouleDoseMl: historicalDoseMl };
   });
-  const remainingById = new Map(
-    ampoules.map((ampoule) => {
-      const fallbackDoseMl = decimalToNumber(ampoule.doseMl);
-      const used = normalizedEntries
-        .filter((entry) => entry.ampouleId === ampoule.id && entry.status === 'given')
-        .reduce((sum, entry) => sum + getEntryAmpouleDoseMl(entry, fallbackDoseMl), 0);
-      return [ampoule.id, Math.max(0, decimalToNumber(ampoule.volumeMl) - used)];
-    })
-  );
+  const remainingById = new Map(ampoules.map((ampoule) => {
+    const used = normalizedEntries.filter((entry) => entry.ampouleId === ampoule.id && entry.status === 'given').length;
+    return [ampoule.id, Math.max(0, normalizeAmpouleDoseCount(ampoule.targetDoseCount) - used)];
+  }));
   let activeAmpouleId =
     typeof requestedActiveId === 'string' &&
     byId.has(requestedActiveId) &&

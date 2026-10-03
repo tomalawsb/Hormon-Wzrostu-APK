@@ -9,4 +9,5 @@ function renderAll() {
   renderHistory();
   renderSettings();
   updateNavigation();
+  renderAmpouleLifecycle();
 }

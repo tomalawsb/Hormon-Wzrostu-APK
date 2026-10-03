@@ -1,5 +1,5 @@
-const CACHE_VERSION = 'v2.0-1008262049';
-const CACHE_NAMESPACE = 'dzienniczek-hormonu-v2.0-1008262049';
+const CACHE_VERSION = 'v2.3.2';
+const CACHE_NAMESPACE = 'dzienniczek-hormonu-v2.3.2';
 const APP_CACHE_PREFIX = 'dzienniczek-hormonu-v';
 const DOCUMENT_CACHE = `${CACHE_NAMESPACE}-documents`;
 const SCRIPT_CACHE = `${CACHE_NAMESPACE}-scripts`;
@@ -21,7 +21,7 @@ const REMINDER_IN_FLIGHT = new Set();
 
 const PRECACHE_GROUPS = [
   { cacheName: DOCUMENT_CACHE, assets: ['./', './index.html', './privacy.html'] },
-  { cacheName: SCRIPT_CACHE, assets: ['./app.js', './native-bridge.js'] },
+  { cacheName: SCRIPT_CACHE, assets: ['./app.js', './native-bridge.js', './report-worker.js'] },
   { cacheName: STYLE_CACHE, assets: ['./style.css'] },
   { cacheName: DATA_CACHE, assets: ['./manifest.json', './app-version.json'] },
   { cacheName: STATIC_CACHE, assets: ['./icon-192.png', './icon-512.png'] },
