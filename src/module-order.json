@@ -133,6 +133,10 @@
       "layer": "component"
     },
     {
+      "file": "components/dialog/save-confirm.js",
+      "layer": "component"
+    },
+    {
       "file": "components/ampoule-card/model.js",
       "layer": "component"
     },

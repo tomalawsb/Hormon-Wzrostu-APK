@@ -169,7 +169,7 @@ def main() -> int:
 
     action = "Zsynchronizowano" if sync_existing else "Ustawiono"
     print(f"{action} wersję {version_name}, versionCode {version_code}.")
-    print("Uruchom BUDUJ.cmd, aby przetestować i zbudować wydanie poza projektem.")
+    print("Uruchom BUILD.cmd, aby przetestować i zbudować wydanie poza projektem.")
     print("GitHub Actions sprawdza projekt i zapisuje artefakty; publikacja w Play Console jest osobnym krokiem.")
     return 0
 

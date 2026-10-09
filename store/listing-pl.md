@@ -20,9 +20,9 @@ Dane dzienniczka pozostają na urządzeniu. Aplikacja nie wymaga konta i nie zaw
 
 Aplikacja nie jest wyrobem medycznym. Nie diagnozuje, nie leczy, nie uzdrawia ani nie zapobiega chorobom. Nie dobiera dawki ani schematu terapii. W sprawach diagnozy i leczenia skonsultuj się z lekarzem. Licznik podań i zapas są notatką użytkownika, a nie pomiarem rzeczywistej zawartości wkładu. Przypomnienia zależą od uprawnień i ustawień telefonu.
 
-## Co nowego w 2.3.2 (do 500 znaków)
+## Co nowego w 2.3.3 (do 500 znaków)
 
-Przyspieszyliśmy eksport PDF i Word. PDF na Androidzie zawiera teraz tekst i zajmuje mniej miejsca. Przycisk Drukuj otwiera systemowe drukowanie z wyborem stron. Przycisk i gest Wstecz wracają z ustawień na ekran główny; wyjście wymaga dwóch szybkich naciśnięć. Poprawiliśmy też obsługę anulowania eksportu.
+Po naciśnięciu „Zapisz podanie” pojawia się okno z przyciskami Zapisz, Edytuj i Pomiń — wszystkie działają. Naprawiliśmy też przyciski w komunikatach, np. Cofnij. Wstecz i dotknięcie tła bezpiecznie zamykają okno bez zapisu.
 
 ## Grafiki
 

@@ -1,6 +1,6 @@
 {
   "name": "dzienniczek-hormonu",
-  "version": "2.3.2",
+  "version": "2.3.3",
   "private": true,
   "description": "Dzienniczek Hormonu - PWA i natywna aplikacja Android WebView",
   "scripts": {
@@ -17,7 +17,7 @@
     "release:prepare": "npm run format && npm test",
     "lint": "npm run lint:js && npm run format:check",
     "lint:js": "eslint app.js service-worker.js report-worker.js src/native tests tools eslint.config.cjs prettier.config.cjs",
-    "test:project": "node tools/run_python.js tests/smoke_test.py && node tools/run_python.js tests/build_layout_test.py",
+    "test:project": "node tools/run_python.js tests/smoke_test.py && node tools/run_python.js tests/build_layout_test.py && node tools/run_python.js tests/paths_encoding_test.py",
     "test:pwa": "node tools/run_python.js tests/pwa_http_test.py",
     "test:backup": "node tests/backup_roundtrip_test.js",
     "test:security": "node tests/security_crypto_test.js",
@@ -31,7 +31,7 @@
     "test:notifications": "node tools/run_python.js tests/notifications_stage10_test.py && node tests/notifications_diagnostics_runtime_test.js && node tools/run_python.js tests/reminder_timing_test.py",
     "test:pwa-stage11": "node tools/run_python.js tests/pwa_stage11_test.py && node tests/service_worker_runtime_test.js",
     "test:migrations": "node tests/migration_compatibility_test.js",
-    "test:e2e": "node tests/app_dom_e2e_test.js",
+    "test:e2e": "node tests/app_dom_e2e_test.js && node tests/save_dose_dialog_test.js",
     "test:accessibility": "node tests/accessibility_axe_test.js",
     "test:final": "node tools/run_python.js tests/final_matrix_test.py && node tests/final_states_runtime_test.js && npm run test:migrations && npm run test:e2e && npm run test:accessibility",
     "test:web": "npm run lint && npm run test:project && npm run test:architecture && npm run test:visual && npm run test:today && npm run test:calendar-history && npm run test:profile-stats && npm run test:settings && npm run test:notifications && npm run test:pwa-stage11 && npm run test:final && npm run test:pwa && npm run test:backup && npm run test:security && npm run test:webview && npm run test:ampoules && npm run test:reports",
@@ -39,7 +39,8 @@
     "version:set": "node tools/run_python.js tools/set_version.py",
     "test": "npm run prepare:web && npm run test:web && npm run test:android",
     "test:ampoules": "node tests/ampoule_lifecycle_test.js",
-    "test:reports": "node tests/reports_runtime_test.js"
+    "test:reports": "node tests/reports_runtime_test.js",
+    "test:save-dialog": "node tests/save_dose_dialog_test.js"
   },
   "dependencies": {
     "@capacitor/app": "8.1.1",

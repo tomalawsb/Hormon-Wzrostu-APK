@@ -53,12 +53,13 @@ const gradleArgs = [
   '--stacktrace',
 ];
 const windows = process.platform === 'win32';
-const executable = windows ? `"${wrapper}"` : wrapper;
+// Ścieżka względna do cwd: polskie znaki/spacje w ścieżce nie trafiają do wiersza poleceń.
+const executable = windows ? 'gradlew.bat' : './gradlew';
 const result = spawnSync(executable, gradleArgs, {
   cwd: androidRoot,
   env: process.env,
   stdio: 'inherit',
-  // Pliki .bat wymagają cmd.exe na Windows; bez tego Node zwraca EINVAL dla ścieżek ze spacjami.
+  // Pliki .bat wymagają cmd.exe na Windows.
   shell: windows,
   windowsHide: true,
 });

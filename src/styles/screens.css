@@ -209,6 +209,7 @@ kbd { display: inline-block; min-width: 24px; padding: 3px 6px; border: 1px soli
   background: #173d5c;
   box-shadow: 0 14px 30px rgba(18, 45, 68, .24);
   animation: toast-in .2s ease-out;
+  pointer-events: auto;
 }
 .toast--error { background: #a53e3e; }
 .toast--success { background: #0c7c70; }

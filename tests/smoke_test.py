@@ -178,7 +178,7 @@ for obsolete in (
     require(not (ROOT / obsolete).exists(), f"pozostał martwy plik: {obsolete}")
 
 ignore = read(".gitignore")
-require("android/signing/*" in ignore, "katalog podpisu nie jest ignorowany")
+require("android/signing/" in ignore and "signing.properties" in ignore, "katalog podpisu nie jest ignorowany")
 require("/app.js" in ignore and "/native-bridge.js" in ignore, "wygenerowane zasoby muszą pozostać poza źródłami")
 require("/www/" in workflow, "workflow nie udostępnia gotowej paczki PWA")
 
@@ -195,12 +195,12 @@ require(not secret_files, "projekt zawiera prywatny klucz: " + ", ".join(map(str
 require(not (ROOT / "android/signing/signing.properties").exists(), "projekt zawiera jawne hasła podpisu")
 
 
-signing_script = read("KONFIGURUJ_PODPIS.ps1")
+signing_script = read("tools/dzienniczek.ps1")
 require("UTF8Encoding($false)" in signing_script, "skrypt podpisu nie zapisuje UTF-8 bez BOM")
 require("[System.IO.File]::WriteAllText" in signing_script, "skrypt podpisu nie używa bezpiecznego zapisu pliku")
 require("ANDROID_KEYSTORE_BASE64" in signing_script, "skrypt nie przygotowuje sekretów GitHub")
 require("keytool" in signing_script, "skrypt nie potrafi utworzyć nowego klucza")
-require(signing_script.isascii(), "KONFIGURUJ_PODPIS.ps1 zawiera znaki spoza ASCII i może nie działać w Windows PowerShell 5.1")
+require((ROOT / "tools/dzienniczek.ps1").read_bytes().startswith(b"\xef\xbb\xbf"), "tools/dzienniczek.ps1 musi mieć BOM UTF-8 (Windows PowerShell 5.1)")
 
 updater = read("src/services/updates/index.js")
 require("Google Play" in updater, "wersja Android nie kieruje aktualizacji do Google Play")
@@ -216,7 +216,8 @@ require("Sprawdź aktualizacje" in read("index.html"), "brak przycisku Sprawdź 
 require("autoDownload: true" not in read("src/core/events.js"), "przycisk aktualizacji nadal rozpoczyna pobieranie APK")
 require("today-profile-switcher'].hidden = !multiple" in read("src/screens/today/dashboard.js"), "pojedynczy profil jest nadal dublowany")
 require("currentRemaining" in read("src/components/ampoule-card/model.js"), "brak rzeczywistego stanu ampułki")
-require("AKTUALIZUJ_I_WYSLIJ.cmd" in [path.name for path in ROOT.iterdir()], "brak skryptu jednej operacji")
+for launcher in ("BUILD.cmd", "URUCHOM.cmd", "KONFIGURUJ_PODPIS.cmd", "WYSYLAJ_NA_GITHUB.cmd"):
+    require((ROOT / launcher).is_file(), f"brak skryptu {launcher}")
 require("dzienniczek-hormonu-v" + version_name in read("service-worker.js"), "cache PWA ma starą wersję")
 
 result = subprocess.run(

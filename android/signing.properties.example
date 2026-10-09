@@ -1,0 +1,8 @@
+# Wzór konfiguracji podpisu wydania (bez prawdziwych danych).
+# Prawdziwy plik NIE trafia do projektu. Utwórz go poleceniem KONFIGURUJ_PODPIS.cmd,
+# które zapisuje go w: %LOCALAPPDATA%\DzienniczekHormonu\signing\signing.properties
+# (inne miejsce: zmienna SIGNING_PROPERTIES_FILE; Linux/macOS: ~/.dzienniczek-hormonu/signing.properties).
+storeFile=C:/Users/NAZWA/AppData/Local/DzienniczekHormonu/signing/dzienniczek-release.p12
+storePassword=WPISZ_HASLO
+keyAlias=dzienniczek
+keyPassword=WPISZ_HASLO

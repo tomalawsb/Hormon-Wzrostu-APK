@@ -23,7 +23,7 @@
     el['place-picker-dialog'].addEventListener('click', (event) => {
       if (event.target === el['place-picker-dialog']) closePlacePicker();
     });
-    el['recommended-save-button'].addEventListener('click', confirmRecommendedInjection);
+    el['recommended-save-button'].addEventListener('click', () => requestDoseSave('recommended'));
     el['recommended-edit-button'].addEventListener('click', openRecommendedEntryEditor);
     el['recommended-skip-button'].addEventListener('click', confirmSkippedToday);
     el['recommended-manual-button'].addEventListener('click', () =>
@@ -45,7 +45,8 @@
     el['today-undo-button'].addEventListener('click', undoLastEntryOperation);
     el['today-reminder-button'].addEventListener('click', () => openSettingsSection('reminders'));
     el['voice-button'].addEventListener('click', toggleVoiceRecognition);
-    el['save-button'].addEventListener('click', saveQuickDraft);
+    el['save-button'].addEventListener('click', () => requestDoseSave('quick'));
+    bindSaveConfirmDialog();
     el['skip-button'].addEventListener('click', confirmSkippedToday);
     el['use-suggestion-button'].addEventListener('click', useSuggestedPlace);
 

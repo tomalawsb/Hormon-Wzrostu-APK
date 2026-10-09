@@ -4,7 +4,8 @@ function handleGlobalKeyboard(event) {
   const targetIsField = event.target.matches('input, textarea, select, [contenteditable="true"]');
 
   if (event.key === 'Escape') {
-    if (el['report-preview-dialog'].open) closeDataDialog(el['report-preview-dialog']);
+    if (isSaveConfirmOpen()) skipPendingDoseSave();
+    else if (el['report-preview-dialog'].open) closeDataDialog(el['report-preview-dialog']);
     else if (el['export-report-dialog'].open) closeDataDialog(el['export-report-dialog']);
     else if (el['backup-dialog'].open) closeBackupPanel();
     else if (el['entry-dialog'].open) closeEntryDialog();
@@ -47,8 +48,9 @@ function handleGlobalKeyboard(event) {
 
   if (event.ctrlKey && event.key === 'Enter') {
     event.preventDefault();
-    if (el['entry-dialog'].open) el['entry-form'].requestSubmit();
-    else if (!el['save-button'].disabled) saveQuickDraft();
+    if (isSaveConfirmOpen()) confirmPendingDoseSave();
+    else if (el['entry-dialog'].open) el['entry-form'].requestSubmit();
+    else if (!el['save-button'].disabled) requestDoseSave('quick');
     return;
   }
 

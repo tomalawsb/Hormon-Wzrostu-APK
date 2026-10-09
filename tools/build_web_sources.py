@@ -93,7 +93,7 @@ def main() -> None:
     args = parser.parse_args()
     root = Path(args.root).resolve() if args.root else Path(__file__).resolve().parents[1]
     if not args.check and os.environ.get("DH_BUILD_WORKSPACE") != "1":
-        raise SystemExit("Uruchom BUDUJ.cmd: pliki wynikowe powstają w zewnętrznej kopii roboczej.")
+        raise SystemExit("Uruchom BUILD.cmd: pliki wynikowe powstają w zewnętrznej kopii roboczej.")
     raise SystemExit(build(root, args.check, args.target))
 
 

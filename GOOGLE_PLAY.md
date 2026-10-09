@@ -1,4 +1,4 @@
-# Publikacja 2.3.1 w Google Play
+# Publikacja 2.3.3 w Google Play
 
 Stan: przygotowanie techniczne i materiały. Publikacja nie została wykonana. Dokument odnosi się do kodu w tej paczce; deklaracje trzeba porównać z ostateczną konfiguracją oferty. Wymagania sprawdzono 23.09.2026.
 
@@ -14,9 +14,9 @@ Opublikuj uzupełniony `privacy.html` pod stałym adresem HTTPS, dostępnym bez 
 
 ## 3. Aplikacja i podpis
 
-Utwórz aplikację „Dzienniczek Hormonu”, język polski, bezpłatną. Zachowaj identyfikator `pl.tomaszwolak.dzienniczekhormonuwzrostu`. Użyj wynikowego AAB, a nie debug APK. Włącz Play App Signing i skonfiguruj klucz przesyłania. Jeśli dotychczasowy APK musi aktualizować się do wersji Play bez odinstalowania, zaplanuj użycie jego istniejącego klucza jako klucza podpisywania aplikacji. Inny certyfikat instalacyjny uniemożliwia taką aktualizację; sam identyczny packageId nie wystarczy. [Play App Signing](https://developer.android.com/studio/publish/app-signing).
+Utwórz aplikację „Dzienniczek Hormonu”, język polski, bezpłatną. Zachowaj identyfikator `pl.tomaszwolak.dzienniczekhormonuwzrostu`. Użyj wynikowego, podpisanego AAB (`DzienniczekHormonu-WERSJA.aab`), a nie debug APK. Włącz Play App Signing i skonfiguruj klucz przesyłania. Jeśli dotychczasowy APK musi aktualizować się do wersji Play bez odinstalowania, zaplanuj użycie jego istniejącego klucza jako klucza podpisywania aplikacji. Inny certyfikat instalacyjny uniemożliwia taką aktualizację; sam identyczny packageId nie wystarczy. [Play App Signing](https://developer.android.com/studio/publish/app-signing).
 
-Wersja: 2.3.1, versionCode 2009002302. Sprawdź, czy wyższy kod nie został już użyty na którejkolwiek ścieżce. targetSdk 36 spełnia obecny wymóg dla nowych aplikacji i aktualizacji; minSdk 24. [Wymagania API](https://support.google.com/googleplay/android-developer/answer/11926878?hl=en).
+Wersja: 2.3.3, versionCode 2009002304. Plik do przesłania: `DzienniczekHormonu-2.3.3.aab` (obok `BUILD.cmd` po podpisanym budowaniu albo z GitHub Releases). Sprawdź, czy wyższy kod nie został już użyty na którejkolwiek ścieżce. targetSdk 36 spełnia obecny wymóg dla nowych aplikacji i aktualizacji; minSdk 24. [Wymagania API](https://support.google.com/googleplay/android-developer/answer/11926878?hl=en).
 
 Aplikacji raz udostępnionej jako bezpłatna nie można potem zmienić na płatne pobranie. Późniejsze płatne funkcje wymagają osobnego projektu zakupów w aplikacji; w tym wydaniu nie dodano reklam ani płatności. [Zasady cen](https://support.google.com/googleplay/android-developer/answer/6334373?hl=en).
 
@@ -43,7 +43,7 @@ Lokalne przetwarzanie samo w sobie nie oznacza zbierania danych poza urządzenie
 
 ## 5. Test wewnętrzny, potem produkcja
 
-1. Po uzupełnieniu kontaktu ponownie zbuduj wydanie. Jeżeli kod wersji wykorzystano już w Play, zwiększ go przez USTAW_WERSJE.cmd.
+1. Po uzupełnieniu kontaktu ponownie zbuduj wydanie. Jeżeli kod wersji wykorzystano już w Play, zwiększ go: `BUILD.cmd -SetVersion X.Y.Z -VersionCode NOWY_KOD`.
 2. Prześlij AAB na ścieżkę testów wewnętrznych. Wgraj informacje o wydaniu.
 3. Sprawdź App Bundle Explorer, raport przed premierą i listę urządzeń. Przetestuj instalację przez Play na rzeczywistym telefonie oraz aktualizację poprzedniej wersji. Zrób kopię własnych danych przed aktualizacją testową.
 4. Sprawdź powiadomienie po zgaszeniu ekranu i ponownym uruchomieniu telefonu, odmowę uprawnień, eksport/import oraz wymianę 10/10 → pytanie → 0/10 → osobny zapis podania.

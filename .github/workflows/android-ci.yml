@@ -3,6 +3,7 @@ on:
   pull_request:
   push:
     branches: [main]
+    tags: ['v*']
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,7 +13,10 @@ concurrency:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      signed: ${{ steps.signed.outputs.signed }}
     env:
       DH_BUILD_WORKSPACE: '1'
       ANDROID_CHECK_REQUIRED: '1'
@@ -32,6 +36,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/dzienniczek/work"
           rsync -a --exclude=.git --exclude=node_modules --exclude=build --exclude=.gradle --exclude='*.apk' --exclude='*.aab' --exclude='*.zip' "$GITHUB_WORKSPACE/" "$RUNNER_TEMP/dzienniczek/work/"
           echo "DH_WORK=$RUNNER_TEMP/dzienniczek/work" >> "$GITHUB_ENV"
+          echo "DH_DIST=$RUNNER_TEMP/dzienniczek/dist" >> "$GITHUB_ENV"
           echo "GRADLE_USER_HOME=$RUNNER_TEMP/gradle-cache" >> "$GITHUB_ENV"
       - uses: actions/cache@v4
         with:
@@ -40,13 +45,17 @@ jobs:
           restore-keys: gradle-${{ runner.os }}-
       - name: Android API 36
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
-      - name: Testy web i Android
+      - name: Wersja
+        id: version
+        run: echo "version=$(node -p "require('./app-version.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Testy web i Android (APK debug)
         run: |
           cd "$DH_WORK"
           npm ci --no-audit --no-fund
           chmod +x android/gradlew
           npm test
-      - name: Podpisane wydanie
+      - name: Podpisane wydanie (APK + AAB)
+        id: signed
         if: github.event_name != 'pull_request'
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -55,8 +64,9 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "::error::Brak sekretów podpisu. Nie utworzono release."
-            exit 1
+            echo "::warning::Brak sekretów podpisu. Wydanie zawiera tylko testowy APK (debug), bez AAB dla Google Play. Zobacz README.md (GitHub)."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           KEYSTORE_FILE="$RUNNER_TEMP/dzienniczek/upload-key.p12"
           trap 'rm -f "$KEYSTORE_FILE"' EXIT
@@ -66,6 +76,27 @@ jobs:
           ./gradlew --no-daemon assembleRelease bundleRelease
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify app/build/outputs/apk/release/app-release.apk
           jarsigner -verify app/build/outputs/bundle/release/app-release.aab
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+      - name: Pliki wydania
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SIGNED: ${{ steps.signed.outputs.signed }}
+        run: |
+          mkdir -p "$DH_DIST"
+          OUT="$DH_WORK/android/app/build/outputs"
+          if [ "$SIGNED" = "true" ]; then
+            cp "$OUT/apk/release/app-release.apk" "$DH_DIST/DzienniczekHormonu-$VERSION.apk"
+            cp "$OUT/bundle/release/app-release.aab" "$DH_DIST/DzienniczekHormonu-$VERSION.aab"
+          else
+            cp "$OUT/apk/debug/app-debug.apk" "$DH_DIST/DzienniczekHormonu-$VERSION-debug.apk"
+          fi
+          cd "$DH_DIST" && sha256sum DzienniczekHormonu-* > "DzienniczekHormonu-$VERSION.sha256"
+          ls -l "$DH_DIST"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wydanie
+          path: ${{ runner.temp }}/dzienniczek/dist/
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -76,3 +107,43 @@ jobs:
             ${{ runner.temp }}/dzienniczek/work/android/app/build/reports/lint-results-debug.html
             ${{ runner.temp }}/dzienniczek/work/www/
           retention-days: 14
+
+  github-release:
+    needs: test-and-build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: github-release
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.test-and-build.outputs.version }}
+      SIGNED: ${{ needs.test-and-build.outputs.signed }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: wydanie
+          path: dist
+      - name: Publikacja w GitHub Releases
+        run: |
+          TAG="v$VERSION"
+          if [ "$SIGNED" = "true" ]; then
+            TITLE="Dzienniczek Hormonu $VERSION"
+            NOTES="APK: instalacja na telefonie. AAB: przesłanie do Google Play Console."
+          else
+            TITLE="Dzienniczek Hormonu $VERSION (wersja testowa debug)"
+            NOTES="Brak sekretów podpisu: APK testowy (debug), bez AAB. Instrukcja: README.md (GitHub)."
+          fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TITLE" --notes "$NOTES"
+            if [ "$SIGNED" = "true" ]; then
+              gh release delete-asset "$TAG" "DzienniczekHormonu-$VERSION-debug.apk" --repo "$GITHUB_REPOSITORY" --yes 2>/dev/null || true
+            fi
+            gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$TITLE" --notes "$NOTES"
+          fi
+          echo "Wydanie: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"

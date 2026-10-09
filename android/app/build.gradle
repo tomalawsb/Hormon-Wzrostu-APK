@@ -120,6 +120,6 @@ final boolean releaseBuildRequested = gradle.startParameter.taskNames.any { Stri
 if (releaseBuildRequested && !signingReady) {
     throw new GradleException(
             'Brak bezpiecznej konfiguracji podpisu. Uruchom KONFIGURUJ_PODPIS.cmd '
-                    + 'albo ustaw sekrety GitHub Actions zgodnie z GITHUB_ACTIONS_INSTRUKCJA.md.'
+                    + 'albo ustaw sekrety GitHub Actions zgodnie z README.md.'
     )
 }

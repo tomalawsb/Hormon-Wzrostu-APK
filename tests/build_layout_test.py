@@ -16,7 +16,7 @@ with tempfile.TemporaryDirectory(prefix="dzienniczek-layout-") as temporary:
     root.mkdir()
     work.mkdir()
     files = {
-        "BUDUJ.cmd": "builder", "src/source.js": "source",
+        "BUILD.cmd": "builder", "src/source.js": "source",
         "android/gradle/wrapper/gradle-wrapper.jar": "wrapper",
         "android/app/build/large.bin": "compiled", "node_modules/large.js": "dependency",
         "android/.gradle/cache.bin": "cache", "app.js": "generated",
@@ -29,7 +29,7 @@ with tempfile.TemporaryDirectory(prefix="dzienniczek-layout-") as temporary:
         target = root / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(value)
-    expected = {"BUDUJ.cmd", "src/source.js", "android/gradle/wrapper/gradle-wrapper.jar"}
+    expected = {"BUILD.cmd", "src/source.js", "android/gradle/wrapper/gradle-wrapper.jar"}
     assert {p.as_posix() for p in builder.source_files(root)} == expected
     before = {p: builder.digest(root / p) for p in builder.source_files(root)}
     state = base / "state.json"

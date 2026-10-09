@@ -136,3 +136,11 @@ html[data-skin="family"] .button { border-radius: 18px; }
 }
 
 .status-badge--neutral { color: var(--text); }
+.save-confirm-dialog { padding: 26px; max-width: min(460px, calc(100vw - 28px)); }
+.save-confirm-dialog .dialog-header { margin-bottom: 10px; }
+.save-confirm-summary { margin: 0; line-height: 1.6; font-weight: 600; color: var(--text-strong); }
+.save-confirm-dialog .dialog-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.save-confirm-dialog .dialog-actions .button { width: 100%; min-height: 48px; }
+@media (max-width: 420px) {
+  .save-confirm-dialog .dialog-actions { grid-template-columns: 1fr; }
+}
