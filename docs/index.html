@@ -1,0 +1,1814 @@
+<!doctype html>
+<html lang="pl" class="security-pending" data-theme-mode="system">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; child-src 'self' blob:; frame-src 'self' blob:; media-src 'self' blob:; form-action 'self'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0c857b">
+  <meta name="description" content="Prywatny dzienniczek podań hormonu wzrostu z obsługą głosową, klawiaturą, kalendarzem i historią.">
+  <title>Dzienniczek Hormonu v2.3.3</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Przejdź do treści</a>
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Nawigacja główna">
+      <div class="brand brand--desktop">
+        <img src="./icon-192.png" alt="" width="46" height="46">
+        <div>
+          <strong>Dzienniczek Hormonu <span class="brand-version">v2.3.3</span></strong>
+          <span>dziennik podań</span>
+        </div>
+      </div>
+
+      <nav class="desktop-nav" aria-label="Sekcje aplikacji">
+        <button class="nav-button is-active" type="button" data-view="today" aria-current="page" title="Dzisiaj (Alt+1)">
+          <svg class="app-icon nav-icon" aria-hidden="true" focusable="false"><use href="#icon-home"></use></svg>
+          <span>Dzisiaj</span>
+          <kbd>Alt+1</kbd>
+        </button>
+        <button class="nav-button" type="button" data-view="calendar" title="Kalendarz (Alt+2)">
+          <svg class="app-icon nav-icon" aria-hidden="true" focusable="false"><use href="#icon-calendar"></use></svg>
+          <span>Kalendarz</span>
+          <kbd>Alt+2</kbd>
+        </button>
+        <button class="nav-button" type="button" data-view="history" title="Historia (Alt+3)">
+          <svg class="app-icon nav-icon" aria-hidden="true" focusable="false"><use href="#icon-history"></use></svg>
+          <span>Historia</span>
+          <kbd>Alt+3</kbd>
+        </button>
+        <button class="nav-button" type="button" data-view="more" title="Więcej (Alt+4)">
+          <svg class="app-icon nav-icon" aria-hidden="true" focusable="false"><use href="#icon-more"></use></svg>
+          <span>Więcej</span>
+          <kbd>Alt+4</kbd>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="desktop-install-button" class="text-button is-hidden" type="button">Zainstaluj aplikację</button>
+        <p id="version-label">Wersja —</p>
+      </div>
+    </aside>
+
+    <div class="app-content">
+      <header class="topbar">
+        <div class="brand brand--mobile">
+          <img src="./icon-192.png" alt="" width="42" height="42">
+          <div>
+            <strong>Dzienniczek Hormonu <span class="brand-version">v2.3.3</span></strong>
+          <span>dziennik podań</span>
+          </div>
+        </div>
+
+        <div class="topbar-date">
+          <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-calendar"></use></svg>
+          <span id="current-date-label">—</span>
+        </div>
+
+        <div class="topbar-profile">
+          <button id="active-profile-button" class="profile-switcher-button" type="button" aria-haspopup="dialog" aria-controls="profiles-dialog" title="Zmień profil">
+            <span id="active-profile-avatar" class="profile-avatar" data-profile-color="teal" aria-hidden="true">🙂</span>
+            <span class="profile-switcher-copy"><small>Profil</small><strong id="active-profile-name">Profil 1</strong></span>
+            <svg class="app-icon profile-switcher-chevron" aria-hidden="true" focusable="false"><use href="#icon-chevron-down"></use></svg>
+          </button>
+        </div>
+
+        <div class="topbar-actions">
+          <button id="header-install-button" class="icon-button is-hidden" type="button" aria-label="Zainstaluj aplikację" title="Zainstaluj aplikację"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-download"></use></svg></button>
+        </div>
+      </header>
+
+      <main id="main-content" tabindex="-1">
+          <svg class="icon-sprite" aria-hidden="true" focusable="false">
+            <defs>
+              <symbol id="icon-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></symbol>
+              <symbol id="icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01"/></symbol>
+              <symbol id="icon-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></symbol>
+              <symbol id="icon-more" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></symbol>
+              <symbol id="icon-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+              <symbol id="icon-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+              <symbol id="icon-chevron-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
+              <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></symbol>
+              <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+              <symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></symbol>
+              <symbol id="icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></symbol>
+              <symbol id="icon-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 20v-2a5.5 5.5 0 0 1 11 0v2M16 5.5a3 3 0 0 1 0 5.8M17 14a5 5 0 0 1 3.5 4.8V20"/></symbol>
+              <symbol id="icon-syringe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5 5 5M16.5 2.5l5 5M8 17l-3 3M3 21l2-1M13 4l7 7-8.5 8.5a2.1 2.1 0 0 1-3 0l-4-4a2.1 2.1 0 0 1 0-3Z"/><path d="m8 9 7 7M10 7l2 2M7 10l2 2"/></symbol>
+              <symbol id="icon-rotate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 8a8 8 0 0 1 13.4 2M17.9 16a8 8 0 0 1-13.4-2"/></symbol>
+              <symbol id="icon-ampoule" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v4l-2 3v9a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-9l-2-3V3"/><path d="M8 12h8M10.5 16h3"/></symbol>
+              <symbol id="icon-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></symbol>
+              <symbol id="icon-microphone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></symbol>
+              <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></symbol>
+              <symbol id="icon-database" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></symbol>
+              <symbol id="icon-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></symbol>
+              <symbol id="icon-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 0 0 0 18h1.5a2 2 0 0 0 1.4-3.4 2 2 0 0 1 1.4-3.4H18a3 3 0 0 0 3-3A9 9 0 0 0 12 3Z"/><path d="M7.5 10h.01M9.5 6.5h.01M14 6.5h.01M17 9h.01"/></symbol>
+              <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></symbol>
+              <symbol id="icon-location" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+              <symbol id="icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+              <symbol id="icon-report" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l3 3v15H6Z"/><path d="M14 3v4h4M9 12h6M9 16h6M9 8h2"/></symbol>
+              <symbol id="icon-backup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 6M20 5v6h-6"/><path d="M12 8v4l3 2"/></symbol>
+              <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+              <symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v5.5c0 4.8 3.2 7.8 7.5 9.5 4.3-1.7 7.5-4.7 7.5-9.5V6Z"/><path d="m8.5 12 2.3 2.3 4.7-5"/></symbol>
+              <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+              <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z"/></symbol>
+              <symbol id="icon-device" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M10 5h4M11 19h2"/></symbol>
+              <symbol id="icon-printer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8V3h10v5M7 17H4V9h16v8h-3M7 14h10v7H7Z"/><path d="M17 11h.01"/></symbol>
+              <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l11-11-4-4L4 16Z"/><path d="m13.5 6.5 4 4"/></symbol>
+              <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6"/></symbol>
+              <symbol id="icon-arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 11 6-6 6 6M12 5v14"/></symbol>
+              <symbol id="icon-arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 13 6 6 6-6M12 19V5"/></symbol>
+              <symbol id="icon-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></symbol>
+              <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></symbol>
+            </defs>
+          </svg>
+        <section id="view-today" class="view is-active" aria-labelledby="today-heading">
+          <h1 id="today-heading" class="sr-only">Dzisiejsze podanie</h1>
+
+          <nav id="today-profile-switcher" class="today-profile-switcher" aria-label="Wybierz profil lub podsumowanie wszystkich profili"></nav>
+
+          <section id="all-profiles-dashboard" class="all-profiles-dashboard" aria-labelledby="all-profiles-heading" hidden>
+            <div class="all-profiles-heading">
+              <div>
+                <p class="eyebrow">Podsumowanie dnia</p>
+                <h2 id="all-profiles-heading" tabindex="-1">Dzisiejsze podania</h2>
+              </div>
+              <strong id="all-profiles-progress" class="all-profiles-progress">—</strong>
+            </div>
+            <div id="all-profiles-list" class="all-profiles-list"></div>
+          </section>
+
+          <div id="single-profile-dashboard" class="today-dashboard-v2">
+            <section id="replacement-banner" class="replacement-banner" aria-label="Wymiana ampułki" hidden>
+              <div><span class="eyebrow">Oczekuje na wymianę</span><p id="replacement-banner-text"></p></div>
+              <button id="replacement-open" class="button button--primary" type="button">Potwierdź wymianę</button>
+            </section>
+            <article class="card today-primary-card" aria-labelledby="main-action-heading">
+              <div class="today-profile-compat" hidden aria-hidden="true">
+                <span id="today-profile-avatar" data-profile-color="teal">🙂</span>
+                <span id="main-action-eyebrow">Profil</span>
+                <span id="main-profile-name">Profil 1</span>
+              </div>
+
+              <div class="today-primary-card__title today-primary-card__title--status">
+                <h2 id="main-action-heading" tabindex="-1">Dzisiejsze podanie</h2>
+                <span id="main-status-badge" class="status-badge status-badge--neutral">Do podania</span>
+              </div>
+
+              <div class="today-plan-grid">
+                <section class="today-dose-control" aria-labelledby="today-dose-label">
+                  <span id="today-dose-label" class="today-plan-label">
+                    <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-syringe"></use></svg>
+                    Dzisiejsza dawka
+                  </span>
+                  <div class="today-dose-stepper">
+                    <button id="today-dose-decrease" class="today-stepper-button" type="button" aria-label="Zmniejsz dzisiejszą dawkę o 0,1">
+                      <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-minus"></use></svg>
+                    </button>
+                    <button id="dose-chip" class="today-dose-value" type="button" aria-label="Wpisz inną dzisiejszą dawkę">
+                      <strong id="main-dose-value">1,0 mg</strong>
+                      <span>Zmień dokładnie</span>
+                    </button>
+                    <button id="today-dose-increase" class="today-stepper-button" type="button" aria-label="Zwiększ dzisiejszą dawkę o 0,1">
+                      <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-plus"></use></svg>
+                    </button>
+                  </div>
+                  <span id="today-dose" class="sr-only">1,0 mg</span>
+                  <small id="main-time-value">Godzina zostanie zapisana automatycznie</small>
+                </section>
+
+                <button id="place-field" class="today-place-control" type="button" aria-label="Zmień sugerowane miejsce wkłucia">
+                  <span class="today-plan-label">
+                    <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-location"></use></svg>
+                    Sugerowane miejsce wkłucia
+                  </span>
+                  <strong id="main-place-value">—</strong>
+                  <span class="today-place-control__change">Dotknij, aby zmienić</span>
+                  <span id="selected-place" class="sr-only">Nie wybrano</span>
+                  <svg class="app-icon today-place-control__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                </button>
+              </div>
+
+              <div class="today-primary-actions">
+                <button id="recommended-save-button" class="button button--primary today-save-button" type="button">
+                  <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-check"></use></svg>
+                  Zapisz podanie
+                </button>
+                <button id="recommended-skip-button" class="button button--ghost" type="button">Oznacz jako pominięte</button>
+                <button id="recommended-edit-button" class="button button--secondary is-hidden" type="button" hidden aria-hidden="true">Edytuj szczegóły</button>
+                <button id="today-undo-button" class="button button--ghost today-undo-button is-hidden" type="button">
+                  <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-rotate"></use></svg>
+                  Cofnij ostatnią operację
+                </button>
+              </div>
+
+              <div id="today-confirmation" class="today-confirmation today-confirmation--pending" role="status" aria-live="polite" hidden>
+                <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-info"></use></svg>
+                <p id="main-action-text">Sprawdź propozycję przed zapisaniem.</p>
+              </div>
+            </article>
+
+            <div class="today-support-grid">
+              <article class="card today-support-card today-ampoule-card" aria-labelledby="ampoule-alert-title">
+                <div class="today-support-card__heading">
+                  <span class="today-support-card__icon" aria-hidden="true">
+                    <svg class="app-icon" focusable="false"><use href="#icon-ampoule"></use></svg>
+                  </span>
+                  <div>
+                    <span>Ampułka</span>
+                    <strong id="main-ampoule-value">—</strong>
+                  </div>
+                </div>
+                <div id="ampoule-progress" class="ampoule-progress" role="progressbar" aria-label="Postęp wykorzystania ampułki" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
+                  <div class="ampoule-progress__summary">
+                    <strong id="ampoule-progress-label">0 z 10 podań</strong>
+                    <span id="ampoule-progress-percent" hidden>0%</span>
+                  </div>
+                  <div class="ampoule-progress__track" aria-hidden="true">
+                    <span id="ampoule-progress-fill" class="ampoule-progress__fill"></span>
+                    <span id="ampoule-progress-marker" class="ampoule-progress__marker">
+                      <svg class="app-icon" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </span>
+                  </div>
+                  <small id="ampoule-progress-caption">Pozostało 10 podań.</small>
+                </div>
+                <div class="today-ampoule-metrics" hidden aria-hidden="true">
+                  <span id="main-dose-number-value">—</span>
+                  <strong id="main-remaining-ml-value">—</strong>
+                  <span id="main-doses-left-value">—</span>
+                  <small id="main-ampoule-open-value">—</small>
+                </div>
+                <div id="ampoule-alert" class="ampoule-alert" role="status" aria-live="polite" hidden>
+                  <strong id="ampoule-alert-title">Ampułka</strong>
+                  <span id="ampoule-alert-text">Ustaw datę rozpoczęcia ampułki, aby aplikacja mogła liczyć jej zużycie.</span>
+                </div>
+                <div class="today-support-actions">
+                  <button id="ampoule-start-main-button" class="button button--secondary button--small is-hidden" type="button">Rozpocznij ampułkę dzisiaj</button>
+                  <button id="recommended-manual-button" class="button button--secondary button--small is-hidden" type="button">Ustaw ampułkę</button>
+                </div>
+              </article>
+
+              <article id="inventory-today" class="card inventory-card" hidden>
+                <div class="section-heading-row"><span class="eyebrow">Twój zapas</span><svg class="app-icon" aria-hidden="true"><use href="#icon-ampoule"></use></svg></div>
+                <strong id="inventory-count-label" class="inventory-count-label"></strong>
+                <p id="inventory-status" class="muted"></p>
+                <button class="button button--secondary button--small" type="button" data-inventory-settings>Uzupełnij zapas</button>
+              </article>
+              <article class="card today-support-card today-voice-card" aria-labelledby="today-voice-title">
+                <div class="today-support-card__heading">
+                  <span class="today-support-card__icon" aria-hidden="true">
+                    <svg class="app-icon" focusable="false"><use href="#icon-microphone"></use></svg>
+                  </span>
+                  <div>
+                    <span>Polecenia głosowe</span>
+                    <strong id="today-voice-title">Powiedz, co zrobić</strong>
+                  </div>
+                </div>
+                <div class="voice-zone voice-zone--today">
+                  <button id="voice-button" class="voice-button today-voice-button" type="button" aria-pressed="false" aria-describedby="voice-help" title="Uruchom polecenia głosowe">
+                    <span class="voice-rings" aria-hidden="true"></span>
+                    <svg class="app-icon voice-mic" aria-hidden="true" focusable="false"><use href="#icon-microphone"></use></svg>
+                    <span class="voice-button-label">Naciśnij i mów</span>
+                  </button>
+                  <p id="voice-help" class="muted">Podanie, pominięcie lub zmiana ampułki.</p>
+                </div>
+                <div id="voice-result" class="recognition-result is-hidden" role="status" aria-live="polite">
+                  <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-check"></use></svg>
+                  <span>Rozpoznano: <strong id="voice-result-text"></strong></span>
+                </div>
+              </article>
+
+              <article class="card today-support-card today-reminder-card" aria-labelledby="today-reminder-title">
+                <div class="today-support-card__heading">
+                  <span class="today-support-card__icon" aria-hidden="true">
+                    <svg class="app-icon" focusable="false"><use href="#icon-bell"></use></svg>
+                  </span>
+                  <div>
+                    <span>Następne przypomnienie</span>
+                    <strong id="today-reminder-title">—</strong>
+                  </div>
+                </div>
+                <p id="today-reminder-text" class="muted">Sprawdzanie ustawień przypomnienia…</p>
+                <button id="today-reminder-button" class="button button--secondary button--small" type="button">Ustawienia przypomnień</button>
+              </article>
+            </div>
+
+            <details id="today-details" class="card today-details-card" hidden aria-hidden="true">
+              <summary>
+                <span>
+                  <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-more"></use></svg>
+                  Szczegóły i dodatkowe opcje
+                </span>
+                <svg class="app-icon today-details-chevron" aria-hidden="true" focusable="false"><use href="#icon-chevron-down"></use></svg>
+              </summary>
+
+              <div class="today-details-content">
+                <article class="today-entry-details" aria-labelledby="today-status-heading">
+                  <div class="card-heading-row">
+                    <div>
+                      <p class="eyebrow">Przygotowany wpis</p>
+                      <h2 id="today-status-heading">Sprawdź i zapisz</h2>
+                    </div>
+                    <span id="today-status-badge" class="status-badge status-badge--neutral">Brak wpisu</span>
+                  </div>
+
+                  <div class="summary-chips" aria-label="Data i godzina przygotowanego wpisu">
+                    <button id="date-chip" class="summary-chip summary-chip--date" type="button" title="Zmień datę">
+                      <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-calendar"></use></svg>
+                      <span>Data: <strong id="today-entry-date">Dzisiaj</strong></span>
+                    </button>
+                    <button id="time-chip" class="summary-chip" type="button" title="Zmień godzinę">
+                      <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-clock"></use></svg>
+                      <span>Godzina: <strong id="today-time">20:00</strong></span>
+                    </button>
+                  </div>
+
+                  <div class="primary-actions">
+                    <button id="save-button" class="button button--primary" type="button" disabled title="Zapisz przygotowany wpis (Ctrl+Enter)">
+                      <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-check"></use></svg>
+                      Zapisz podanie
+                    </button>
+                  </div>
+                  <p id="save-help" class="save-help" aria-live="polite">Sprawdź dawkę i miejsce wkłucia.</p>
+                  <button id="skip-button" class="link-button" type="button">Oznacz dawkę jako pominiętą</button>
+                </article>
+
+                <aside class="today-details-side" aria-label="Dodatkowe podsumowanie">
+                  <article class="compact-card today-last-place">
+                    <div class="info-row">
+                      <span class="info-icon info-icon--blue" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-history"></use></svg></span>
+                      <div>
+                        <span>Ostatnie miejsce wkłucia</span>
+                        <strong id="last-place">Brak wcześniejszych wpisów</strong>
+                      </div>
+                    </div>
+                    <span id="suggested-place" hidden></span>
+                    <strong id="ampoule-status" hidden>Ustaw rozpoczęcie</strong>
+                    <button id="use-suggestion-button" class="mini-button is-hidden" type="button" hidden aria-hidden="true"></button>
+                  </article>
+
+                  <article class="calendar-preview-card">
+                    <div class="section-heading-row">
+                      <h2>Ten miesiąc</h2>
+                      <button class="text-button" type="button" data-view="calendar">Pełny kalendarz</button>
+                    </div>
+                    <div id="mini-calendar" class="mini-calendar" aria-label="Podgląd bieżącego miesiąca"></div>
+                  </article>
+
+                  <article class="recent-card">
+                    <div class="section-heading-row">
+                      <h2>Ostatnie podania</h2>
+                      <button class="text-button" type="button" data-view="history">Cała historia</button>
+                    </div>
+                    <div id="recent-list" class="recent-list"></div>
+                  </article>
+                </aside>
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <section id="view-calendar" class="view" aria-labelledby="calendar-heading" hidden>
+          <div class="page-heading page-heading--split-mobile">
+            <div>
+              <p class="eyebrow">Przegląd miesięczny</p>
+              <h1 id="calendar-heading">Kalendarz podań</h1>
+            </div>
+            <div class="page-heading-actions">
+              <button id="calendar-today-button" class="button button--secondary button--small" type="button">Dzisiaj</button>
+              <button class="button button--primary button--small" type="button" data-open-entry>Dodaj wpis</button>
+            </div>
+          </div>
+
+          <div class="calendar-layout">
+            <article class="card calendar-card">
+              <div class="calendar-toolbar">
+                <button id="calendar-prev" class="icon-button" type="button" aria-label="Poprzedni miesiąc"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-chevron-left"></use></svg></button>
+                <div class="calendar-toolbar-title">
+                  <h2 id="calendar-month-label">—</h2>
+                  <span id="calendar-month-summary" class="muted" aria-live="polite">—</span>
+                </div>
+                <button id="calendar-next" class="icon-button" type="button" aria-label="Następny miesiąc"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg></button>
+              </div>
+              <div class="calendar-profile-toolbar">
+                <label>
+                  <span>Widok profilu</span>
+                  <select id="calendar-profile-filter" aria-label="Wybierz profil w kalendarzu"></select>
+                </label>
+                <span id="calendar-scope-label" class="muted">—</span>
+              </div>
+              <div class="calendar-weekdays" aria-hidden="true">
+                <span>Pn</span><span>Wt</span><span>Śr</span><span>Cz</span><span>Pt</span><span>So</span><span>Nd</span>
+              </div>
+              <div id="calendar-grid" class="calendar-grid" role="grid" aria-labelledby="calendar-month-label"></div>
+              <div class="calendar-legend">
+                <span><i class="legend-dot legend-dot--given"></i> Podano</span>
+                <span><i class="legend-dot legend-dot--skipped"></i> Pominięto</span>
+                <span><i class="legend-dot legend-dot--today"></i> Dzisiaj</span>
+              </div>
+              <div id="calendar-profile-legend" class="calendar-profile-legend" aria-label="Legenda profili"></div>
+            </article>
+
+            <aside class="card day-details-card">
+              <div class="section-heading-row">
+                <div>
+                  <p class="eyebrow">Wybrany dzień</p>
+                  <h2 id="selected-day-label">—</h2>
+                </div>
+                <button id="add-for-selected-day" class="mini-button" type="button">Dodaj</button>
+              </div>
+              <div id="selected-day-entries" class="day-entry-list"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="view-history" class="view" aria-labelledby="history-heading" hidden>
+          <div class="page-heading page-heading--split-mobile">
+            <div>
+              <p class="eyebrow">Wszystkie wpisy</p>
+              <h1 id="history-heading">Historia podań</h1>
+            </div>
+            <div class="page-heading-actions">
+              <button class="button button--primary button--small" type="button" data-open-entry>Dodaj wpis</button>
+            </div>
+          </div>
+
+          <article class="card history-card history-card--timeline">
+            <details id="history-filter-disclosure" class="history-filter-disclosure" open>
+              <summary>
+                <span><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-search"></use></svg> Filtry historii</span>
+                <svg class="app-icon history-filter-chevron" aria-hidden="true" focusable="false"><use href="#icon-chevron-down"></use></svg>
+              </summary>
+              <div class="history-filters" role="search" aria-label="Filtry historii">
+              <label>
+                <span>Profil</span>
+                <select id="history-profile-filter" aria-label="Wybierz profil w historii"></select>
+              </label>
+              <label class="search-field">
+                <span class="sr-only">Szukaj w historii</span>
+                <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-search"></use></svg>
+                <input id="history-search" type="search" placeholder="Szukaj daty, miejsca lub uwagi">
+              </label>
+              <label>
+                <span>Status</span>
+                <select id="status-filter">
+                  <option value="all">Wszystkie statusy</option>
+                  <option value="given">Podano</option>
+                  <option value="skipped">Pominięto</option>
+                </select>
+              </label>
+              <label>
+                <span>Miejsce</span>
+                <select id="site-filter">
+                  <option value="all">Wszystkie miejsca</option>
+                  <option value="brzuch">Brzuch</option>
+                  <option value="udo">Udo / noga</option>
+                  <option value="ramię">Ramię</option>
+                  <option value="pośladek">Pośladek</option>
+                  <option value="łopatka">Łopatka</option>
+                </select>
+              </label>
+              <label>
+                <span>Zmiany</span>
+                <select id="history-correction-filter">
+                  <option value="all">Wszystkie wpisy</option>
+                  <option value="corrected">Tylko poprawione</option>
+                  <option value="original">Bez poprawek</option>
+                </select>
+              </label>
+              </div>
+            </details>
+
+            <div class="history-results-heading">
+              <div id="history-scope-label" class="history-scope-label muted" aria-live="polite">—</div>
+              <button id="history-clear-filters" class="text-button" type="button">Wyczyść filtry</button>
+            </div>
+            <div class="history-results">
+              <div id="history-list" class="history-list"></div>
+              <div id="history-empty" class="empty-state is-hidden">
+                <strong>Brak pasujących wpisów</strong>
+                <span>Zmień filtry albo dodaj pierwsze podanie.</span>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section id="view-more" class="view" aria-labelledby="more-heading" hidden>
+          <div class="page-heading page-heading--split-mobile">
+            <div>
+              <p class="eyebrow">Konfiguracja</p>
+              <h1 id="more-heading">Ustawienia</h1>
+            </div>
+            <div class="page-heading-actions">
+            </div>
+          </div>
+
+          <div id="settings-profile-context" class="profile-context-banner" aria-live="polite">
+            <span id="settings-profile-avatar" class="profile-avatar profile-avatar--large" data-profile-color="teal" aria-hidden="true">🧒</span>
+            <div>
+              <span>Edytujesz dane profilu</span>
+              <strong id="settings-profile-name">Profil 1</strong>
+              <small id="settings-profile-note">Ustawienia dotyczą wyłącznie aktywnego profilu.</small>
+            </div>
+          </div>
+
+          <div id="settings-layout" class="settings-layout">
+            <aside class="card settings-category-card" aria-label="Kategorie ustawień">
+              <div class="settings-category-card__heading">
+                <p class="eyebrow">Kategorie</p>
+                <h2>Wybierz kategorię</h2>
+                <p class="muted">Wybierz obszar, który chcesz zmienić.</p>
+              </div>
+              <div id="settings-category-list" class="settings-category-list" role="tablist" aria-label="Kategorie ustawień">
+                <section class="settings-category-group" aria-labelledby="settings-group-treatment">
+                  <h3 id="settings-group-treatment">Leczenie</h3>
+                  <div class="settings-category-group__items">
+                    <button class="settings-category-button is-active" type="button" role="tab" aria-selected="true" data-settings-target="profiles">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-users"></use></svg></span>
+                      <span><strong>Profil</strong><small>Osoba i pomiary</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                    <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="treatment">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-syringe"></use></svg></span>
+                      <span><strong>Dawkowanie</strong><small>Dawka i miejsca wkłuć</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                    <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="reminders">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-bell"></use></svg></span>
+                      <span><strong>Przypomnienia</strong><small>Godzina i powiadomienia</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                    <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="ampoules">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-ampoule"></use></svg></span>
+                      <span><strong>Ampułki</strong><small>Licznik i zmiana ampułki</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                  </div>
+                </section>
+
+                <section class="settings-category-group" aria-labelledby="settings-group-data">
+                  <h3 id="settings-group-data">Raporty i dane</h3>
+                  <div class="settings-category-group__items">
+                    <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="data">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-database"></use></svg></span>
+                      <span><strong>Raporty i kopie</strong><small>Raport, eksport i import</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                  </div>
+                </section>
+
+                <section class="settings-category-group" aria-labelledby="settings-group-appearance">
+                  <h3 id="settings-group-appearance">Wygląd i obsługa</h3>
+                  <div class="settings-category-group__items">
+                    <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="appearance">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-palette"></use></svg></span>
+                      <span><strong>Wygląd</strong><small>Motyw i czytelność</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                  </div>
+                </section>
+
+                <section class="settings-category-group" aria-labelledby="settings-group-security">
+                  <h3 id="settings-group-security">Bezpieczeństwo i aplikacja</h3>
+                  <div class="settings-category-group__items">
+                    <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="security">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-lock"></use></svg></span>
+                      <span><strong>Bezpieczeństwo</strong><small>PIN, biometria i blokada</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                    <button class="settings-category-button" type="button" role="tab" aria-selected="false" data-settings-target="about">
+                      <span class="settings-category-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-info"></use></svg></span>
+                      <span><strong>O aplikacji</strong><small>Wersja, aktualizacje i zgody</small></span>
+                      <svg class="app-icon settings-category-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                    </button>
+                  </div>
+                </section>
+              </div>
+            </aside>
+
+            <div class="settings-content">
+              <button id="settings-section-back-button" class="back-button settings-section-back is-hidden" type="button" aria-label="Wróć do wszystkich ustawień" hidden>
+                <svg class="app-icon settings-section-back__arrow" aria-hidden="true" focusable="false"><use href="#icon-arrow-left"></use></svg>
+                <span>Wstecz do wszystkich ustawień</span>
+              </button>
+              <div id="settings-panels" class="settings-panels">
+                <section class="settings-panel settings-panel-stack profile-health-dashboard" data-settings-panel="profiles" role="tabpanel">
+                  <article class="card settings-card profiles-settings-card profile-health-overview">
+                    <div class="card-heading-row">
+                      <div>
+                        <p class="eyebrow">Profil osoby</p>
+                        <h2 id="profile-health-name">Profil 1</h2>
+                      </div>
+                      <span id="profiles-summary" class="profile-count-badge">1 aktywny profil</span>
+                    </div>
+                    <div class="profile-health-heading">
+                      <span id="profile-health-avatar" class="profile-avatar profile-avatar--large" data-profile-color="teal" aria-hidden="true">🧒</span>
+                      <p class="muted">Dane medyczne, pomiary i statystyki należą wyłącznie do aktywnego profilu.</p>
+                    </div>
+                    <div class="profile-health-key-metrics" aria-label="Najważniejsze dane profilu">
+                      <div><span>Aktualna dawka</span><strong id="profile-current-dose">—</strong></div>
+                      <div><span>Ostatni wzrost</span><strong id="profile-latest-height">—</strong></div>
+                      <div><span>Ostatnia masa</span><strong id="profile-latest-weight">—</strong></div>
+                      <div><span>Regularność</span><strong id="profile-regularity-rate">—</strong></div>
+                    </div>
+                    <div class="button-row-wrap">
+                      <button id="manage-profiles-button" class="button button--secondary button--small" type="button">Zarządzaj profilami</button>
+                      <button id="profile-open-treatment-button" class="button button--ghost button--small" type="button">Zmień aktualną dawkę</button>
+                    </div>
+                  </article>
+
+                  <div class="profile-health-grid">
+                    <article class="card settings-card profile-medical-card">
+                      <div>
+                        <p class="eyebrow">Informacje medyczne</p>
+                        <h2>Lekarz i leczenie</h2>
+                      </div>
+                      <form id="profile-medical-form" class="profile-medical-form">
+                        <div class="form-grid">
+                          <label>
+                            <span>Data urodzenia</span>
+                            <input id="profile-birth-date" type="date">
+                          </label>
+                          <label>
+                            <span>Lekarz prowadzący</span>
+                            <input id="profile-doctor-name" maxlength="120" autocomplete="off" placeholder="Imię i nazwisko">
+                          </label>
+                          <label>
+                            <span>Poradnia / placówka</span>
+                            <input id="profile-clinic-name" maxlength="160" autocomplete="off" placeholder="Nazwa poradni">
+                          </label>
+                          <label>
+                            <span>Preparat</span>
+                            <input id="profile-medication-name" maxlength="160" autocomplete="off" placeholder="Nazwa leku">
+                          </label>
+                          <label class="form-field--wide">
+                            <span>Rozpoznanie i ważne informacje</span>
+                            <textarea id="profile-diagnosis" rows="3" maxlength="2000" placeholder="Informacje potrzebne podczas wizyty"></textarea>
+                          </label>
+                          <label class="form-field--wide">
+                            <span>Dodatkowe uwagi medyczne</span>
+                            <textarea id="profile-medical-notes" rows="3" maxlength="2000" placeholder="Np. zalecenia lekarza"></textarea>
+                          </label>
+                        </div>
+                        <button class="button button--primary button--small" type="submit">Zapisz informacje medyczne</button>
+                      </form>
+                    </article>
+
+                    <article class="card settings-card profile-regularity-card">
+                      <div class="card-heading-row">
+                        <div>
+                          <p class="eyebrow">Ostatnie 30 dni</p>
+                          <h2>Regularność podań</h2>
+                        </div>
+                        <strong id="profile-regularity-summary" class="profile-stat-emphasis">—</strong>
+                      </div>
+                      <div id="profile-regularity-chart" class="regularity-chart" role="list" aria-label="Status podań w kolejnych dniach"></div>
+                      <div class="regularity-legend">
+                        <span><i class="legend-dot legend-dot--given"></i> Podano</span>
+                        <span><i class="legend-dot legend-dot--skipped"></i> Pominięto</span>
+                        <span><i class="legend-dot legend-dot--missing"></i> Brak wpisu</span>
+                      </div>
+                      <p id="profile-regularity-details" class="muted">—</p>
+                    </article>
+
+                    <article class="card settings-card profile-measurements-card">
+                      <div>
+                        <p class="eyebrow">Pomiary</p>
+                        <h2>Wzrost i masa</h2>
+                      </div>
+                      <form id="profile-measurement-form" class="profile-record-form">
+                        <label><span>Data</span><input id="profile-measurement-date" type="date" required></label>
+                        <label><span>Wzrost (cm)</span><input id="profile-height-cm" inputmode="decimal" autocomplete="off" placeholder="np. 132,5"></label>
+                        <label><span>Masa (kg)</span><input id="profile-weight-kg" inputmode="decimal" autocomplete="off" placeholder="np. 31,2"></label>
+                        <label class="profile-record-form__note"><span>Uwagi</span><input id="profile-measurement-note" maxlength="1000" autocomplete="off" placeholder="Opcjonalnie"></label>
+                        <button class="button button--primary button--small" type="submit">Zapisz pomiar</button>
+                      </form>
+                      <div id="profile-measurement-list" class="profile-record-list" aria-live="polite"></div>
+                    </article>
+
+                    <article class="card settings-card profile-dose-history-card">
+                      <div>
+                        <p class="eyebrow">Przebieg leczenia</p>
+                        <h2>Historia zmian dawki</h2>
+                      </div>
+                      <form id="profile-dose-history-form" class="profile-record-form">
+                        <label><span>Obowiązuje od</span><input id="profile-dose-history-date" type="date" required></label>
+                        <label><span>Dawka</span><input id="profile-dose-history-value" inputmode="decimal" autocomplete="off" required></label>
+                        <label><span>Jednostka</span><select id="profile-dose-history-unit"><option value="mg">mg</option><option value="ml">ml</option><option value="IU">IU / j.m.</option><option value="j.m.">j.m.</option></select></label>
+                        <label class="profile-record-form__note"><span>Powód / zalecenie</span><input id="profile-dose-history-note" maxlength="1000" autocomplete="off" placeholder="Opcjonalnie"></label>
+                        <button class="button button--secondary button--small" type="submit">Dodaj do historii</button>
+                      </form>
+                      <p class="muted">Dodanie starszego wpisu nie zmienia aktualnej dawki. Aktualną dawkę ustawisz w sekcji „Leczenie i dawka”.</p>
+                      <div id="profile-dose-history-list" class="profile-record-list" aria-live="polite"></div>
+                    </article>
+
+                    <article class="card settings-card profile-ampoule-stats-card">
+                      <div>
+                        <p class="eyebrow">Zużycie leku</p>
+                        <h2>Ampułki</h2>
+                      </div>
+                      <div class="profile-ampoule-stats">
+                        <div><span>Rozpoczęte</span><strong id="profile-ampoules-opened">0</strong></div>
+                        <div><span>Zakończone</span><strong id="profile-ampoules-finished">0</strong></div>
+                        <div><span>Zapisane zużycie</span><strong id="profile-ampoules-used">0 ml</strong></div>
+                        <div><span>W aktywnej</span><strong id="profile-ampoule-active-remaining">—</strong></div>
+                      </div>
+                      <p id="profile-ampoule-stats-note" class="muted">—</p>
+                    </article>
+
+                    <article class="card settings-card profile-doctor-report-card">
+                      <div>
+                        <p class="eyebrow">Dokument dla lekarza</p>
+                        <h2>Raport profilu</h2>
+                      </div>
+                      <p class="muted">Raport zawiera dane medyczne, aktualną dawkę, pomiary, regularność, historię podań i zużycie ampułek. Układ jest przygotowany do wydruku.</p>
+                      <div class="button-row-wrap">
+                        <button id="profile-doctor-report-button" class="button button--primary button--small" type="button">Podgląd raportu</button>
+                        <button id="profile-doctor-export-button" class="button button--secondary button--small" type="button">Eksportuj raport</button>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="settings-panel settings-panel-stack" data-settings-panel="treatment" role="tabpanel" hidden>
+                  <article class="card settings-card">
+                    <div>
+                      <p class="eyebrow">Leczenie</p>
+                      <h2>Dawka i godzina</h2>
+                    </div>
+                    <div class="form-grid form-grid--settings">
+                      <label>
+                        <span>Dawka domyślna</span>
+                        <input id="settings-dose" inputmode="decimal" autocomplete="off">
+                      </label>
+                      <label>
+                        <span>Jednostka</span>
+                        <select id="settings-unit">
+                          <option value="mg">mg</option>
+                          <option value="ml">ml</option>
+                          <option value="IU">IU / j.m.</option>
+                          <option value="j.m.">j.m.</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span>Typowa godzina</span>
+                        <input id="settings-time" type="time">
+                      </label>
+                      <label>
+                        <span>Zmiana obowiązuje od</span>
+                        <input id="settings-dose-effective-date" type="date">
+                      </label>
+                      <label class="form-field--wide">
+                        <span>Powód zmiany (opcjonalnie)</span>
+                        <input id="settings-dose-change-note" maxlength="1000" autocomplete="off" placeholder="Np. zalecenie z wizyty">
+                      </label>
+                    </div>
+                    <p class="muted">Aplikacja nie dobiera dawki. Zapisuje wyłącznie wartość ustawioną przez opiekuna zgodnie z zaleceniem lekarza.</p>
+                    <button id="save-settings-button" class="button button--primary button--small" type="button">Zapisz dawkę i godzinę</button>
+                  </article>
+
+                  <details id="settings-advanced-injection" class="settings-advanced">
+                    <summary>
+                      <span><strong>Opcje zaawansowane</strong><small>Własna kolejność miejsc wkłucia</small></span>
+                    </summary>
+                    <div class="settings-advanced__content">
+                  <article class="card settings-card injection-order-card">
+                    <div class="card-heading-row">
+                      <div>
+                        <p class="eyebrow">Rotacja wkłuć</p>
+                        <h2>Kolejność miejsc wkłucia</h2>
+                      </div>
+                      <span id="injection-order-summary" class="profile-count-badge">10 pozycji aktywnych</span>
+                    </div>
+                    <p class="muted">Zmień kolejność tylko wtedy, gdy chcesz dostosować automatyczne propozycje miejsc wkłucia.</p>
+                    <div id="injection-order-warning" class="settings-warning is-hidden" role="status"></div>
+                    <div id="injection-order-list" class="injection-order-list" aria-live="polite"></div>
+                    <div class="injection-order-add">
+                      <label>
+                        <span>Strona</span>
+                        <select id="injection-order-side">
+                          <option value="lewa">Lewa</option>
+                          <option value="prawa">Prawa</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span>Miejsce</span>
+                        <select id="injection-order-site">
+                          <option value="brzuch">Brzuch</option>
+                          <option value="udo">Udo</option>
+                          <option value="ramię">Ramię</option>
+                          <option value="pośladek">Pośladek</option>
+                          <option value="łopatka">Łopatka</option>
+                        </select>
+                      </label>
+                      <button id="injection-order-add-button" class="button button--secondary button--small" type="button">Dodaj pozycję</button>
+                      <button id="injection-order-reset-button" class="button button--ghost button--small" type="button">Przywróć domyślną</button>
+                    </div>
+                  </article>
+                    </div>
+                  </details>
+                </section>
+
+                <section class="settings-panel settings-panel-stack" data-settings-panel="ampoules" role="tabpanel" hidden>
+                  <article class="card settings-card inventory-settings">
+                    <div><p class="eyebrow">Nieotwarte ampułki</p><h2>Zapas leku</h2></div>
+                    <label class="switch-row"><span>Włącz licznik zapasu dla tego profilu</span><input id="inventory-enabled" type="checkbox" role="switch"></label>
+                    <p class="muted">Wpisz liczbę nieotwartych ampułek. Rozpoczęcie nowej po potwierdzeniu odejmuje jedną sztukę.</p>
+                    <div class="form-grid">
+                      <label><span>Aktualny zapas (sztuki)</span><input id="inventory-count" type="number" min="0" max="9999" step="1" inputmode="numeric" value="0"></label>
+                      <label><span>Ostrzegaj przy zapasie do</span><input id="inventory-threshold" type="number" min="0" max="9999" step="1" inputmode="numeric" value="2"></label>
+                    </div>
+                    <button id="inventory-save" class="button button--primary" type="button">Zapisz stan i ustawienia</button>
+                    <div class="inventory-delivery-row"><label><span>Nowa dostawa (sztuki)</span><input id="inventory-delivery" type="number" min="1" max="9999" step="1" inputmode="numeric" placeholder="np. 3"></label><button id="inventory-add" class="button button--secondary" type="button">Dodaj dostawę</button></div>
+                  </article>
+                  <article class="card settings-card">
+                    <div>
+                      <p class="eyebrow">Zapas leku</p>
+                      <h2>Ampułki</h2>
+                    </div>
+                    <p class="muted">Ustaw wartości dla kolejnych ampułek. Bieżącą ampułkę poprawisz osobno przyciskiem „Szczegóły bieżącej”. Stan jest liczony na podstawie zapisanych podań.</p>
+                    <div class="form-grid form-grid--settings">
+                      <label>
+                        <span>Data rozpoczęcia ampułki</span>
+                        <input id="ampoule-start-date" type="date">
+                      </label>
+                      <label>
+                        <span>Numer tej ampułki</span>
+                        <input id="ampoule-start-number" type="number" min="1" step="1" inputmode="numeric" autocomplete="off" value="1">
+                      </label>
+                      <label>
+                        <span>Pojemność ampułki w ml</span>
+                        <input id="ampoule-volume" inputmode="decimal" autocomplete="off" value="10">
+                      </label>
+                      <label>
+                        <span>Liczba podań z ampułki</span>
+                        <input id="ampoule-dose-count" type="number" min="1" max="999" step="1" inputmode="numeric" autocomplete="off" value="10">
+                        <small>Ustaw np. 11, jeśli ampułka wystarcza na 11 zastrzyków.</small>
+                      </label>
+                      <label>
+                        <span>Zużycie na jedno podanie w ml</span>
+                        <input id="ampoule-dose-ml" inputmode="decimal" autocomplete="off" placeholder="np. 1,0">
+                        <small>Opcjonalne — aplikacja może wyliczyć wartość z liczby podań.</small>
+                      </label>
+                      <label>
+                        <span>Maks. dni od otwarcia (opcjonalnie)</span>
+                        <input id="ampoule-max-open-days" type="number" min="1" max="365" step="1" inputmode="numeric" autocomplete="off" placeholder="np. 28">
+                      </label>
+                    </div>
+                    <div class="button-row-wrap">
+                      <button class="button button--secondary button--small" type="button" data-current-ampoule>Szczegóły bieżącej</button>
+                      <button id="ampoule-start-today-button" class="button button--secondary button--small" type="button">Rozpocznij ampułkę dzisiaj</button>
+                      <button id="ampoule-new-button" class="button button--secondary button--small" type="button">Odłóż aktywną i rozpocznij nową</button>
+                    </div>
+                    <p id="ampoule-new-help" class="muted ampoule-new-help">Jeżeli odłożysz obecną ampułkę, później wznowisz ją z listy odłożonych poniżej.</p>
+                    <div class="ampoule-management" aria-live="polite">
+                      <strong id="ampoule-management-summary">Nie ma odłożonych ampułek.</strong>
+                      <div id="ampoule-list" class="ampoule-list"></div>
+                    </div>
+                    <p class="muted">Liczba zapisanych podań pokazuje stan ampułki. Wyliczenie ilości w ml jest orientacyjne.</p>
+                    <button id="save-ampoule-settings-button" class="button button--primary button--small" type="button">Zapisz ustawienia ampułki</button>
+                  </article>
+                </section>
+
+                <section class="settings-panel settings-panel-stack" data-settings-panel="reminders" role="tabpanel" hidden>
+                  <article class="card settings-card">
+                    <div>
+                      <p class="eyebrow">Powiadomienia</p>
+                      <h2>Przypomnienie o zastrzyku</h2>
+                    </div>
+                    <label class="toggle-row">
+                      <span>
+                        <strong>Włącz przypomnienie</strong>
+                        <small>Powiadomienie pokaże proponowane miejsce wkłucia na dany dzień.</small>
+                      </span>
+                      <input id="reminder-enabled-toggle" type="checkbox" role="switch">
+                    </label>
+                    <label class="settings-field-row">
+                      <span>
+                        <strong>Godzina przypomnienia</strong>
+                        <small>Na przykład 21:00.</small>
+                      </span>
+                      <input id="reminder-time" type="time" value="21:00">
+                      </label>
+                      <p class="muted">Android przypomni o potrzebnej wymianie ampułki 30 minut przed zastrzykiem. Po potwierdzeniu wymiany to przypomnienie zostanie wyłączone. Wymagana jest zgoda na powiadomienia; dostęp „Alarmy i przypomnienia” zapewnia dokładną godzinę.</p>
+                    <div class="permission-summary" aria-live="polite">
+                      <span>Powiadomienia:</span>
+                      <strong id="notification-permission-status">sprawdzanie…</strong>
+                    </div>
+                    <div class="button-row-wrap">
+                      <button id="request-notification-button" class="button button--secondary button--small" type="button">Zezwól na powiadomienia</button>
+                      <button id="test-notification-button" class="button button--secondary button--small" type="button">Wyślij test</button>
+                    </div>
+                    <p class="muted reminder-note">Ustawienie dotyczy tylko aktywnego profilu. Test potwierdza, czy system pozwala pokazać powiadomienie.</p>
+                    <button id="save-reminder-button" class="button button--primary button--small" type="button">Zapisz przypomnienie</button>
+                  </article>
+
+                  <article class="card settings-card reminder-diagnostics-card" aria-labelledby="reminder-diagnostics-title">
+                    <div class="card-heading-row">
+                      <div>
+                        <p class="eyebrow">Kontrola działania</p>
+                        <h2 id="reminder-diagnostics-title">Stan przypomnienia</h2>
+                      </div>
+                      <span id="reminder-diagnostics-overall" class="profile-count-badge" data-state="checking">Sprawdzanie…</span>
+                    </div>
+                    <div class="reminder-diagnostics-grid" aria-live="polite">
+                      <div><span>Powiadomienia</span><strong id="reminder-diagnostic-permission">Sprawdzanie…</strong></div>
+                      <div><span>Ustawienia systemu</span><strong id="reminder-diagnostic-channel">Sprawdzanie…</strong></div>
+                      <div><span>Sposób działania</span><strong id="reminder-diagnostic-exact-alarm">Sprawdzanie…</strong></div>
+                        <div><span>Następne przypomnienie</span><strong id="reminder-diagnostic-next">Sprawdzanie…</strong></div>
+                        <div><span>Wymiana ampułki</span><strong id="reminder-diagnostic-replacement">Sprawdzanie…</strong></div>
+                    </div>
+                    <p id="reminder-diagnostics-note" class="muted reminder-note">Tutaj sprawdzisz, czy przypomnienie jest gotowe.</p>
+                    <div class="button-row-wrap">
+                      <button id="refresh-reminder-diagnostics-button" class="button button--secondary button--small" type="button">Sprawdź ponownie</button>
+                      <button id="open-notification-settings-button" class="button button--secondary button--small" type="button">Ustawienia powiadomień</button>
+                      <button id="request-exact-alarm-button" class="button button--secondary button--small" type="button">Dokładne alarmy</button>
+                    </div>
+                    <small id="reminder-diagnostics-checked" class="reminder-diagnostics-checked">Jeszcze nie sprawdzono.</small>
+                  </article>
+
+                  <details id="settings-advanced-voice" class="settings-advanced">
+                    <summary>
+                      <span><strong>Polecenia głosowe</strong><small>Odczyt i potwierdzanie zapisu</small></span>
+                    </summary>
+                    <div class="settings-advanced__content">
+                  <article class="card settings-card">
+                    <div>
+                      <p class="eyebrow">Sterowanie</p>
+                      <h2>Obsługa głosowa</h2>
+                    </div>
+                    <label class="toggle-row">
+                      <span>
+                        <strong>Odczytuj potwierdzenia</strong>
+                        <small>Aplikacja powie, co rozpoznała i zapisała.</small>
+                      </span>
+                      <input id="voice-feedback-toggle" type="checkbox" role="switch">
+                    </label>
+                    <label class="toggle-row">
+                      <span>
+                        <strong>Potwierdzaj przed zapisem</strong>
+                        <small>Po rozpoznaniu polecenia trzeba nacisnąć „Zapisz” lub powiedzieć „zapisz”.</small>
+                      </span>
+                      <input id="voice-confirm-toggle" type="checkbox" role="switch" checked>
+                    </label>
+                    <details class="settings-help-details">
+                      <summary>Przykłady poleceń</summary>
+                    <div class="tip-box">
+                      <strong>Przykłady poleceń</strong>
+                      <span>„Wczoraj o 20 podałam w lewe udo”, „jutro pomijam”, „odkładam ampułkę osiemnastą”, „kontynuuj ampułkę siedemnastą”.</span>
+                    </div>
+                    </details>
+                    <button id="save-voice-settings-button" class="button button--primary button--small" type="button">Zapisz obsługę głosową</button>
+                  </article>
+                    </div>
+                  </details>
+                </section>
+
+                <section class="settings-panel" data-settings-panel="appearance" role="tabpanel" hidden>
+                  <article class="card settings-card appearance-settings-card">
+                    <div class="card-heading-row">
+                      <div>
+                        <p class="eyebrow">Interfejs</p>
+                        <h2>Wygląd aplikacji</h2>
+                      </div>
+                      <span id="theme-status" class="profile-count-badge">Automatyczny</span>
+                    </div>
+                    <p class="muted">Wybierz stały motyw albo pozwól aplikacji dopasować się do ustawienia telefonu.</p>
+                    <fieldset id="skin-control" class="skin-choice-group">
+                      <legend>Skórka interfejsu</legend>
+                      <label class="skin-choice"><input id="skin-readable" type="radio" name="skin" value="readable" checked><span class="skin-preview skin-preview--readable" aria-hidden="true"><i></i><i></i><i></i></span><strong>Czytelna</strong><small>Przestrzeń i wyraźne karty</small></label>
+                      <label class="skin-choice"><input id="skin-elegant" type="radio" name="skin" value="elegant"><span class="skin-preview skin-preview--elegant" aria-hidden="true"><i></i><i></i><i></i></span><strong>Elegancka</strong><small>Spokój i prostota</small></label>
+                      <label class="skin-choice"><input id="skin-family" type="radio" name="skin" value="family"><span class="skin-preview skin-preview--family" aria-hidden="true"><i></i><i></i><i></i></span><strong>Rodzinna</strong><small>Ciepły, przyjazny wygląd</small></label>
+                    </fieldset>
+                    <h3>Kolorystyka</h3>
+                    <fieldset id="theme-mode-control" class="theme-choice-group">
+                      <legend class="sr-only">Motyw aplikacji</legend>
+                      <label class="theme-choice">
+                        <input id="theme-system" type="radio" name="theme-mode" value="system" checked>
+                        <span class="theme-choice__preview theme-choice__preview--system" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-device"></use></svg></span>
+                        <span><strong>Automatyczny</strong><small>Zgodny z telefonem</small></span>
+                      </label>
+                      <label class="theme-choice">
+                        <input id="theme-light" type="radio" name="theme-mode" value="light">
+                        <span class="theme-choice__preview theme-choice__preview--light" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-sun"></use></svg></span>
+                        <span><strong>Jasny</strong><small>Zawsze jasne tło</small></span>
+                      </label>
+                      <label class="theme-choice">
+                        <input id="theme-dark" type="radio" name="theme-mode" value="dark">
+                        <span class="theme-choice__preview theme-choice__preview--dark" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-moon"></use></svg></span>
+                        <span><strong>Ciemny</strong><small>Mniej światła wieczorem</small></span>
+                      </label>
+                      <label class="theme-choice">
+                        <input id="theme-elegant" type="radio" name="theme-mode" value="elegant">
+                        <span class="theme-choice__preview theme-choice__preview--elegant" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-palette"></use></svg></span>
+                        <span><strong>Elegancki</strong><small>Grafit i subtelne złoto</small></span>
+                      </label>
+                      <label class="theme-choice">
+                        <input id="theme-amber" type="radio" name="theme-mode" value="amber">
+                        <span class="theme-choice__preview theme-choice__preview--amber" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-sun"></use></svg></span>
+                        <span><strong>Bursztynowy</strong><small>Ciepłe złoto i krem</small></span>
+                      </label>
+                      <label class="theme-choice">
+                        <input id="theme-silver" type="radio" name="theme-mode" value="silver">
+                        <span class="theme-choice__preview theme-choice__preview--silver" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-palette"></use></svg></span>
+                        <span><strong>Srebrny</strong><small>Chłodne szarości i stal</small></span>
+                      </label>
+                      <label class="theme-choice">
+                        <input id="theme-lavender" type="radio" name="theme-mode" value="lavender">
+                        <span class="theme-choice__preview theme-choice__preview--lavender" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-palette"></use></svg></span>
+                        <span><strong>Lawendowy</strong><small>Spokojny fiolet i jasne tło</small></span>
+                      </label>
+                    </fieldset>
+                    <div class="visual-status-guide" aria-label="Znaczenie kolorów statusu">
+                      <span class="visual-status-guide__item visual-status-guide__item--given"><i></i>Podano</span>
+                      <span class="visual-status-guide__item visual-status-guide__item--skipped"><i></i>Pominięto lub błąd</span>
+                      <span class="visual-status-guide__item visual-status-guide__item--warning"><i></i>Ostrzeżenie</span>
+                    </div>
+                  </article>
+                </section>
+
+                <section class="settings-panel settings-panel-stack" data-settings-panel="security" role="tabpanel" hidden>
+                  <article class="card settings-card security-status-card">
+                    <div>
+                      <p class="eyebrow">Ochrona danych</p>
+                      <h2>Bezpieczne przechowywanie</h2>
+                    </div>
+                    <div class="security-status-row">
+                      <span>Dane profili, podań i ampułek</span>
+                      <strong id="security-storage-status">sprawdzanie…</strong>
+                    </div>
+                    <p class="muted">Historia leczenia jest przechowywana lokalnie i chroniona mechanizmami dostępnymi na tym urządzeniu.</p>
+                  </article>
+
+                  <article class="card settings-card">
+                    <div class="card-heading-row">
+                      <div>
+                        <p class="eyebrow">Blokada aplikacji</p>
+                        <h2>PIN</h2>
+                      </div>
+                      <span id="security-pin-status" class="profile-count-badge">PIN jest wyłączony</span>
+                    </div>
+                    <form id="security-pin-form" class="security-pin-form">
+                      <label id="security-current-pin-wrap" hidden>
+                        <span>Obecny PIN</span>
+                        <input id="security-current-pin" type="password" inputmode="numeric" pattern="[0-9]{6,12}" minlength="6" maxlength="12" autocomplete="current-password">
+                      </label>
+                      <label>
+                        <span>Nowy PIN (6–12 cyfr)</span>
+                        <input id="security-new-pin" type="password" inputmode="numeric" pattern="[0-9]{6,12}" minlength="6" maxlength="12" autocomplete="new-password" required>
+                      </label>
+                      <label>
+                        <span>Powtórz nowy PIN</span>
+                        <input id="security-confirm-pin" type="password" inputmode="numeric" pattern="[0-9]{6,12}" minlength="6" maxlength="12" autocomplete="new-password" required>
+                      </label>
+                      <div class="button-row-wrap">
+                        <button id="security-pin-submit-button" class="button button--primary button--small" type="submit">Włącz PIN</button>
+                        <button id="security-remove-pin-button" class="button button--danger button--small" type="button" hidden>Wyłącz PIN</button>
+                      </div>
+                    </form>
+                  </article>
+
+                  <article class="card settings-card">
+                    <div>
+                      <p class="eyebrow">Wygodne odblokowanie</p>
+                      <h2>Biometria i blokada automatyczna</h2>
+                    </div>
+                    <div class="security-status-row">
+                      <span>Odcisk palca lub rozpoznawanie twarzy</span>
+                      <strong id="security-biometric-status">sprawdzanie…</strong>
+                    </div>
+                    <button id="security-biometric-button" class="button button--secondary button--small" type="button" hidden>Włącz biometrię</button>
+                    <label class="settings-field-row">
+                      <span>
+                        <strong>Zablokuj po opuszczeniu aplikacji</strong>
+                        <small>PIN musi być włączony. Zawartość jest zasłaniana od razu.</small>
+                      </span>
+                      <select id="security-auto-lock" disabled>
+                        <option value="0">Natychmiast</option>
+                        <option value="1">Po 1 minucie</option>
+                        <option value="5">Po 5 minutach</option>
+                        <option value="15">Po 15 minutach</option>
+                        <option value="30">Po 30 minutach</option>
+                      </select>
+                    </label>
+                    <button id="security-lock-now-button" class="button button--secondary button--small" type="button" disabled>Zablokuj teraz</button>
+                  </article>
+                </section>
+
+                <section class="settings-panel settings-panel-stack" data-settings-panel="data" role="tabpanel" hidden>
+                  <article id="data-backup-section" class="card settings-card data-card">
+                    <div>
+                      <p class="eyebrow">Dokumentacja leczenia</p>
+                      <h2>Raporty i kopia danych</h2>
+                    </div>
+                    <p class="muted">Utwórz raport dla lekarza albo kopię do późniejszego przywrócenia. Hasło do kopii jest opcjonalne.</p>
+                    <div class="report-config-card" aria-label="Zakres raportu">
+                      <div class="report-config-heading">
+                        <strong>Zakres raportu</strong>
+                        <span id="report-scope-summary" class="muted">—</span>
+                      </div>
+                      <div class="report-config-grid">
+                        <label class="form-field">
+                          <span>Profil</span>
+                          <select id="report-profile-filter" aria-label="Wybierz profil do raportu"></select>
+                        </label>
+                        <label class="form-field">
+                          <span>Data od</span>
+                          <input id="report-date-from" type="date">
+                        </label>
+                        <label class="form-field">
+                          <span>Data do</span>
+                          <input id="report-date-to" type="date">
+                        </label>
+                        <label class="switch-row report-ampoule-toggle">
+                          <span><strong>Uwzględnij ampułki</strong><small>Numery i pozostałą ilość leku</small></span>
+                          <input id="report-include-ampoules" type="checkbox" role="switch" checked>
+                        </label>
+                      </div>
+                    </div>
+                    <div class="data-main-actions" aria-label="Raporty i kopia danych">
+                      <button id="report-preview-button" class="data-main-button data-main-button--report" type="button" title="Podgląd i drukowanie raportu (Alt+P)">
+                        <span class="data-main-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-printer"></use></svg></span>
+                        <span><strong>Podgląd / Drukuj</strong><small>Zobacz tabelę przed wydrukiem</small></span>
+                        <svg class="app-icon data-main-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                      </button>
+                      <button id="export-report-button" class="data-main-button data-main-button--report" type="button" title="Eksport raportu do PDF, Word lub CSV (Alt+W: Word)">
+                        <span class="data-main-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-upload"></use></svg></span>
+                        <span><strong>Eksportuj raport</strong><small>PDF, Word (.docx) lub CSV</small></span>
+                        <svg class="app-icon data-main-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                      </button>
+                      <button id="backup-panel-button" class="data-main-button data-main-button--backup" type="button" title="Zapisz lub przywróć kopię danych">
+                        <span class="data-main-button__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-backup"></use></svg></span>
+                        <span><strong>Kopia zapasowa</strong><small>Zapisz bez hasła lub opcjonalnie zaszyfruj</small></span>
+                        <svg class="app-icon data-main-button__arrow" aria-hidden="true" focusable="false"><use href="#icon-chevron-right"></use></svg>
+                      </button>
+                    </div>
+                    <input id="import-file" class="sr-only" type="file" accept="application/json,.json,.ghbackup">
+                  </article>
+
+                  <article class="card settings-card settings-danger-card">
+                    <div>
+                      <p class="eyebrow">Operacja nieodwracalna</p>
+                      <h2>Usuwanie historii</h2>
+                    </div>
+                    <p>Usuwa wszystkie podania i pominięcia aktywnego profilu. Profil, pomiary i ustawienia pozostaną bez zmian.</p>
+                    <p class="settings-danger-card__warning">Przed usunięciem aplikacja poprosi o potwierdzenie. Operacji nie można cofnąć.</p>
+                    <button id="clear-data-button" class="button button--danger" type="button">Usuń wszystkie wpisy</button>
+                  </article>
+                </section>
+
+                <section class="settings-panel settings-panel-stack" data-settings-panel="about" role="tabpanel" hidden>
+                  <article class="card settings-card settings-update-box">
+                    <div>
+                      <p class="eyebrow">Wersja aplikacji</p>
+                      <h2>Aktualizacje</h2>
+                    </div>
+                    <div class="settings-version-row">
+                      <span>Zainstalowana wersja</span>
+                      <strong id="settings-version-label">v2.3.3</strong>
+                    </div>
+                    <p id="update-status" class="muted" role="status" aria-live="polite">Sprawdź, czy jest dostępna nowsza wersja aplikacji.</p>
+                    <div class="dialog-actions dialog-actions--start">
+                      <button id="check-update-button" class="button button--primary button--small" type="button">Sprawdź aktualizacje</button>
+                      <button id="download-update-button" type="button" hidden tabindex="-1" aria-hidden="true"></button>
+                    </div>
+                    <details id="pwa-maintenance-controls" class="pwa-maintenance settings-advanced" hidden>
+                      <summary><span><strong>Pomoc techniczna</strong><small>Stan instalacji i pracy bez internetu</small></span></summary>
+                      <div class="settings-advanced__content">
+                      <div class="pwa-diagnostic-grid" aria-label="Stan aplikacji">
+                        <span>Aktualizacje</span>
+                        <strong id="pwa-worker-status" data-state="neutral">Sprawdzanie…</strong>
+                        <span>Zasoby offline</span>
+                        <strong id="pwa-cache-status" data-state="neutral">Sprawdzanie…</strong>
+                        <span>Połączenie</span>
+                        <strong id="pwa-online-status" data-state="neutral">Sprawdzanie…</strong>
+                        <span>Instalacja</span>
+                        <strong id="pwa-install-status" data-state="neutral">Sprawdzanie…</strong>
+                      </div>
+                      <p class="muted">Jeśli aplikacja nie odświeżyła się automatycznie, możesz ponownie pobrać jej pliki.</p>
+                      <div class="dialog-actions dialog-actions--start">
+                        <button id="refresh-pwa-resources-button" class="button button--secondary button--small" type="button">Odśwież aplikację</button>
+                        <button id="apply-pwa-update-button" class="button button--primary button--small is-hidden" type="button">Zastosuj nową wersję</button>
+                      </div>
+                      </div>
+                    </details>
+                  </article>
+
+                  <article class="card settings-card app-information-card">
+                    <div>
+                      <p class="eyebrow">O aplikacji</p>
+                      <h2>Informacje</h2>
+                    </div>
+                    <p>Aplikacja zapisuje historię leczenia. Nie jest wyrobem medycznym. Nie diagnozuje, nie leczy ani nie zapobiega chorobom. Nie dobiera dawki. W sprawach diagnozy i leczenia skonsultuj się z lekarzem.</p>
+                    <div id="settings-install-callout" class="settings-install-callout" hidden>
+                      <div class="settings-install-callout__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-download"></use></svg></div>
+                      <div><strong>Zainstaluj aplikację</strong><span>Dodaj ją do ekranu telefonu lub pulpitu komputera.</span></div>
+                      <button id="settings-install-button" class="button button--primary settings-install-button is-hidden" type="button">Zainstaluj aplikację teraz</button>
+                    </div>
+                  </article>
+
+                  <details class="settings-advanced privacy-policy-card">
+                    <summary>
+                      <span><strong>Polityka prywatności</strong><small>Jak aplikacja chroni i wykorzystuje dane</small></span>
+                    </summary>
+                    <div class="settings-advanced__content privacy-policy-content">
+                      <p><strong>Dane pozostają na urządzeniu.</strong> Twórca aplikacji nie otrzymuje historii leczenia i nie prowadzi kont użytkowników.</p>
+                      <p>Profile, podania, pomiary, ampułki i ustawienia służą wyłącznie do historii, raportów, przypomnień i licznika ampułki. Nie są sprzedawane ani używane do reklam. Zapas ampułek również pozostaje lokalny.</p>
+                      <p>Kopię zapasową można zapisać bez hasła albo opcjonalnie ją zaszyfrować. Eksport zapisuje plik w wybranym przez użytkownika miejscu, dlatego należy chronić go we własnym zakresie.</p>
+                      <p>Powiadomienia i dostęp do plików są używane tylko po wykonaniu odpowiedniej czynności. Aplikacja nie wysyła historii leczenia do internetu. Na Androidzie dostęp do mikrofonu jest opcjonalny i uruchamiany dopiero po naciśnięciu mikrofonu. Dźwięk obsługuje systemowe rozpoznawanie mowy, a aplikacja otrzymuje tekst polecenia i nie przechowuje nagrań. Dostawca rozpoznawania mowy może przetwarzać dźwięk poza urządzeniem zgodnie z ustawieniami swojej usługi.</p>
+                      <p>Dane można usunąć w aplikacji, przez wyczyszczenie jej danych w systemie albo odinstalowanie. Aplikacja nie dobiera dawki i nie zastępuje zaleceń lekarza.</p>
+                      <p class="muted">Polityka prywatności: 23 września 2026 r. Wersja przed publikacją w Google Play — dane wydawcy i prywatny kontakt zostaną uzupełnione przed udostępnieniem.</p>
+                    </div>
+                  </details>
+
+                  <details id="settings-advanced-permissions" class="settings-advanced">
+                    <summary>
+                      <span><strong>Opcje zaawansowane</strong><small>Status zgód urządzenia</small></span>
+                    </summary>
+                    <div class="settings-advanced__content">
+                      <article class="card settings-card">
+                        <div>
+                          <p class="eyebrow">Dostęp urządzenia</p>
+                          <h2>Zgody aplikacji</h2>
+                        </div>
+                        <div class="permission-list">
+                          <div class="permission-row--microphone"><span>Mikrofon</span><strong id="microphone-permission-settings">sprawdzanie…</strong></div>
+                          <div><span>Powiadomienia</span><strong id="notification-permission-settings">sprawdzanie…</strong></div>
+                          <div><span>Trwałe przechowywanie</span><strong id="storage-permission-settings">sprawdzanie…</strong></div>
+                        </div>
+                        <button id="open-permissions-button" class="button button--secondary button--small" type="button">Otwórz ustawienia zgód</button>
+                      </article>
+                    </div>
+                  </details>
+                </section>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <nav class="mobile-nav" aria-label="Nawigacja dolna">
+        <button class="mobile-nav-button is-active" type="button" data-view="today" aria-current="page" title="Dzisiaj (Alt+1)">
+          <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-home"></use></svg><span>Dzisiaj</span>
+        </button>
+        <button class="mobile-nav-button" type="button" data-view="calendar" title="Kalendarz (Alt+2)">
+          <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-calendar"></use></svg><span>Kalendarz</span>
+        </button>
+        <button class="mobile-nav-button" type="button" data-view="history" title="Historia (Alt+3)">
+          <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-history"></use></svg><span>Historia</span>
+        </button>
+        <button class="mobile-nav-button" type="button" data-view="more" title="Więcej (Alt+4)">
+          <svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-more"></use></svg><span>Więcej</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <dialog id="profiles-dialog" class="profile-dialog" aria-labelledby="profiles-dialog-title">
+    <div class="profile-dialog__content">
+      <div class="dialog-header dialog-header--compact">
+        <div>
+          <p class="eyebrow">Użytkownicy dzienniczka</p>
+          <h2 id="profiles-dialog-title">Dzieci i profile</h2>
+          <p class="muted">Wybierz osobę albo zarządzaj jej profilem. Dane profili są przechowywane oddzielnie.</p>
+        </div>
+        <button id="profiles-dialog-close-button" class="icon-button" type="button" aria-label="Zamknij profile"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+      <div id="profiles-list" class="profiles-list"></div>
+      <div class="dialog-actions">
+        <button id="add-profile-button" class="button button--primary" type="button">+ Dodaj profil</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="profile-editor-dialog" class="profile-dialog profile-editor-dialog" aria-labelledby="profile-editor-title">
+    <form id="profile-editor-form" class="profile-dialog__content">
+      <div class="dialog-header dialog-header--compact">
+        <div>
+          <p class="eyebrow">Profil osoby</p>
+          <h2 id="profile-editor-title">Dodaj profil</h2>
+          <p class="muted">Nazwa jest obowiązkowa. Ikona i kolor pomagają szybko rozpoznać profil.</p>
+        </div>
+        <button id="profile-editor-close-button" class="icon-button" type="button" aria-label="Zamknij edycję profilu"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+      <input id="profile-editor-id" type="hidden">
+      <label class="profile-name-field">
+        <span>Nazwa profilu</span>
+        <input id="profile-name-input" maxlength="60" autocomplete="off" required placeholder="Np. Kasia">
+      </label>
+      <fieldset class="profile-choice-fieldset">
+        <legend>Ikona</legend>
+        <div id="profile-icon-options" class="profile-icon-options" role="group" aria-label="Wybierz ikonę profilu">
+          <button type="button" data-profile-icon="🧒">🧒</button><button type="button" data-profile-icon="👧">👧</button>
+          <button type="button" data-profile-icon="👦">👦</button><button type="button" data-profile-icon="🙂">🙂</button>
+          <button type="button" data-profile-icon="⭐">⭐</button><button type="button" data-profile-icon="💚">💚</button>
+          <button type="button" data-profile-icon="💙">💙</button><button type="button" data-profile-icon="💜">💜</button>
+        </div>
+      </fieldset>
+      <fieldset class="profile-choice-fieldset">
+        <legend>Kolor</legend>
+        <div id="profile-color-options" class="profile-color-options" role="group" aria-label="Wybierz kolor profilu">
+          <button type="button" data-profile-color="teal" aria-label="Turkusowy"></button>
+          <button type="button" data-profile-color="blue" aria-label="Niebieski"></button>
+          <button type="button" data-profile-color="violet" aria-label="Fioletowy"></button>
+          <button type="button" data-profile-color="rose" aria-label="Różowy"></button>
+          <button type="button" data-profile-color="amber" aria-label="Bursztynowy"></button>
+          <button type="button" data-profile-color="green" aria-label="Zielony"></button>
+        </div>
+      </fieldset>
+      <div class="dialog-actions">
+        <button id="profile-editor-cancel-button" class="button button--secondary" type="button">Anuluj</button>
+        <button class="button button--primary" type="submit">Zapisz profil</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="profile-delete-dialog" class="profile-dialog profile-delete-dialog" aria-labelledby="profile-delete-title">
+    <div class="profile-dialog__content">
+      <div class="dialog-header dialog-header--compact">
+        <div>
+          <p class="eyebrow eyebrow--danger">Nieodwracalne usunięcie</p>
+          <h2 id="profile-delete-title">Usuń profil</h2>
+        </div>
+        <button id="profile-delete-close-button" class="icon-button" type="button" aria-label="Zamknij usuwanie profilu"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+      <div id="profile-delete-warning" class="profile-delete-warning"></div>
+      <label class="profile-name-field">
+        <span>Wpisz dokładnie: <strong id="profile-delete-name">—</strong></span>
+        <input id="profile-delete-input" autocomplete="off" placeholder="Nazwa profilu">
+      </label>
+      <div class="dialog-actions">
+        <button id="profile-delete-cancel-button" class="button button--secondary" type="button">Anuluj</button>
+        <button id="profile-delete-confirm-button" class="button button--danger" type="button" disabled>Usuń profil i wszystkie dane</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="permissions-dialog" class="permissions-dialog" aria-labelledby="permissions-title">
+    <div class="permissions-content">
+      <div class="permissions-hero" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-shield"></use></svg></div>
+      <p class="eyebrow">Pierwsze uruchomienie</p>
+      <h2 id="permissions-title">Zezwól na potrzebne funkcje</h2>
+      <p class="muted">Każdą zgodę zatwierdzasz osobno. Bez powiadomień aplikacja nadal działa w pełni ręcznie.</p>
+
+      <div class="permission-cards">
+        <section class="permission-card permission-card--microphone">
+          <div><strong>Mikrofon</strong><span>Potrzebny do poleceń typu „lewy brzuch”.</span></div>
+          <button id="permission-microphone-button" class="button button--secondary button--small" type="button">Zezwól</button>
+          <span id="permission-microphone-status" class="permission-status">Nie sprawdzono</span>
+        </section>
+        <section class="permission-card">
+          <div><strong>Powiadomienia</strong><span>Przypomnienie o zastrzyku i proponowanym miejscu.</span></div>
+          <button id="permission-notification-button" class="button button--secondary button--small" type="button">Zezwól</button>
+          <span id="permission-notification-status" class="permission-status">Nie sprawdzono</span>
+        </section>
+        <section class="permission-card">
+          <div><strong>Trwałe przechowywanie</strong><span>Zmniejsza ryzyko usunięcia historii przez przeglądarkę.</span></div>
+          <button id="permission-storage-button" class="button button--secondary button--small" type="button">Włącz</button>
+          <span id="permission-storage-status" class="permission-status">Nie sprawdzono</span>
+        </section>
+      </div>
+
+      <div class="dialog-actions permissions-actions">
+        <button id="permissions-skip-button" class="button button--secondary" type="button">Pomiń na razie</button>
+        <button id="permissions-finish-button" class="button button--primary" type="button">Przejdź do aplikacji</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="setup-dialog" class="setup-dialog" aria-labelledby="setup-title">
+    <form id="setup-form" class="setup-shell">
+      <header class="setup-header">
+        <div class="setup-brand" aria-hidden="true"><img src="./icon-192.png" alt="" width="48" height="48"></div>
+        <div>
+          <p class="eyebrow">Pierwsze uruchomienie</p>
+          <h2 id="setup-title">Skonfiguruj swój dzienniczek</h2>
+        </div>
+        <span id="setup-step-label" class="setup-step-label">Krok 1 z 4</span>
+      </header>
+
+      <div class="setup-progress" aria-hidden="true"><span id="setup-progress-fill"></span></div>
+
+      <div class="setup-body">
+        <section class="setup-step is-active" data-setup-step="0">
+          <div class="setup-intro">
+            <span class="setup-intro__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-shield"></use></svg></span>
+            <h3>Twoje dane zostają na urządzeniu</h3>
+            <p>Możesz zacząć od nowa albo bezpiecznie przenieść ustawienia i całą historię z poprzedniej wersji.</p>
+          </div>
+          <div class="setup-choice-grid">
+            <button id="setup-import-button" class="setup-choice" type="button">
+              <span><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-upload"></use></svg></span>
+              <strong>Przenieś moje dane</strong>
+              <small>Wybierz plik kopii z używanej dotąd wersji.</small>
+            </button>
+            <button id="setup-new-button" class="setup-choice setup-choice--primary" type="button">
+              <span><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-plus"></use></svg></span>
+              <strong>Utwórz nowy dzienniczek</strong>
+              <small>Kreator przeprowadzi Cię przez najważniejsze ustawienia.</small>
+            </button>
+          </div>
+          <input id="setup-import-file" class="sr-only" type="file" accept=".json,.ghbackup,application/json">
+          <div id="setup-import-preview" class="setup-import-preview" hidden>
+            <div><strong id="setup-import-name">Kopia danych</strong><span id="setup-import-summary"></span></div>
+            <button id="setup-import-confirm" class="button button--primary" type="button">Importuj i przejdź do aplikacji</button>
+          </div>
+        </section>
+
+        <section class="setup-step" data-setup-step="1" hidden>
+          <div class="setup-section-heading">
+            <p class="eyebrow">Profil</p>
+            <h3>Kto będzie korzystać z dzienniczka?</h3>
+            <p>Dla kolejnych osób dodasz osobne profile później.</p>
+          </div>
+          <fieldset class="setup-profile-type">
+            <legend class="sr-only">Rodzaj profilu</legend>
+            <label><input id="setup-type-adult" type="radio" name="setup-type" value="adult" checked><span aria-hidden="true">🙂</span><strong>Osoba dorosła</strong></label>
+            <label><input id="setup-type-child" type="radio" name="setup-type" value="child"><span aria-hidden="true">🧒</span><strong>Dziecko</strong></label>
+          </fieldset>
+          <label class="setup-large-field"><span>Nazwa profilu</span><input id="setup-profile-name" type="text" maxlength="60" autocomplete="name" placeholder="Np. Tomek" required></label>
+        </section>
+
+        <section class="setup-step" data-setup-step="2" hidden>
+          <div class="setup-section-heading">
+            <p class="eyebrow">Plan leczenia</p>
+            <h3>Ustaw domyślne podanie</h3>
+            <p>Wszystkie wartości będzie można później zmienić.</p>
+          </div>
+          <div class="form-grid setup-treatment-grid">
+            <label><span>Dawka</span><input id="setup-dose" inputmode="decimal" value="1,0" required></label>
+            <label><span>Jednostka</span><select id="setup-unit"><option value="mg">mg</option><option value="ml">ml</option><option value="IU">IU</option><option value="j.m.">j.m.</option></select></label>
+            <label><span>Planowana godzina</span><input id="setup-time" type="time" value="20:00" required></label>
+          </div>
+        </section>
+
+        <section class="setup-step" data-setup-step="3" hidden>
+          <div class="setup-section-heading">
+            <p class="eyebrow">Ampułka i przypomnienie</p>
+            <h3>Ostatnie dwa ustawienia</h3>
+            <p>Kończąc konfigurację potwierdzasz, że nowa ampułka / wkład jest już we wstrzykiwaczu. Licznik rozpocznie się od zera; podanie zapiszesz osobno.</p>
+          </div>
+          <label class="setup-large-field setup-dose-count-field">
+            <span>Liczba zastrzyków z jednej ampułki</span>
+            <input id="setup-dose-count" type="number" min="1" max="999" step="1" inputmode="numeric" value="10" required>
+            <small>Możesz wpisać dowolną wartość, np. 11.</small>
+          </label>
+          <label class="toggle-row setup-reminder-toggle">
+            <span><strong>Codzienne przypomnienie</strong><small>System poprosi o zgodę na powiadomienia po zakończeniu kreatora.</small></span>
+            <input id="setup-reminder-enabled" type="checkbox" role="switch" checked>
+          </label>
+          <label class="setup-large-field"><span>Godzina przypomnienia</span><input id="setup-reminder-time" type="time" value="21:00"></label>
+        </section>
+      </div>
+
+      <footer id="setup-actions" class="setup-actions" hidden>
+        <button id="setup-back-button" class="button button--ghost" type="button">Wstecz</button>
+        <span class="dialog-spacer"></span>
+        <button id="setup-next-button" class="button button--primary" type="button">Dalej</button>
+        <button id="setup-finish-button" class="button button--primary" type="submit" hidden>Zakończ konfigurację</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="pwa-install-dialog" class="permissions-dialog pwa-install-dialog" aria-labelledby="pwa-install-title">
+    <div class="permissions-content">
+      <div class="permissions-hero pwa-install-hero" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-download"></use></svg></div>
+      <p class="eyebrow">Aplikacja na urządzeniu</p>
+      <h2 id="pwa-install-title">Zainstalować Dzienniczek Hormonu?</h2>
+      <p class="muted">Po instalacji aplikacja otrzyma własną ikonę i będzie uruchamiana jak zwykły program. Twoje dane pozostają na tym urządzeniu.</p>
+      <div class="pwa-install-benefits" aria-label="Zalety instalacji">
+        <span>Szybkie uruchamianie z ekranu telefonu lub komputera</span>
+        <span>Działanie także bez internetu po pobraniu zasobów</span>
+        <span>Automatyczne pobieranie nowych wersji</span>
+      </div>
+      <p id="pwa-install-dialog-note" class="settings-warning is-hidden">Przeglądarka nie udostępniła jeszcze automatycznej instalacji. Użyj opcji „Zainstaluj aplikację” albo „Dodaj do ekranu głównego” w menu przeglądarki.</p>
+      <div class="dialog-actions permissions-actions">
+        <button id="pwa-install-later-button" class="button button--secondary" type="button">Może później</button>
+        <button id="pwa-install-confirm-button" class="button button--primary" type="button">Zainstaluj aplikację</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="entry-dialog" class="entry-dialog" aria-labelledby="entry-dialog-title">
+    <form id="entry-form" method="dialog">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">Wpis podania</p>
+          <h2 id="entry-dialog-title">Dodaj wpis</h2>
+          <p class="muted entry-limit-note">Można zapisać tylko jeden wpis dla każdego dnia w wybranym profilu.</p>
+        </div>
+        <button id="dialog-close-button" class="icon-button" type="button" aria-label="Zamknij"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+
+      <input id="entry-id" type="hidden">
+      <div class="form-grid">
+        <label>
+          <span>Data</span>
+          <input id="entry-date" type="date" required>
+        </label>
+        <label>
+          <span>Godzina</span>
+          <input id="entry-time" type="time" required>
+        </label>
+        <label class="form-field--given-only">
+          <span>Dawka</span>
+          <input id="entry-dose" inputmode="decimal" autocomplete="off" required>
+        </label>
+        <label class="form-field--given-only">
+          <span>Jednostka</span>
+          <select id="entry-unit">
+            <option value="mg">mg</option>
+            <option value="ml">ml</option>
+            <option value="IU">IU / j.m.</option>
+            <option value="j.m.">j.m.</option>
+          </select>
+        </label>
+        <label class="form-field--given-only">
+          <span>Strona</span>
+          <select id="entry-side" required>
+            <option value="">Wybierz</option>
+            <option value="lewa">Lewa</option>
+            <option value="prawa">Prawa</option>
+          </select>
+        </label>
+        <label class="form-field--given-only">
+          <span>Miejsce</span>
+          <select id="entry-site" required>
+            <option value="">Wybierz</option>
+            <option value="brzuch">Brzuch</option>
+            <option value="udo">Udo / noga</option>
+            <option value="ramię">Ramię</option>
+            <option value="pośladek">Pośladek</option>
+            <option value="łopatka">Łopatka</option>
+          </select>
+        </label>
+        <label>
+          <span>Status</span>
+          <select id="entry-status">
+            <option value="given">Podano</option>
+            <option value="skipped">Pominięto</option>
+          </select>
+        </label>
+        <label class="form-field--wide" hidden><span>Ampułka używana w tym dniu</span><select id="entry-ampoule"></select></label>
+        <label class="form-field--wide">
+          <span>Uwagi</span>
+          <textarea id="entry-note" rows="3" placeholder="Opcjonalnie, np. lekkie zaczerwienienie"></textarea>
+        </label>
+      </div>
+
+      <div class="dialog-actions">
+        <button id="delete-entry-button" class="button button--danger button--small is-hidden" type="button">Usuń</button>
+        <span class="dialog-spacer"></span>
+        <button id="dialog-cancel-button" class="button button--secondary button--small" type="button">Anuluj</button>
+        <button class="button button--primary button--small" type="submit">Zapisz wpis</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="save-confirm-dialog" class="entry-dialog save-confirm-dialog" aria-labelledby="save-confirm-title" aria-describedby="save-confirm-summary">
+    <div class="dialog-header">
+      <div>
+        <p class="eyebrow">Potwierdzenie</p>
+        <h2 id="save-confirm-title">Zapisać podanie?</h2>
+      </div>
+    </div>
+    <p id="save-confirm-summary" class="save-confirm-summary"></p>
+    <div class="dialog-actions save-confirm-actions">
+      <button id="save-confirm-save" class="button button--primary" type="button">Zapisz</button>
+      <button id="save-confirm-edit" class="button button--secondary" type="button">Edytuj</button>
+      <button id="save-confirm-skip" class="button button--ghost" type="button">Pomiń</button>
+    </div>
+  </dialog>
+
+  <dialog id="ampoule-quick-dialog" class="data-dialog ampoule-quick-dialog" aria-labelledby="ampoule-quick-title">
+    <form id="ampoule-quick-form" class="data-dialog__content ampoule-quick-content">
+      <div class="dialog-header dialog-header--compact data-dialog__header">
+        <div>
+          <p class="eyebrow">Szybka konfiguracja</p>
+          <h2 id="ampoule-quick-title">Ampułka</h2>
+          <p class="muted">Ustaw licznik bez opuszczania ekranu dzisiejszego podania.</p>
+        </div>
+        <button id="ampoule-quick-close-button" class="icon-button" type="button" aria-label="Zamknij ustawienia ampułki"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+
+      <div class="ampoule-quick-hero" aria-hidden="true">
+        <span><svg class="app-icon" focusable="false"><use href="#icon-ampoule"></use></svg></span>
+        <div><strong id="ampoule-quick-summary">Nowa ampułka</strong><small>Każdy zapisany zastrzyk przesunie licznik o jeden.</small></div>
+      </div>
+
+      <div class="form-grid ampoule-quick-grid">
+        <label>
+          <span>Numer ampułki</span>
+          <input id="ampoule-quick-number" type="number" min="1" max="999" step="1" inputmode="numeric" required>
+        </label>
+        <label>
+          <span>Data rozpoczęcia</span>
+          <input id="ampoule-quick-date" type="date" required>
+        </label>
+        <label class="ampoule-quick-count-field">
+          <span>Liczba zastrzyków z ampułki</span>
+          <input id="ampoule-quick-dose-count" type="number" min="1" max="999" step="1" inputmode="numeric" required>
+          <small>Na przykład 11 — licznik pokaże kolejno 1 z 11, 2 z 11 itd.</small>
+        </label>
+        <label>
+          <span>Limit dni od otwarcia</span>
+          <input id="ampoule-quick-max-days" type="number" min="1" max="365" step="1" inputmode="numeric" placeholder="Opcjonalnie">
+        </label>
+      </div>
+
+      <p id="ampoule-quick-warning" class="ampoule-quick-warning" role="status" aria-live="polite"></p>
+      <div class="dialog-actions ampoule-quick-actions">
+        <button id="ampoule-quick-advanced-button" class="button button--ghost" type="button">Wszystkie ustawienia</button>
+        <span class="dialog-spacer"></span>
+        <button id="ampoule-quick-new-button" class="button button--secondary" type="button">Rozpocznij nową</button>
+        <button class="button button--primary" type="submit">Zapisz</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="place-picker-dialog" class="place-picker-dialog" aria-labelledby="place-picker-title">
+    <div class="place-picker-content">
+      <div class="dialog-header dialog-header--compact">
+        <div>
+          <p class="eyebrow">Miejsce wkłucia</p>
+          <h2 id="place-picker-title">Wybierz miejsce</h2>
+          <p class="muted">Wybierz stronę i miejsce. Dawka oraz godzina zostają bez zmian.</p>
+        </div>
+        <button id="place-picker-close-button" class="icon-button" type="button" aria-label="Zamknij"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+      <div id="place-picker-options" class="place-picker-options"></div>
+      <div class="dialog-actions">
+        <button id="place-picker-edit-button" class="button button--secondary button--small" type="button">Edytuj szczegóły</button>
+      </div>
+    </div>
+  </dialog>
+
+
+  <dialog id="report-preview-dialog" class="data-dialog report-preview-dialog" aria-labelledby="report-preview-title">
+    <div class="data-dialog__content data-dialog__content--preview">
+      <div class="dialog-header dialog-header--compact data-dialog__header">
+        <div>
+          <p class="eyebrow">Raport</p>
+          <h2 id="report-preview-title">Podgląd / Drukuj</h2>
+          <p class="muted">Na telefonie podgląd dopasowuje wpisy do ekranu. Wydruk i PDF zachowują układ A4.</p>
+        </div>
+        <button id="report-preview-close-button" class="icon-button" type="button" aria-label="Zamknij podgląd"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+      <div class="report-preview-actions">
+        <button id="report-print-button" class="button button--primary" type="button">Drukuj</button>
+      </div>
+      <div class="report-preview-scroll">
+        <iframe id="report-preview-frame" class="report-preview-frame" title="Podgląd raportu do wydruku"></iframe>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="export-report-dialog" class="data-dialog data-sheet-dialog" aria-labelledby="export-report-title">
+    <div class="data-dialog__content">
+      <div class="dialog-header dialog-header--compact data-dialog__header">
+        <div>
+          <p class="eyebrow">Eksport raportu</p>
+          <h2 id="export-report-title">Wybierz format</h2>
+          <p class="muted">Kliknięcie kafelka od razu zapisze raport w wybranym formacie.</p>
+        </div>
+        <button id="export-report-close-button" class="icon-button" type="button" aria-label="Zamknij eksport raportu"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+      <div class="format-tile-grid">
+        <button id="export-pdf-button" class="format-tile" type="button" title="Eksportuj raport do pliku PDF">
+          <span class="format-icon format-icon--pdf" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-report"></use></svg></span>
+          <strong>PDF</strong>
+          <small>Plik gotowy do zapisania</small>
+        </button>
+        <button id="export-word-button" class="format-tile" type="button" title="Eksportuj raport do Word (.docx) (Alt+W)">
+          <span class="format-icon format-icon--word" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-report"></use></svg></span>
+          <strong>Word (.docx)</strong>
+          <small>Edytowalny dokument</small>
+        </button>
+        <button id="export-csv-button" class="format-tile" type="button" title="Eksportuj historię do CSV">
+          <span class="format-icon format-icon--csv" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-report"></use></svg></span>
+          <strong>CSV</strong>
+          <small>Tabela do arkusza</small>
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="backup-dialog" class="data-dialog data-sheet-dialog" aria-labelledby="backup-dialog-title">
+    <div class="data-dialog__content">
+      <div class="dialog-header dialog-header--compact data-dialog__header">
+        <div>
+          <p class="eyebrow">Kopia zapasowa</p>
+          <h2 id="backup-dialog-title">Dane aplikacji</h2>
+          <p class="muted">Zwykłą kopię zapiszesz bez hasła. Jeśli chcesz, możesz dodatkowo włączyć szyfrowanie.</p>
+        </div>
+        <button id="backup-close-button" class="icon-button" type="button" aria-label="Zamknij kopię zapasową"><svg class="app-icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg></button>
+      </div>
+      <label class="toggle-row backup-encryption-choice">
+        <span><strong>Zabezpiecz kopię hasłem</strong><small>Opcjonalnie — hasło będzie potrzebne podczas przywracania</small></span>
+        <input id="backup-encryption-toggle" type="checkbox" role="switch" aria-controls="backup-password-fields" aria-expanded="false">
+      </label>
+      <div id="backup-password-fields" class="backup-password-grid" aria-label="Hasło kopii zapasowej" hidden>
+        <label>
+          <span>Hasło do kopii</span>
+          <input id="backup-password" type="password" minlength="8" maxlength="256" autocomplete="new-password" placeholder="Co najmniej 8 znaków">
+        </label>
+        <label>
+          <span>Powtórz hasło</span>
+          <input id="backup-password-confirm" type="password" minlength="8" maxlength="256" autocomplete="new-password" placeholder="Wpisz ponownie">
+        </label>
+        <p class="muted">Zapamiętaj hasło — bez niego nie będzie można przywrócić tej kopii.</p>
+      </div>
+      <div class="backup-option-grid">
+        <button id="export-json-button" class="backup-option" type="button">
+          <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-upload"></use></svg></span>
+          <span><strong>Zapisz wszystkie profile</strong><small>Kopia historii, ustawień, ampułek i przypomnień</small></span>
+        </button>
+        <button id="export-profile-json-button" class="backup-option" type="button">
+          <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-upload"></use></svg></span>
+          <span><strong>Zapisz aktywny profil</strong><small>Kopia tylko aktualnie wybranej osoby</small></span>
+        </button>
+        <button id="import-button" class="backup-option" type="button">
+          <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-download"></use></svg></span>
+          <span><strong>Wczytaj kopię</strong><small>Możesz też przenieść dane ze starszej wersji aplikacji</small></span>
+        </button>
+        <button id="restore-auto-backup-button" class="backup-option backup-option--recovery" type="button" hidden>
+          <span class="backup-option__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-backup"></use></svg></span>
+          <span><strong>Przywróć stan sprzed importu</strong><small id="auto-backup-summary">Brak lokalnej kopii bezpieczeństwa</small></span>
+        </button>
+      </div>
+      <section id="import-preview" class="backup-import-preview" aria-labelledby="import-preview-title" hidden>
+        <div class="backup-import-preview__heading">
+          <div>
+            <p class="eyebrow">Podgląd importu</p>
+            <h3 id="import-preview-title">Sprawdź kopię przed przywróceniem</h3>
+          </div>
+        </div>
+        <div id="import-preview-summary" class="backup-import-summary"></div>
+        <div class="backup-import-profiles">
+          <strong>Profile w pliku</strong>
+          <ul id="import-preview-profiles"></ul>
+        </div>
+        <p id="import-preview-warning" class="backup-import-warning"></p>
+        <div class="backup-import-actions">
+          <button id="import-cancel-button" class="button button--ghost" type="button">Anuluj</button>
+          <button id="import-confirm-button" class="button button--primary" type="button">Przywróć dane</button>
+        </div>
+      </section>
+    </div>
+  </dialog>
+
+  <div id="security-startup-cover" class="security-cover security-cover--startup" role="status" aria-live="polite">
+    <div class="security-cover__card">
+      <span class="security-cover__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-lock"></use></svg></span>
+      <h1>Bezpieczne uruchamianie</h1>
+      <p id="security-startup-message">Otwieranie zaszyfrowanego magazynu danych…</p>
+    </div>
+  </div>
+
+  <div id="security-privacy-cover" class="security-cover security-cover--privacy" aria-hidden="true" hidden>
+    <div class="security-cover__card">
+      <span class="security-cover__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-lock"></use></svg></span>
+      <strong>Dzienniczek jest chroniony</strong>
+    </div>
+  </div>
+
+  <section id="security-lock-screen" class="security-cover security-cover--lock" aria-labelledby="security-lock-title" hidden>
+    <form id="security-unlock-form" class="security-cover__card security-unlock-card">
+      <span class="security-cover__icon" aria-hidden="true"><svg class="app-icon" focusable="false"><use href="#icon-lock"></use></svg></span>
+      <h1 id="security-lock-title">Odblokuj aplikację</h1>
+      <p id="security-unlock-message">Wpisz PIN, aby kontynuować.</p>
+      <label>
+        <span>PIN</span>
+        <input id="security-unlock-pin" type="password" inputmode="numeric" pattern="[0-9]{6,12}" minlength="6" maxlength="12" autocomplete="current-password" required>
+      </label>
+      <p id="security-unlock-error" class="security-unlock-error" role="alert"></p>
+      <button class="button button--primary" type="submit">Odblokuj</button>
+      <button id="security-unlock-biometric" class="button button--secondary" type="button" hidden>Użyj biometrii</button>
+    </form>
+  </section>
+
+  <div id="toast-region" class="toast-region" role="status" aria-live="polite" aria-atomic="true"></div>
+  <div id="live-region" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+<dialog id="ampoule-replacement-dialog" class="entry-dialog replacement-dialog" aria-labelledby="replacement-title" aria-describedby="replacement-description">
+  <div class="dialog-header">
+    <div><p class="eyebrow" id="replacement-profile">Profil</p><h2 id="replacement-title">Potwierdź wymianę ampułki</h2></div>
+    <svg class="app-icon replacement-icon" aria-hidden="true"><use href="#icon-ampoule"></use></svg>
+  </div>
+  <p id="replacement-description"></p>
+  <label class="replacement-choice-label"><span>Ampułka we wstrzykiwaczu</span><select id="replacement-choice"></select></label>
+  <p id="replacement-stock-note" class="muted"></p>
+  <p class="replacement-separate-note">Potwierdzenie wymiany nie zapisuje podania.</p>
+  <div class="dialog-actions">
+    <button id="replacement-defer" class="button button--secondary" type="button">Jeszcze nie</button>
+    <button id="replacement-confirm" class="button button--primary" type="button">Tak, wymieniono</button>
+  </div>
+</dialog>
+
+  <script src="./native-bridge.js" defer></script>
+  <script src="./app.js" defer></script>
+</body>
+</html>
